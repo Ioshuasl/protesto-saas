@@ -1,0 +1,25 @@
+from packages.v1.administrativo.schemas.t_tb_andamentoservico_schema import TTbAndamentoservicoUpdateSchema
+from packages.v1.administrativo.repositories.t_tb_andamentoservico.t_tb_andamentoservico_update_repository import UpdateRepository
+
+
+class UpdateAction:
+    """
+        Service responsável por encapsular a lógica de negócio para a atualização
+        de um registro na tabela t_tb_andamentoservico.
+    """
+
+    def execute(self, tb_andamentoservico_id : int, andamentoservico_schema: TTbAndamentoservicoUpdateSchema):
+        """
+        Executa a operação de atualização.
+
+        Args:
+        andamentoservico_schema (TTbAndamentoservicoUpdateSchema): O esquema com os dados a serem atualizados.
+
+            Returns:
+                O resultado da operação de atualização.
+            """
+        # Instância o repositório de atualização
+        update_repository = UpdateRepository()
+
+        # Chama o método de execução do repositório para realizar a atualização
+        return update_repository.execute(tb_andamentoservico_id, andamentoservico_schema)

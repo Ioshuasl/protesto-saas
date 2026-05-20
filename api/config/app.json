@@ -1,0 +1,24 @@
+{
+    "state" : "go",
+    "url": "/api/v1",
+    "log": {
+        "request": {
+            "name": "request.json",
+            "path": "storage/temp"
+        }
+    },
+    "StartupCheck": {
+        "database": true,
+        "disk": true
+    },
+    "jwt" : {
+        "token" : "WYe1zwtlDkh39_X3X3qTSICFDxts4VQrMyGLxnEpGUg",
+        "algorithm" : "HS256",
+        "type" : "",
+        "expire" : {
+            "minute" : 60,
+            "hours" : 24,
+            "days" : 7
+        }
+    }
+}

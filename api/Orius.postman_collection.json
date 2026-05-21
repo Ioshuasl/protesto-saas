@@ -2248,6 +2248,43 @@
               }
             },
             {
+              "name": "Finalizar",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_andamento/finalizar/{{livroAndamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_andamento",
+                    "finalizar",
+                    "{{livroAndamentoId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"data_fechamento\": \"2026-05-22T00:00:00\",\r\n  \"folha_atual\": 100\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
               "name": "Update",
               "request": {
                 "auth": {

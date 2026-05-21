@@ -43,8 +43,11 @@
 | GET | `/proximo-numero-livro/{livro_natureza_id}` | Sugestão de numeração (antes da rota `/{id}`) |
 | GET | `/{livro_andamento_id}` | Show |
 | POST | `/` | Create |
+| PUT | `/finalizar/{livro_andamento_id}` | Fecha o livro (`data_fechamento` obrigatória; opcional `folha_atual`, `usuario_id`) |
 | PUT | `/{livro_andamento_id}` | Update |
 | DELETE | `/{livro_andamento_id}` | Delete |
+
+**Finalizar:** 404 se não existir; 409 se já fechado; 422 se `data_fechamento` &lt; `data_abertura`.
 
 Postman: pasta **Administrativo → Livro Andamento**, variável `{{livroAndamentoId}}`.
 

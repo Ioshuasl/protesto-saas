@@ -8,6 +8,7 @@ from packages.v1.administrativo.controllers.p_livro_andamento_controller import 
     PLivroAndamentoController,
 )
 from packages.v1.administrativo.schemas.p_livro_andamento_schema import (
+    PLivroAndamentoFinalizarSchema,
     PLivroAndamentoIdSchema,
     PLivroAndamentoIndexSchema,
     PLivroAndamentoNaturezaIdSchema,
@@ -102,6 +103,22 @@ async def save(
     current_user: dict = Depends(get_current_user),
 ):
     return p_livro_andamento_controller.save(livro_andamento_schema)
+
+
+@router.put(
+    "/finalizar/{livro_andamento_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Finaliza (fecha) livro de andamento",
+    response_description="Preenche DATA_FECHAMENTO e dados opcionais de encerramento",
+)
+async def finalizar(
+    livro_andamento_id: int,
+    livro_andamento_schema: PLivroAndamentoFinalizarSchema,
+    current_user: dict = Depends(get_current_user),
+):
+    return p_livro_andamento_controller.finalizar(
+        livro_andamento_id, livro_andamento_schema
+    )
 
 
 @router.put(

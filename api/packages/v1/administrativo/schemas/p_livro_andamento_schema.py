@@ -135,6 +135,23 @@ class PLivroAndamentoSaveSchema(BaseModel):
         return datetime.combine(value, datetime.min.time())
 
 
+class PLivroAndamentoFinalizarSchema(BaseModel):
+    """Fecha o livro (DATA_FECHAMENTO obrigatória) e campos opcionais de encerramento."""
+
+    data_fechamento: Union[datetime, date]
+    folha_atual: Optional[int] = None
+    usuario_id: Optional[int] = None
+
+    @field_validator("data_fechamento", mode="after")
+    @classmethod
+    def parse_data_fechamento_finalize(
+        cls, value: Union[datetime, date]
+    ) -> datetime:
+        if isinstance(value, datetime):
+            return value.replace(tzinfo=None) if value.tzinfo else value
+        return datetime.combine(value, datetime.min.time())
+
+
 class PLivroAndamentoUpdateSchema(BaseModel):
     livro_natureza_id: Optional[int] = None
     folha_atual: Optional[int] = None

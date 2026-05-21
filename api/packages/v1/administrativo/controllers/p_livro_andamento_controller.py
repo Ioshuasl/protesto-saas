@@ -1,6 +1,7 @@
 from actions.data.query_params_parser import QueryParams
 from actions.dynamic_import.dynamic_import import DynamicImport
 from packages.v1.administrativo.schemas.p_livro_andamento_schema import (
+    PLivroAndamentoFinalizarSchema,
     PLivroAndamentoIdSchema,
     PLivroAndamentoIndexSchema,
     PLivroAndamentoNaturezaIdSchema,
@@ -59,6 +60,22 @@ class PLivroAndamentoController:
         return {
             "message": "Livro de andamento salvo com sucesso",
             "data": save_service().execute(livro_andamento_schema),
+        }
+
+    def finalizar(
+        self,
+        livro_andamento_id: int,
+        livro_andamento_schema: PLivroAndamentoFinalizarSchema,
+    ):
+        finalizar_service = self.dynamic_import.service(
+            "p_livro_andamento_finalizar_service",
+            "FinalizarService",
+        )
+        return {
+            "message": "Livro de andamento finalizado com sucesso",
+            "data": finalizar_service().execute(
+                livro_andamento_id, livro_andamento_schema
+            ),
         }
 
     def update(

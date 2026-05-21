@@ -7,12 +7,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PLivroAndamentoForm, LivroAndamentoFormValues } from "./PLivroAndamentoForm";
-import { PLivroAndamentoInterface } from "@/packages/administrativo/interfaces";
+import { PLivroAndamentoInterface, PLivroNaturezaInterface } from "@/packages/administrativo/interfaces";
 
 interface PLivroAndamentoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   livroAndamento?: PLivroAndamentoInterface | null;
+  naturezas?: PLivroNaturezaInterface[];
   onSubmit: (data: LivroAndamentoFormValues) => void;
   isLoading?: boolean;
 }
@@ -21,6 +22,7 @@ export function PLivroAndamentoDialog({
   open,
   onOpenChange,
   livroAndamento,
+  naturezas = [],
   onSubmit,
   isLoading,
 }: PLivroAndamentoDialogProps) {
@@ -36,6 +38,7 @@ export function PLivroAndamentoDialog({
         </DialogHeader>
         <PLivroAndamentoForm
           defaultValues={livroAndamento || undefined}
+          naturezas={naturezas}
           onSubmit={onSubmit}
           isLoading={isLoading}
         />

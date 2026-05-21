@@ -1,32 +1,23 @@
-import { gusuarioListRef } from '@/packages/administrativo/data/GUsuario/gusuarioInMemory';
-import {
-  GUSUARIO_FAKE_ENDPOINTS,
-  useGUsuarioMockData,
-} from '@/packages/administrativo/data/GUsuario/gusuarioDataConfig';
-import type { GUsuarioInterface } from '@/packages/administrativo/interfaces/GUsuario/GUsuarioInterface';
-import { mockDbDelay } from '@/packages/administrativo/shared/mockDbDelay';
+'use server';
+
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 import API from '@/shared/services/api/Api';
 import { Methods } from '@/shared/services/api/enums/ApiMethodEnum';
 
-async function executeGUsuarioDeleteData(data: GUsuarioInterface) {
-  const id = data.usuario_id;
-  if (!useGUsuarioMockData()) {
-    const api = new API();
-    return await api.send({
-      method: Methods.DELETE,
-      endpoint: GUSUARIO_FAKE_ENDPOINTS.delete(id),
-    });
-  }
+type GUsuarioDeletePayload = {
+  usuario_id: number;
+};
 
-  await mockDbDelay(500);
-  gusuarioListRef.current = gusuarioListRef.current.filter((row) => row.usuario_id !== id);
+async function executeGUsuarioDeleteData(data: GUsuarioDeletePayload) {
 
-  return {
-    status: 200,
-    message: 'Usuário removido com sucesso',
-    data,
-  };
+  const api = new API();
+
+  const response = await api.send({
+    method: Methods.DELETE,
+    endpoint: `administrativo/g_usuario/${data.usuario_id}`,
+  });
+
+  return response;
 }
 
 export const GUsuarioDeleteData = withClientErrorHandler(executeGUsuarioDeleteData);

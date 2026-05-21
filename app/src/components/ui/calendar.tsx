@@ -1,16 +1,28 @@
 'use client';
 
+import { startOfDay } from 'date-fns';
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import * as React from 'react';
 import {
+  dateMatchModifiers,
   DayPicker,
   getDefaultClassNames,
   type DayButton,
   type Locale,
+  type Matcher,
+  type Modifiers,
+  type OnSelectHandler,
 } from 'react-day-picker';
 
-import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type CalendarProps = React.ComponentProps<typeof DayPicker> & {
+  buttonVariant?: React.ComponentProps<typeof Button>['variant'];
+  /** Exibe botão para selecionar a data atual (apenas em `mode="single"`). Padrão: true. */
+  showTodayButton?: boolean;
+  todayLabel?: string;
+};
 
 function Calendar({
   className,
@@ -21,14 +33,23 @@ function Calendar({
   locale,
   formatters,
   components,
+  showTodayButton,
+  todayLabel = 'Hoje',
+  mode,
+  onSelect,
+  disabled,
   ...props
-}: React.ComponentProps<typeof DayPicker> & {
-  buttonVariant?: React.ComponentProps<typeof Button>['variant'];
-}) {
+}: CalendarProps) {
   const defaultClassNames = getDefaultClassNames();
+  const { Footer: userFooter, ...restComponents } = components ?? {};
+  const shouldShowTodayButton =
+    showTodayButton !== false && mode === 'single' && typeof onSelect === 'function';
 
   return (
     <DayPicker
+      mode={mode}
+      onSelect={onSelect}
+      disabled={disabled}
       showOutsideDays={showOutsideDays}
       className={cn(
         'group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(7)] [--rdp-selected-border:0px_solid_transparent] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
@@ -114,6 +135,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        ...restComponents,
         Root: ({ className, rootRef, ...rootProps }) => {
           return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...rootProps} />;
         },
@@ -134,10 +156,56 @@ function Calendar({
             </td>
           );
         },
-        ...components,
+        Footer: shouldShowTodayButton
+          ? (footerProps) => (
+              <div {...footerProps} className={cn('flex flex-col', footerProps.className)}>
+                {typeof userFooter === 'function' ? userFooter(footerProps) : userFooter}
+                <CalendarTodayButton
+                  label={todayLabel}
+                  disabled={disabled}
+                  onSelect={onSelect as OnSelectHandler<Date | undefined>}
+                />
+              </div>
+            )
+          : userFooter,
       }}
       {...props}
     />
+  );
+}
+
+function isDateDisabledByMatcher(date: Date, disabled: Matcher | Matcher[] | boolean | undefined): boolean {
+  if (!disabled) return false;
+  if (typeof disabled === 'boolean') return disabled;
+  return dateMatchModifiers(date, disabled);
+}
+
+function CalendarTodayButton({
+  label,
+  disabled,
+  onSelect,
+}: {
+  label: string;
+  disabled: CalendarProps['disabled'];
+  onSelect: OnSelectHandler<Date | undefined>;
+}) {
+  const today = React.useMemo(() => startOfDay(new Date()), []);
+  const isDisabled = isDateDisabledByMatcher(today, disabled);
+
+  return (
+    <div className="border-t px-2 pt-2">
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={isDisabled}
+        onClick={(event) => {
+          onSelect(today, today, {} as Modifiers, event);
+        }}
+      >
+        {label}
+      </Button>
+    </div>
   );
 }
 

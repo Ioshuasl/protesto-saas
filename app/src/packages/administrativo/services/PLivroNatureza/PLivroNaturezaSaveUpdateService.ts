@@ -1,16 +1,16 @@
 'use server';
 
-import { PLivroNaturezaSaveUpdateData } from '@/packages/administrativo/data/PLivroNatureza/PLivroNaturezaSaveData';
-import type { PLivroNaturezaInterface } from '@/packages/administrativo/interfaces/PLivroNatureza/PLivroNaturezaInterface';
+import {
+  PLivroNaturezaSaveUpdateData,
+  type PLivroNaturezaSavePayload,
+} from '@/packages/administrativo/data/PLivroNatureza/PLivroNaturezaSaveData';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 
 async function executePLivroNaturezaSaveUpdateService(
   id: number,
-  data: Partial<PLivroNaturezaInterface>,
+  data: Partial<PLivroNaturezaSavePayload>,
 ) {
-  const response = await PLivroNaturezaSaveUpdateData(id, data);
-
-  return response;
+  return await PLivroNaturezaSaveUpdateData(id, data);
 }
 
 export const PLivroNaturezaSaveUpdateService = withClientErrorHandler(

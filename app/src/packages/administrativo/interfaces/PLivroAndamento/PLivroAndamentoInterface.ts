@@ -12,4 +12,6 @@ export interface PLivroAndamentoInterface {
   usuario_id?: number;
   numero_livro_letra?: string;
   sigla?: string;
+  /** Calculado na API: DATA_FECHAMENTO null */
+  aberto?: boolean;
 }

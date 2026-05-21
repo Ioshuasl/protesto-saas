@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PLIVRO_ANDAMENTO_LIST_QUERY } from "@/packages/administrativo/data/PLivroAndamento/plivroAndamentoDataConfig";
 import { usePLivroAndamentoReadHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoReadHook";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ export function PLivroAndamentoSelectObject({
   const { livrosAndamento, isLoading, fetchLivrosAndamento } = usePLivroAndamentoReadHook();
 
   useEffect(() => {
-    void fetchLivrosAndamento();
+    void fetchLivrosAndamento(PLIVRO_ANDAMENTO_LIST_QUERY);
   }, [fetchLivrosAndamento]);
 
   const options = useMemo(

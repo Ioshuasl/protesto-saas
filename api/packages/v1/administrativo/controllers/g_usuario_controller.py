@@ -41,29 +41,18 @@ class GUsuarioController:
         # Instânciamento da service
         self.authenticate_service = authenticate_service()
 
-        # Verifica se o usuário tem codigo de segurança
-        if not g_usuario_authenticate_schema.codigo_seguranca:
+        result = self.authenticate_service.execute(
+            g_usuario_authenticate_schema=g_usuario_authenticate_schema,
+            request=request,
+        )
 
-            # Retorna os dados do usuário para preparar a segunda etapa de autenticação
-            return {
-                "message": "Usuário localizado com sucesso",
-                "data": self.authenticate_service.execute(
-                    g_usuario_authenticate_schema=g_usuario_authenticate_schema,
-                    request=request,
-                ),
-            }
-        else:
+        # Token (str) após login completo; dict na etapa de desafio 2FA
+        data = {"token": result} if isinstance(result, str) else result
 
-            # Retorna o usuário logado + token de acesso
-            return {
-                "message": "Usuário localizado com sucesso",
-                "data": {
-                    "token": self.authenticate_service.execute(
-                        g_usuario_authenticate_schema=g_usuario_authenticate_schema,
-                        request=request,
-                    )
-                },
-            }
+        return {
+            "message": "Usuário localizado com sucesso",
+            "data": data,
+        }
 
     # Carrega os dados do usuário logado
     def me(self, current_user):

@@ -6,8 +6,9 @@ Substituir `<entidade>`, `<Entidade>`, `<modulo>`.
 
 | # | Camada | Caminho |
 |---|--------|---------|
-| 0 | descoberta | `describe_table` + amostra 5–10 rows → documentar em `modulos/**/<entidade>.md` |
-| 1 | model (se `USE_ORM_FIREBIRD=true`) | `api/packages/v1/<modulo>/model/<entidade>.py` |
+| 0 | descoberta | `describe_table` + `list_foreign_keys` + amostra 5–10 rows → inventário de **todas** as tabelas do prompt em `modulos/**/<entidade>.md` |
+| 1 | models (fase A) | `api/packages/v1/<modulo>/model/<tabela>.py` — **um arquivo por tabela do inventário** (alvo + FKs + regras, ex.: `p_banco`, `p_layout`, `p_titulo`) |
+| 1b | associações (fase B) | `api/packages/v1/<modulo>/model/index.py` — `register_<modulo>_associations()` **após** todos os models da fase A |
 | 2 | schema | `api/packages/v1/<modulo>/schemas/<entidade>_schema.py` (siglas + `normalize_*`) |
 | 3 | repository | `api/packages/v1/<modulo>/repositories/<entidade>/<entidade>_index_repository.py` |
 | 3 | repository | `.../<entidade>_show_repository.py` |

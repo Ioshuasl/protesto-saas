@@ -41,6 +41,27 @@
 | `P_BANCO_PESSOA_FK` | `P_BANCO.PESSOA_ID` | `P_PESSOA.PESSOA_ID` |
 | `P_TITULO_P_BANCO_FK` | `P_TITULO.BANCO_ID` | `P_BANCO.BANCO_ID` |
 
+### Models ORM (inventário — fase A antes de `index.py`)
+
+| Tabela | Arquivo | Motivo |
+|--------|---------|--------|
+| `P_BANCO` | `model/p_banco.py` | Entidade alvo (implementado) |
+| `P_LAYOUT` | `model/p_layout.py` | FK `LAYOUT_ID`; `p_layout_exists_repository` |
+| `P_PESSOA` | `model/p_pessoa.py` | 27 colunas (`describe_table`); leitura index/show |
+| `P_TITULO` | `model/p_titulo.py` | 97 colunas (`describe_table`); delete/count por `BANCO_ID` |
+
+### Associações (`model/index.py` — implementado)
+
+`register_administrativo_associations()` chamado em `database/orm_firebird.get_orm()`.
+
+### Associações planejadas (referência)
+
+| Origem | Tipo | Destino | FK | `as` |
+|--------|------|---------|-----|------|
+| `P_BANCO` | `belongsTo` | `P_LAYOUT` | `LAYOUT_ID` | `layout` |
+| `P_BANCO` | `belongsTo` | `P_PESSOA` | `PESSOA_ID` | `pessoa` |
+| `P_BANCO` | `hasMany` | `P_TITULO` | `BANCO_ID` em `P_TITULO` | `titulos` |
+
 **Nota:** `P_BANCO` **não possui** coluna `SITUACAO` (diferente de `G_FERIADO`).
 
 ## Amostra (10 registros — `santarita`)

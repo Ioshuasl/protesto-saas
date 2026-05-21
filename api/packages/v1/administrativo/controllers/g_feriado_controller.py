@@ -1,3 +1,4 @@
+from actions.data.query_params_parser import QueryParams
 from actions.dynamic_import.dynamic_import import DynamicImport
 from packages.v1.administrativo.schemas.g_feriado_schema import (
     GFeriadoIdSchema,
@@ -13,14 +14,16 @@ class GFeriadoController:
         self.dynamic_import.set_package("administrativo")
         self.dynamic_import.set_table("g_feriado")
 
-    def index(self, feriado_index_schema: GFeriadoIndexSchema):
+    def index(self, feriado_index_schema: GFeriadoIndexSchema, query_params: QueryParams):
         index_service = self.dynamic_import.service(
             "g_feriado_index_service",
             "IndexService",
         )
+        result = index_service().execute(feriado_index_schema, query_params)
         return {
             "message": "Feriados localizados com sucesso",
-            "data": index_service().execute(feriado_index_schema),
+            "data": result["rows"],
+            "pagination": result["pagination"],
         }
 
     def show(self, feriado_schema: GFeriadoIdSchema):

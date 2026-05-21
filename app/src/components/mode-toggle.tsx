@@ -10,9 +10,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
+import { useHydrated } from "@/shared/hooks/useHydrated";
 
 export function ModeToggle() {
+  const hydrated = useHydrated();
   const { setTheme } = useTheme();
+
+  if (!hydrated) {
+    return (
+      <Button variant="outline" size="icon" aria-label="Alternar tema" disabled>
+        <Sun className="h-[1.2rem] w-[1.2rem]" />
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

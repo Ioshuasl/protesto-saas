@@ -37,8 +37,8 @@ export function GFeriadoForm({ defaultValues, onSubmit, isLoading }: GFeriadoFor
     defaultValues: {
       data: defaultValues?.data ? new Date(defaultValues.data) : undefined,
       descricao: defaultValues?.descricao || "",
-      tipo: defaultValues?.tipo || "Municipal",
-      situacao: defaultValues?.situacao || "Ativo",
+      tipo: defaultValues?.tipo || "F",
+      situacao: defaultValues?.situacao || "A",
     },
   });
 
@@ -47,8 +47,8 @@ export function GFeriadoForm({ defaultValues, onSubmit, isLoading }: GFeriadoFor
       form.reset({
         data: defaultValues.data ? new Date(defaultValues.data) : undefined,
         descricao: defaultValues.descricao || "",
-        tipo: defaultValues.tipo || "Municipal",
-        situacao: defaultValues.situacao || "Ativo",
+        tipo: defaultValues.tipo || "F",
+        situacao: defaultValues.situacao || "A",
       });
     }
   }, [defaultValues, form]);
@@ -100,6 +100,7 @@ export function GFeriadoForm({ defaultValues, onSubmit, isLoading }: GFeriadoFor
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
+                    todayLabel="Data atual"
                     disabled={(date) =>
                       date < new Date("1900-01-01")
                     }
@@ -140,9 +141,8 @@ export function GFeriadoForm({ defaultValues, onSubmit, isLoading }: GFeriadoFor
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Municipal">Municipal</SelectItem>
-                    <SelectItem value="Estadual">Estadual</SelectItem>
-                    <SelectItem value="Federal">Federal</SelectItem>
+                    <SelectItem value="F">Fixo</SelectItem>
+                    <SelectItem value="V">Variável</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -163,8 +163,8 @@ export function GFeriadoForm({ defaultValues, onSubmit, isLoading }: GFeriadoFor
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value="A">Ativo</SelectItem>
+                    <SelectItem value="I">Inativo</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

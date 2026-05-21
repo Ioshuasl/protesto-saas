@@ -1,15 +1,13 @@
 'use server';
 
-import { PLivroNaturezaSaveCreateData } from '@/packages/administrativo/data/PLivroNatureza/PLivroNaturezaSaveData';
-import type { PLivroNaturezaInterface } from '@/packages/administrativo/interfaces/PLivroNatureza/PLivroNaturezaInterface';
+import {
+  PLivroNaturezaSaveCreateData,
+  type PLivroNaturezaSavePayload,
+} from '@/packages/administrativo/data/PLivroNatureza/PLivroNaturezaSaveData';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 
-async function executePLivroNaturezaSaveCreateService(
-  data: Omit<PLivroNaturezaInterface, 'livro_natureza_id'>,
-) {
-  const response = await PLivroNaturezaSaveCreateData(data);
-
-  return response;
+async function executePLivroNaturezaSaveCreateService(data: PLivroNaturezaSavePayload) {
+  return await PLivroNaturezaSaveCreateData(data);
 }
 
 export const PLivroNaturezaSaveCreateService = withClientErrorHandler(

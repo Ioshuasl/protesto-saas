@@ -5,9 +5,15 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GFeriadoDialog } from "@/packages/administrativo/components/GFeriado/GFeriadoDialog";
 import { GFeriadoFilter } from "@/packages/administrativo/components/GFeriado/GFeriadoFilter";
+import {
+  buildGFeriadoIndexQuery,
+  defaultGFeriadoFilterState,
+  type GFeriadoFilterState,
+} from "@/packages/administrativo/components/GFeriado/gFeriadoFilterUtils";
 import { GFeriadoTable } from "@/packages/administrativo/components/GFeriado/GFeriadoTable";
 import { useGFeriadoDeleteHook } from "@/packages/administrativo/hooks/GFeriado/useGFeriadoDeleteHook";
 import { useGFeriadoReadHook } from "@/packages/administrativo/hooks/GFeriado/useGFeriadoReadHook";
+import { DEFAULT_PAGINATION_META, Pagination } from "@/shared/components/pagination";
 import {
   type FeriadoSavePayload,
   useGFeriadoSaveHook,
@@ -15,17 +21,36 @@ import {
 import type { GFeriadoInterface } from "@/packages/administrativo/interfaces/GFeriado/GFeriadoInterface";
 import ConfirmDialog from "@/shared/components/confirmDialog/ConfirmDialog";
 
+const GFERIADO_PER_PAGE = DEFAULT_PAGINATION_META.per_page;
+
 export default function GFeriadoIndex() {
-  const { feriados, isLoading, fetchFeriados } = useGFeriadoReadHook();
+  const { feriados, pagination, isLoading, fetchFeriados } = useGFeriadoReadHook();
   const { saveFeriado } = useGFeriadoSaveHook();
   const { deleteFeriado } = useGFeriadoDeleteHook();
 
   const [buttonIsLoading, setButtonIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<GFeriadoFilterState>(defaultGFeriadoFilterState);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selected, setSelected] = useState<GFeriadoInterface | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+
+  const apiFilters = useMemo(() => buildGFeriadoIndexQuery(filters), [filters]);
+
+  const indexQuery = useMemo(
+    () => ({
+      ...apiFilters,
+      page,
+      per_page: GFERIADO_PER_PAGE,
+    }),
+    [apiFilters, page],
+  );
+
+  const handleFiltersChange = useCallback((next: GFeriadoFilterState) => {
+    setFilters(next);
+    setPage(1);
+  }, []);
 
   const handleOpenDialog = useCallback((row?: GFeriadoInterface) => {
     setSelected(row ?? null);
@@ -42,7 +67,7 @@ export default function GFeriadoIndex() {
       setButtonIsLoading(true);
       try {
         await saveFeriado(formData, selected);
-        await fetchFeriados();
+        await fetchFeriados(indexQuery);
         handleCloseDialog();
       } catch (e) {
         console.error("Erro ao salvar feriado:", e);
@@ -50,7 +75,7 @@ export default function GFeriadoIndex() {
         setButtonIsLoading(false);
       }
     },
-    [saveFeriado, selected, fetchFeriados, handleCloseDialog],
+    [saveFeriado, selected, fetchFeriados, handleCloseDialog, indexQuery],
   );
 
   const openDeleteDialog = useCallback((id: number) => {
@@ -69,21 +94,22 @@ export default function GFeriadoIndex() {
     closeDeleteDialog();
     try {
       await deleteFeriado(id);
-      await fetchFeriados();
+      await fetchFeriados(indexQuery);
     } catch (e) {
       console.error("Erro ao excluir feriado:", e);
     }
-  }, [pendingDeleteId, closeDeleteDialog, deleteFeriado, fetchFeriados]);
+  }, [pendingDeleteId, closeDeleteDialog, deleteFeriado, fetchFeriados, indexQuery]);
 
   useEffect(() => {
-    void fetchFeriados();
-  }, [fetchFeriados]);
+    void fetchFeriados(indexQuery);
+  }, [fetchFeriados, indexQuery]);
 
   const filtered = useMemo(() => {
-    if (!searchQuery) return feriados;
-    const q = searchQuery.toLowerCase();
+    const search = filters.search.trim();
+    if (!search) return feriados;
+    const q = search.toLowerCase();
     return feriados.filter((f) => f.descricao?.toLowerCase().includes(q) || f.ano?.toString().includes(q));
-  }, [feriados, searchQuery]);
+  }, [feriados, filters.search]);
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -98,8 +124,13 @@ export default function GFeriadoIndex() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <GFeriadoFilter value={searchQuery} onChange={setSearchQuery} />
+        <GFeriadoFilter value={filters} onChange={handleFiltersChange} />
         <GFeriadoTable data={filtered} isLoading={isLoading} onEdit={handleOpenDialog} onDelete={openDeleteDialog} />
+        <Pagination
+          pagination={pagination}
+          onPageChange={setPage}
+          disabled={isLoading}
+        />
       </div>
 
       <GFeriadoDialog

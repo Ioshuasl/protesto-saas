@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from functools import lru_cache
 from typing import Any, Mapping, Optional
 
 from orm_py import OrmFirebird, normalize_firebird_charset, is_ansi_charset
@@ -34,15 +33,31 @@ def _build_connection_config() -> dict[str, Any]:
     }
 
 
-@lru_cache(maxsize=1)
+_ORM_SINGLETON: OrmFirebird | None = None
+
+
 def get_orm() -> OrmFirebird:
+    global _ORM_SINGLETON
+    if _ORM_SINGLETON is not None:
+        return _ORM_SINGLETON
+
     if not use_orm_firebird():
         raise RuntimeError(
             "ORM Firebird desabilitado. Defina USE_ORM_FIREBIRD=true no .env para usar orm-firebird-py."
         )
     orm = OrmFirebird(_build_connection_config())
     orm.authenticate()
-    return orm
+    _ORM_SINGLETON = orm
+    _register_administrativo_associations_once()
+    return _ORM_SINGLETON
+
+
+def _register_administrativo_associations_once() -> None:
+    from packages.v1.administrativo.model.index import (
+        register_administrativo_associations,
+    )
+
+    register_administrativo_associations()
 
 
 def get_query_interface() -> QueryInterface:
@@ -79,3 +94,23 @@ def describe_table_schema(table_name: str) -> dict[str, Any]:
 
 def describe_g_feriado_schema() -> dict[str, Any]:
     return describe_table_schema("G_FERIADO")
+
+
+def describe_p_pessoa_schema() -> dict[str, Any]:
+    return describe_table_schema("P_PESSOA")
+
+
+def describe_p_titulo_schema() -> dict[str, Any]:
+    return describe_table_schema("P_TITULO")
+
+
+def describe_g_tb_estadocivil_schema() -> dict[str, Any]:
+    return describe_table_schema("G_TB_ESTADOCIVIL")
+
+
+def describe_g_tb_profissao_schema() -> dict[str, Any]:
+    return describe_table_schema("G_TB_PROFISSAO")
+
+
+def describe_g_cidade_schema() -> dict[str, Any]:
+    return describe_table_schema("G_CIDADE")

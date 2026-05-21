@@ -1,3 +1,4 @@
+from actions.data.query_params_parser import QueryParams
 from actions.dynamic_import.dynamic_import import DynamicImport
 from packages.v1.administrativo.schemas.p_banco_schema import (
     PBancoIdSchema,
@@ -13,14 +14,16 @@ class PBancoController:
         self.dynamic_import.set_package("administrativo")
         self.dynamic_import.set_table("p_banco")
 
-    def index(self, banco_index_schema: PBancoIndexSchema):
+    def index(self, banco_index_schema: PBancoIndexSchema, query_params: QueryParams):
         index_service = self.dynamic_import.service(
             "p_banco_index_service",
             "IndexService",
         )
+        result = index_service().execute(banco_index_schema, query_params)
         return {
             "message": "Bancos localizados com sucesso",
-            "data": index_service().execute(banco_index_schema),
+            "data": result["rows"],
+            "pagination": result["pagination"],
         }
 
     def show(self, banco_schema: PBancoIdSchema):

@@ -1,11 +1,12 @@
+import type { SituacaoKey } from '@/shared/enums/SituacoesEnum';
+
 /**
- * Interface gerada para a tabela P_LIVRO_NATUREZA
+ * Contrato API P_LIVRO_NATUREZA (tipo e natureza_id omitidos na API).
  */
 export interface PLivroNaturezaInterface {
   livro_natureza_id: number;
-  natureza_id?: number;
   descricao?: string;
-  situacao?: string;
+  /** Siglas da API: A = ativo, I = inativo */
+  situacao?: SituacaoKey | string;
   sigla?: string;
-  tipo?: string;
 }

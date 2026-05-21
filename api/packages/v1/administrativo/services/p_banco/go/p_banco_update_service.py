@@ -5,8 +5,8 @@ from packages.v1.administrativo.actions.p_banco.p_banco_update_action import Upd
 from packages.v1.administrativo.repositories.p_banco.p_banco_get_by_codigo_repository import (
     GetByCodigoRepository,
 )
-from packages.v1.administrativo.repositories.p_banco.p_banco_layout_exists_repository import (
-    LayoutExistsRepository,
+from packages.v1.administrativo.repositories.p_layout.p_layout_exists_repository import (
+    ExistsRepository as LayoutExistsRepository,
 )
 from packages.v1.administrativo.schemas.p_banco_schema import (
     PBancoCodigoSchema,

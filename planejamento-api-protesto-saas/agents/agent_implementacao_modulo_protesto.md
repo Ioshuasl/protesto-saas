@@ -35,16 +35,17 @@ Implementa **um** módulo ou grupo coeso de rotas após plano aprovado. Opera ex
 ## Ordem de implementação (obrigatória)
 
 1. Descoberta Firebird (se ainda não documentada no `.md` do módulo)
-2. Model (`model/<entidade>.py`) — somente se `USE_ORM_FIREBIRD=true`
-3. Schemas (`*_schema.py`) — validação de siglas no schema
-4. Repositories (`repositories/<entidade>/`) — **um arquivo por operação**, sem auxiliares
-5. Actions (`actions/<entidade>/`)
-6. Services (`services/<entidade>/go/`)
-7. Controller (`*_controller.py`)
-8. Endpoint (`*_endpoint.py`)
-9. Registro em `packages/v1/api.py`
-10. Testes (`tests/unit/...`)
-11. `api/Orius.postman_collection.json`
+2. **Todos** os models do inventário (`model/<entidade>.py` por tabela referenciada no plano) — somente se `USE_ORM_FIREBIRD=true`
+3. **Associações** em `model/index.py` (`register_<modulo>_associations`) — **somente após** todos os models do passo 2 existirem; ver [agent_planejamento_protesto_api.md](./agent_planejamento_protesto_api.md) § Models
+4. Schemas (`*_schema.py`) — validação de siglas no schema
+5. Repositories (`repositories/<entidade>/`) — **um arquivo por operação**, sem auxiliares
+6. Actions (`actions/<entidade>/`)
+7. Services (`services/<entidade>/go/`)
+8. Controller (`*_controller.py`)
+9. Endpoint (`*_endpoint.py`)
+10. Registro em `packages/v1/api.py`
+11. Testes (`tests/unit/...`)
+12. `api/Orius.postman_collection.json`
 
 ## Padrões a copiar
 
@@ -60,6 +61,7 @@ Implementa **um** módulo ou grupo coeso de rotas após plano aprovado. Opera ex
 
 - `USE_ORM_FIREBIRD=true` → `use_orm_firebird()` nos repositories; model em `packages/v1/<modulo>/model/`
 - Debug: `QueryInterface` + `scripts/describe_<TABELA>_schema.py`
+- **Documentação ORM:** [docs/orm-firebird-py/README.md](../../docs/orm-firebird-py/README.md) (carregar ao usar `get_orm()`, `Op`, `define`, hooks)
 - Filtros em colunas `VARCHAR(1)`: SQL no repository (ver `g_feriado_index_repository._execute_sql`)
 - **Não criar** `*_orm_query.py`, `*_sql_query.py`, `*_codec.py`, `*_row_mapper.py`
 

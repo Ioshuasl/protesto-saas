@@ -35,7 +35,7 @@ export function PEspecieSelectObject({
   const { especies, isLoading, fetchEspecies } = usePEspecieReadHook();
 
   useEffect(() => {
-    void fetchEspecies();
+    void fetchEspecies({ page: 1, per_page: 500, sort: 'especie_id.asc' });
   }, [fetchEspecies]);
 
   const options = useMemo(() => {

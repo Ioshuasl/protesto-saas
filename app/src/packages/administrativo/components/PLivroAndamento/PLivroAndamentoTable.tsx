@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { PLivroAndamentoInterface, PLivroNaturezaInterface } from "@/packages/administrativo/interfaces";
@@ -62,6 +63,7 @@ export function PLivroAndamentoTable({
             <TableHead>Natureza</TableHead>
             <TableHead>Folha Atual</TableHead>
             <TableHead>Data Abertura</TableHead>
+            <TableHead>Situação</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -79,6 +81,11 @@ export function PLivroAndamentoTable({
               <TableCell>{livro.folha_atual} / {livro.numero_folhas}</TableCell>
               <TableCell>
                 {livro.data_abertura ? format(new Date(livro.data_abertura), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+              </TableCell>
+              <TableCell>
+                <Badge variant={livro.aberto ? "default" : "secondary"}>
+                  {livro.aberto ? "Aberto" : "Fechado"}
+                </Badge>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">

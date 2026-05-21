@@ -93,6 +93,7 @@ Regras:
 
 - Flag lida por `database/orm_firebird_settings.use_orm_firebird()`.
 - Conexão ORM: `database/orm_firebird.py` (`get_orm()`, `get_query_interface()`).
+- **Referência ORM:** [docs/orm-firebird-py/README.md](../docs/orm-firebird-py/README.md) (`orm_py` / `OriusORM`, `Op`, modelos, transações, `QueryInterface`).
 - **Debug de schema/tabela:** `QueryInterface.describe_table`, `table_exists`, script `api/scripts/describe_<TABELA>_schema.py` (ex.: `describe_g_feriado_schema.py`).
 - Atributos do model devem refletir tamanhos reais do Firebird (ex.: `VARCHAR(1)` → `STRING(2)` no ORM quando o dialect exige; validar com describe).
 - Filtros `WHERE` em colunas `VARCHAR` curtas: preferir SQL explícito no repository (limitação conhecida do dialect `sqlalchemy-firebird` com binds).
@@ -106,11 +107,25 @@ Regras:
 
 Referência: `g_feriado` — `TIPO`: `F` fixo, `V` variável; `SITUACAO`: `A` ativo, `I`/vazio/`NULL` inativo.
 
-### Model (`model/<entidade>.py`)
+### Models (`model/<entidade>.py` + `model/index.py`)
 
-- `G_<ENTIDADE>_ATTRIBUTES`, `G_<ENTIDADE>_OPTIONS`, `get_g_<entidade>_model()` com `@lru_cache`.
-- Comentário no arquivo documentando domínio Firebird e siglas expostas na API.
-- Somente quando `USE_ORM_FIREBIRD=true`.
+**Inventário:** todo prompt que cite tabelas ligadas por FK ou regra (ex.: `P_BANCO` + `P_TITULO` no delete) exige **um model por tabela** antes de repositories. Ver agente de planejamento § Models.
+
+**Ordem:**
+
+1. Criar **todos** os `model/<entidade>.py` (`*_ATTRIBUTES`, `*_OPTIONS`, `get_<entidade>_model()` com `@lru_cache`).
+2. Registrar **todas** as associações em `model/index.py` (`belongsTo`, `hasOne`, `hasMany`, `belongsToMany`) — sintaxe em [docs/orm-firebird-py/README.md](../docs/orm-firebird-py/README.md) § Associações.
+3. Só então schemas e repositories.
+
+**Por arquivo `model/<entidade>.py`:**
+
+- Comentário com domínio Firebird e siglas da API.
+- **Sem** chamadas `belongsTo`/`hasMany` no arquivo individual — associações centralizadas no `index.py`.
+
+**`model/index.py`:**
+
+- Importa todos os `get_*_model()` do pacote.
+- Expõe `register_<modulo>_associations()` com o grafo FK do módulo.
 
 ### Schemas (`*_schema.py`)
 

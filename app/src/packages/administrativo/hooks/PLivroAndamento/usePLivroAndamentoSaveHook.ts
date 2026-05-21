@@ -1,26 +1,38 @@
 import { useState } from 'react';
 
-import { LivroAndamentoFormValues } from '@/packages/administrativo/schemas/PLivroAndamento/PLivroAndamentoFormSchema';
+import { formatDateTimeForApi } from '@/packages/administrativo/data/PLivroAndamento/plivroAndamentoApiUtils';
+import { invalidateProximoNumeroCache } from '@/packages/administrativo/hooks/PLivroAndamento/useProximoNumeroPorNatureza';
+import type { PLivroAndamentoSavePayload } from '@/packages/administrativo/data/PLivroAndamento/PLivroAndamentoSaveData';
 import { PLivroAndamentoInterface } from '@/packages/administrativo/interfaces/PLivroAndamento/PLivroAndamentoInterface';
+import { LivroAndamentoFormValues } from '@/packages/administrativo/schemas/PLivroAndamento/PLivroAndamentoFormSchema';
 import { PLivroAndamentoSaveCreateService } from '@/packages/administrativo/services/PLivroAndamento/PLivroAndamentoSaveCreateService';
 import { PLivroAndamentoSaveUpdateService } from '@/packages/administrativo/services/PLivroAndamento/PLivroAndamentoSaveUpdateService';
 import { useResponse } from '@/shared/components/response/ResponseContext';
 
+function buildSavePayload(data: LivroAndamentoFormValues): PLivroAndamentoSavePayload {
+  return {
+    livro_natureza_id: data.livro_natureza_id,
+    folha_atual: data.folha_atual,
+    numero_livro: data.numero_livro,
+    numero_folhas: data.numero_folhas,
+    data_abertura: formatDateTimeForApi(data.data_abertura),
+    data_fechamento:
+      data.data_fechamento != null ? formatDateTimeForApi(data.data_fechamento) : null,
+    sigla: data.sigla?.trim() || undefined,
+    usuario_id: data.usuario_id ?? null,
+  };
+}
+
 export const usePLivroAndamentoSaveHook = () => {
   const { setResponse } = useResponse();
   const [pLivroAndamento, setPLivroAndamento] = useState<PLivroAndamentoInterface | null>(null);
-  // controla se o formulário está aberto ou fechado
   const [isOpen, setIsOpen] = useState(false);
 
   const saveLivroAndamento = async (
     data: LivroAndamentoFormValues,
     selected: PLivroAndamentoInterface | null,
   ) => {
-    const payload = {
-      ...data,
-      data_abertura: data.data_abertura,
-      data_fechamento: data.data_fechamento || undefined,
-    };
+    const payload = buildSavePayload(data);
 
     const response = selected
       ? await PLivroAndamentoSaveUpdateService(selected.livro_andamento_id, payload)
@@ -28,6 +40,7 @@ export const usePLivroAndamentoSaveHook = () => {
 
     if (response && typeof response === 'object' && 'livro_andamento_id' in response) {
       setPLivroAndamento(response as PLivroAndamentoInterface);
+      invalidateProximoNumeroCache(payload.livro_natureza_id);
     }
 
     setResponse(
@@ -50,5 +63,5 @@ export const usePLivroAndamentoSaveHook = () => {
     return response;
   };
 
-  return { pLivroAndamento, saveLivroAndamento };
+  return { pLivroAndamento, saveLivroAndamento, isOpen, setIsOpen };
 };

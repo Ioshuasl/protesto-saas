@@ -70,12 +70,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"login\" : \"orius\",\r\n    \"senha_api\": \"123123\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
+                  "raw": "{\r\n    \"identificador\": \"dev@oriustecnologia.com.br\",\r\n    \"senha_api\": \"123123\",\r\n    \"codigo_seguranca\": \"\"\r\n}"
                 },
                 "url": {
                   "raw": "{{BaseUrlV1}}administrativo/g_usuario/authenticate",
@@ -729,9 +724,16 @@
                       "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
                       "});\r",
                       "\r",
-                      "pm.test(\"Resposta contém ID ou confirmação\", function () {\r",
+                      "pm.test(\"Resposta contém dados paginados\", function () {\r",
                       "    const jsonData = pm.response.json();\r",
-                      "    pm.expect(jsonData).to.have.any.keys(\"id\", \"message\", \"status\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"data\");\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"page\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"per_page\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"total\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"total_pages\");\r",
                       "});\r",
                       "\r",
                       "pm.test(\"Mensagem indica sucesso\", function () {\r",
@@ -759,7 +761,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{BaseUrlV1}}administrativo/g_feriado?ano=2026&tipo=F&situacao=A",
+                  "raw": "{{BaseUrlV1}}administrativo/g_feriado?p=1&per_page=20&sort=feriado_id.desc&ano=2026&tipo=F&situacao=A",
                   "host": [
                     "{{BaseUrlV1}}administrativo"
                   ],
@@ -767,6 +769,21 @@
                     "g_feriado"
                   ],
                   "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "feriado_id.desc",
+                      "description": "Opcional. Formato: campo.asc ou campo.desc. Sem sort: feriado_id desc. Campos: feriado_id, data, ano, mes, dia, descricao, tipo, situacao"
+                    },
                     {
                       "key": "ano",
                       "value": "2026",
@@ -1131,7 +1148,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{BaseUrlV1}}administrativo/p_banco?codigo=001",
+                  "raw": "{{BaseUrlV1}}administrativo/p_banco?p=1&per_page=20&sort=banco_id.desc&busca=001",
                   "host": [
                     "{{BaseUrlV1}}administrativo"
                   ],
@@ -1140,15 +1157,24 @@
                   ],
                   "query": [
                     {
-                      "key": "descricao",
-                      "value": "",
-                      "disabled": true,
-                      "description": "Busca por descrição"
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
                     },
                     {
-                      "key": "codigo",
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "banco_id.desc",
+                      "description": "Opcional. Formato: campo.asc ou campo.desc. Sem sort: banco_id desc. Campos: banco_id, codigo_banco, codigo, descricao, pessoa_id, layout_id"
+                    },
+                    {
+                      "key": "busca",
                       "value": "001",
-                      "description": "Busca por código (CODIGO_BANCO)"
+                      "description": "Busca unificada: LIKE em CODIGO_BANCO ou DESCRICAO (OR)"
                     }
                   ]
                 },
@@ -1440,6 +1466,852 @@
             }
           ],
           "description": "CRUD P_BANCO — prefix /administrativo/p_banco. Siglas: apontamento_pag_posterior e custas_na_confirmacao S/N. Variável {{bancoId}} preenchida no Create."
+        },
+        {
+          "name": "Especie",
+          "item": [
+            {
+              "name": "All",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém dados paginados\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"data\");\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"page\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"per_page\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"total\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.property(\"total_pages\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_especie?p=1&per_page=20&sort=especie_id.desc&busca=DMI",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_especie"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "especie_id.desc",
+                      "description": "Opcional. Campos: especie_id, especie, descricao. Sem sort: especie_id desc"
+                    },
+                    {
+                      "key": "busca",
+                      "value": "DMI",
+                      "description": "Busca unificada: LIKE em ESPECIE ou DESCRICAO (OR)"
+                    }
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              }
+            },
+            {
+              "name": "Create",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "if (response && response.data && response.data.especie_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"especieId\", response.data.especie_id);\r",
+                      "}\r",
+                      "\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém ID ou confirmação\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.any.keys(\"id\", \"message\", \"status\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_especie",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_especie"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"especie\": \"TST\",\r\n  \"descricao\": \"Espécie Teste API\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém ID ou confirmação\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.any.keys(\"id\", \"message\", \"status\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_especie/{{especieId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_especie",
+                    "{{especieId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Espécie Teste API Atualizada\",\r\n  \"especie\": \"TST\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Get",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém ID ou confirmação\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.any.keys(\"id\", \"message\", \"status\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_especie/{{especieId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_especie",
+                    "{{especieId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              }
+            },
+            {
+              "name": "Delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém ID ou confirmação\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.any.keys(\"id\", \"message\", \"status\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_especie/{{especieId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_especie",
+                    "{{especieId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              }
+            }
+          ],
+          "description": "CRUD P_ESPECIE — prefix /administrativo/p_especie. Sigla em especie (até 3 chars). Variável {{especieId}} preenchida no Create."
+        },
+        {
+          "name": "Livro Natureza",
+          "item": [
+            {
+              "name": "All",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém dados paginados\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"data\");\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_natureza?p=1&per_page=20&sort=livro_natureza_id.desc&busca=AP",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_natureza"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "livro_natureza_id.desc",
+                      "description": "Campos: livro_natureza_id, sigla, descricao, situacao"
+                    },
+                    {
+                      "key": "busca",
+                      "value": "AP",
+                      "description": "Busca unificada: SIGLA ou DESCRICAO"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "if (response && response.data && response.data.livro_natureza_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"livroNaturezaId\", response.data.livro_natureza_id);\r",
+                      "}\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_natureza",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_natureza"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"sigla\": \"TST\",\r\n  \"descricao\": \"Natureza teste API\",\r\n  \"situacao\": \"A\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_natureza/{{livroNaturezaId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_natureza",
+                    "{{livroNaturezaId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_natureza/{{livroNaturezaId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_natureza",
+                    "{{livroNaturezaId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Natureza teste API atualizada\",\r\n  \"situacao\": \"I\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_natureza/{{livroNaturezaId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_natureza",
+                    "{{livroNaturezaId}}"
+                  ]
+                }
+              }
+            }
+          ],
+          "description": "CRUD P_LIVRO_NATUREZA — prefix /administrativo/p_livro_natureza. situacao A/I (I grava NULL). tipo omitido. Delete bloqueado com P_LIVRO_ANDAMENTO. Variável {{livroNaturezaId}}."
+        },
+        {
+          "name": "Livro Andamento",
+          "item": [
+            {
+              "name": "All",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém dados paginados\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"data\");\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_andamento?p=1&per_page=20&livro_natureza_id={{livroNaturezaId}}&aberto=S",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_andamento"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "data_abertura.desc",
+                      "description": "Padrão sem sort: data_abertura DESC. Campos: livro_andamento_id, data_abertura, numero_livro, sigla, ..."
+                    },
+                    {
+                      "key": "livro_natureza_id",
+                      "value": "{{livroNaturezaId}}"
+                    },
+                    {
+                      "key": "aberto",
+                      "value": "S",
+                      "description": "S = aberto (DATA_FECHAMENTO null); N = fechado"
+                    },
+                    {
+                      "key": "busca",
+                      "value": "AP",
+                      "description": "Busca: SIGLA LIKE ou NUMERO_LIVRO exato",
+                      "disabled": true
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Proximo Numero Livro",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_andamento/proximo-numero-livro/{{livroNaturezaId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_andamento",
+                    "proximo-numero-livro",
+                    "{{livroNaturezaId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "if (response && response.data && response.data.livro_andamento_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"livroAndamentoId\", response.data.livro_andamento_id);\r",
+                      "}\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_andamento",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_andamento"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"livro_natureza_id\": {{livroNaturezaId}},\r\n  \"folha_atual\": 1,\r\n  \"numero_livro\": 1,\r\n  \"numero_folhas\": 100,\r\n  \"data_abertura\": \"2026-05-21T00:00:00\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_andamento/{{livroAndamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_andamento",
+                    "{{livroAndamentoId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_andamento/{{livroAndamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_andamento",
+                    "{{livroAndamentoId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"folha_atual\": 2,\r\n  \"data_fechamento\": \"2026-05-22T00:00:00\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_livro_andamento/{{livroAndamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_livro_andamento",
+                    "{{livroAndamentoId}}"
+                  ]
+                }
+              }
+            }
+          ],
+          "description": "CRUD P_LIVRO_ANDAMENTO — prefix /administrativo/p_livro_andamento. Livro aberto = DATA_FECHAMENTO null; um aberto por natureza (409). Ordenação padrão data_abertura DESC. GET proximo-numero-livro/{livro_natureza_id}. Delete 409 com P_TITULO. Variável {{livroAndamentoId}}."
         },
         {
           "name": "Caixa",
@@ -16114,7 +16986,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{BaseUrlV1}}administrativo/t_pessoa/tipo/F",
+                  "raw": "{{BaseUrlV1}}administrativo/t_pessoa/tipo/F?p=1&per_page=20&sort=pessoa_id.desc",
                   "host": [
                     "{{BaseUrlV1}}administrativo"
                   ],
@@ -16122,6 +16994,29 @@
                     "t_pessoa",
                     "tipo",
                     "F"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "pessoa_id.desc",
+                      "description": "Opcional. Formato: campo.asc ou campo.desc. Sem sort: pessoa_id desc. Campos: pessoa_id, nome, cpf_cnpj, cidade, uf, email, etc."
+                    },
+                    {
+                      "key": "f",
+                      "value": "nome:like:Silva",
+                      "disabled": true,
+                      "description": "Filtro formato3 (opcional, repetível): campo:operador:valor (ex.: cidade:eq:Goiânia)"
+                    }
                   ]
                 }
               },
@@ -25055,7 +25950,7 @@
   "variable": [
     {
       "key": "BaseUrlV1",
-      "value": "http://localhost:8000/api/v1/"
+      "value": "http://192.168.1.100:8000/api/v1/"
     },
     {
       "key": "BearerToken",
@@ -25359,6 +26254,18 @@
     },
     {
       "key": "bancoId",
+      "value": ""
+    },
+    {
+      "key": "especieId",
+      "value": ""
+    },
+    {
+      "key": "livroNaturezaId",
+      "value": ""
+    },
+    {
+      "key": "livroAndamentoId",
       "value": ""
     }
   ]

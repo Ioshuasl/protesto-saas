@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PLIVRO_NATUREZA_LIST_QUERY } from "@/packages/administrativo/data/PLivroNatureza/plivroNaturezaDataConfig";
 import { usePLivroNaturezaReadHook } from "@/packages/administrativo/hooks/PLivroNatureza/usePLivroNaturezaReadHook";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +32,7 @@ export function PLivroNaturezaSelectObject({
   const { naturezas, isLoading, fetchNaturezas } = usePLivroNaturezaReadHook();
 
   useEffect(() => {
-    void fetchNaturezas();
+    void fetchNaturezas(PLIVRO_NATUREZA_LIST_QUERY);
   }, [fetchNaturezas]);
 
   const options = useMemo(

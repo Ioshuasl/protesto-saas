@@ -1,24 +1,32 @@
 import { useState } from 'react';
 
-import { LivroNaturezaFormValues } from '@/packages/administrativo/schemas/PLivroNatureza/PLivroNaturezaFormSchema';
+import type { PLivroNaturezaSavePayload } from '@/packages/administrativo/data/PLivroNatureza/PLivroNaturezaSaveData';
 import { PLivroNaturezaInterface } from '@/packages/administrativo/interfaces/PLivroNatureza/PLivroNaturezaInterface';
+import { LivroNaturezaFormValues } from '@/packages/administrativo/schemas/PLivroNatureza/PLivroNaturezaFormSchema';
 import { PLivroNaturezaSaveCreateService } from '@/packages/administrativo/services/PLivroNatureza/PLivroNaturezaSaveCreateService';
 import { PLivroNaturezaSaveUpdateService } from '@/packages/administrativo/services/PLivroNatureza/PLivroNaturezaSaveUpdateService';
 import { useResponse } from '@/shared/components/response/ResponseContext';
 
+function toSavePayload(data: LivroNaturezaFormValues): PLivroNaturezaSavePayload {
+  return {
+    sigla: data.sigla,
+    descricao: data.descricao,
+    situacao: data.situacao,
+  };
+}
+
 export const usePLivroNaturezaSaveHook = () => {
   const { setResponse } = useResponse();
   const [pLivroNatureza, setPLivroNatureza] = useState<PLivroNaturezaInterface | null>(null);
-  // controla se o formulário está aberto ou fechado
-  const [isOpen, setIsOpen] = useState(false);
 
   const saveLivroNatureza = async (
     data: LivroNaturezaFormValues,
     selected: PLivroNaturezaInterface | null,
   ) => {
+    const payload = toSavePayload(data);
     const response = selected
-      ? await PLivroNaturezaSaveUpdateService(selected.livro_natureza_id, data)
-      : await PLivroNaturezaSaveCreateService(data);
+      ? await PLivroNaturezaSaveUpdateService(selected.livro_natureza_id, payload)
+      : await PLivroNaturezaSaveCreateService(payload);
 
     if (response && typeof response === 'object' && 'livro_natureza_id' in response) {
       setPLivroNatureza(response as PLivroNaturezaInterface);
@@ -38,8 +46,6 @@ export const usePLivroNaturezaSaveHook = () => {
             error: (response as { message?: string }).message,
           },
     );
-
-    setIsOpen(false);
 
     return response;
   };

@@ -35,7 +35,7 @@ export function PBancoSelectObject({
   const { bancos, isLoading, fetchBancos } = usePBancoReadHook();
 
   useEffect(() => {
-    void fetchBancos();
+    void fetchBancos({ page: 1, per_page: 500, sort: 'banco_id.desc' });
   }, [fetchBancos]);
 
   const options = useMemo(() => {

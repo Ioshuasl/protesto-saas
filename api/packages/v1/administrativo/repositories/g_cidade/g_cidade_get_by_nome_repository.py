@@ -1,29 +1,62 @@
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import Any, Mapping, Optional
+
 from abstracts.repository import BaseRepository
+from database.orm_firebird import normalize_row_keys
+from database.orm_firebird_settings import use_orm_firebird
+from packages.v1.administrativo.model.g_cidade import get_g_cidade_model
 from packages.v1.administrativo.schemas.g_cidade_schema import GCidadeNomeSchema
 
+_SELECT_COLUMNS = """
+    CIDADE_ID,
+    UF,
+    CIDADE_NOME,
+    CODIGO_IBGE,
+    CODIGO_GYN
+"""
+
+
 class GetByNomeRepository(BaseRepository):
-    """
-    Repositório para a operação de busca de um registro na tabela
-    G_CIDADE por nome (CIDADE_NOME).
-    """
-
     def execute(self, g_cidade_schema: GCidadeNomeSchema):
+        if use_orm_firebird():
+            return self._execute_orm(g_cidade_schema)
+        return self._execute_sql(g_cidade_schema)
+
+    def _execute_orm(
+        self, g_cidade_schema: GCidadeNomeSchema
+    ) -> Optional[dict[str, Any]]:
+        row = get_g_cidade_model().findOne(
+            {"where": {"CIDADE_NOME": g_cidade_schema.cidade_nome}}
+        )
+        return self._map_row(row)
+
+    def _execute_sql(
+        self, g_cidade_schema: GCidadeNomeSchema
+    ) -> Optional[dict[str, Any]]:
+        sql = f"""
+        SELECT
+            {_SELECT_COLUMNS.strip()}
+        FROM G_CIDADE
+        WHERE CIDADE_NOME = :cidade_nome
         """
-        Executa a consulta SQL para buscar um registro pelo nome da cidade.
+        params = {"cidade_nome": g_cidade_schema.cidade_nome}
+        result = self.fetch_one(sql, params)
+        return self._map_row(result)
 
-        Args:
-            g_cidade_schema (GCidadeNomeSchema): O esquema com o nome da cidade a ser buscada.
+    @staticmethod
+    def _map_row(row: Optional[Mapping[str, Any]]) -> Optional[dict[str, Any]]:
+        mapped = normalize_row_keys(row)
+        if mapped is None:
+            return None
 
-        Returns:
-            Um dicionário contendo os dados do registro ou None se não for encontrado.
-        """
-        # Montagem do SQL
-        sql = """ SELECT * FROM G_CIDADE WHERE CIDADE_NOME = :cidade_nome """
+        cidade_id = mapped.get("cidade_id")
+        if isinstance(cidade_id, Decimal):
+            mapped["cidade_id"] = int(cidade_id)
 
-        # Preenchimento de parâmetros
-        params = {
-            'cidade_nome': g_cidade_schema.cidade_nome
-        }
+        uf = mapped.get("uf")
+        if uf is not None:
+            mapped["uf"] = str(uf).strip().upper() or None
 
-        # Execução do sql
-        return self.fetch_one(sql, params)
+        return mapped

@@ -50,12 +50,13 @@ class PBancoIdSchema(BaseModel):
 
 
 class PBancoIndexSchema(BaseModel):
-    descricao: Optional[str] = None
-    codigo: Optional[str] = None
+    """busca: termo único pesquisado em CODIGO_BANCO ou DESCRICAO (OR, LIKE)."""
+
+    busca: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
 
-    @field_validator("descricao", "codigo", mode="before")
+    @field_validator("busca", mode="before")
     @classmethod
     def sanitize_filters(cls, value):
         if value is None or value == "":

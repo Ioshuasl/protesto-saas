@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from actions.data.get_url_params import get_url_params
+from actions.data.query_params_parser import QueryParamsParser
 from actions.jwt.get_current_user import get_current_user
 from packages.v1.administrativo.controllers.g_feriado_controller import GFeriadoController
 from packages.v1.administrativo.schemas.g_feriado_schema import (
@@ -12,6 +13,8 @@ from packages.v1.administrativo.schemas.g_feriado_schema import (
 router = APIRouter()
 g_feriado_controller = GFeriadoController()
 
+_GFERIADO_INDEX_FILTER_KEYS = frozenset({"ano", "tipo", "situacao", "descricao"})
+
 
 @router.get(
     "/",
@@ -22,8 +25,15 @@ g_feriado_controller = GFeriadoController()
 async def index(
     current_user: dict = Depends(get_current_user),
     url_params=Depends(get_url_params),
+    query_params=Depends(QueryParamsParser.parse),
 ):
-    return g_feriado_controller.index(GFeriadoIndexSchema(**url_params))
+    filter_data = {
+        key: url_params[key]
+        for key in _GFERIADO_INDEX_FILTER_KEYS
+        if key in url_params
+    }
+    feriado_index_schema = GFeriadoIndexSchema(**filter_data)
+    return g_feriado_controller.index(feriado_index_schema, query_params)
 
 
 @router.get(

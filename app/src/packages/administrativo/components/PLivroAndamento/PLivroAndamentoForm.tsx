@@ -2,7 +2,8 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PLivroAndamentoInterface } from "@/packages/administrativo/interfaces";
+import { PLivroAndamentoInterface, PLivroNaturezaInterface } from "@/packages/administrativo/interfaces";
+import { useProximoNumeroPorNatureza } from "@/packages/administrativo/hooks/PLivroAndamento/useProximoNumeroPorNatureza";
 import {
   livroAndamentoFormSchema,
   type LivroAndamentoFormValues,
@@ -25,21 +26,38 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 export type { LivroAndamentoFormValues };
 
 interface PLivroAndamentoFormProps {
   defaultValues?: Partial<PLivroAndamentoInterface>;
+  naturezas?: PLivroNaturezaInterface[];
   onSubmit: (data: LivroAndamentoFormValues) => void;
   isLoading?: boolean;
 }
 
-export function PLivroAndamentoForm({ 
-  defaultValues, 
-  onSubmit, 
-  isLoading 
+export function PLivroAndamentoForm({
+  defaultValues,
+  naturezas = [],
+  onSubmit,
+  isLoading,
 }: PLivroAndamentoFormProps) {
+  const isEditing = !!defaultValues?.livro_andamento_id;
+
+  const naturezaIds = useMemo(
+    () =>
+      naturezas
+        .map((n) => n.livro_natureza_id)
+        .filter((id): id is number => id != null && id > 0),
+    [naturezas],
+  );
+
+  const { proximoNumeroPorNatureza, isLoadingProximos } = useProximoNumeroPorNatureza(
+    naturezaIds,
+    !isEditing,
+  );
+
   const form = useForm<LivroAndamentoFormValues>({
     resolver: zodResolver(livroAndamentoFormSchema),
     defaultValues: {
@@ -69,6 +87,32 @@ export function PLivroAndamentoForm({
     }
   }, [defaultValues, form]);
 
+  const livroNaturezaId = form.watch("livro_natureza_id");
+  const proximoNumeroAtual =
+    livroNaturezaId > 0 ? proximoNumeroPorNatureza[livroNaturezaId] : undefined;
+
+  const numeroLivroPlaceholder =
+    proximoNumeroAtual != null
+      ? String(proximoNumeroAtual)
+      : isLoadingProximos
+        ? "Carregando sugestão..."
+        : "Ex: 100";
+
+  useEffect(() => {
+    if (!livroNaturezaId || livroNaturezaId < 1) return;
+    const natureza = naturezas.find((n) => n.livro_natureza_id === livroNaturezaId);
+    if (natureza?.sigla) {
+      form.setValue("sigla", natureza.sigla);
+    }
+  }, [livroNaturezaId, naturezas, form]);
+
+  useEffect(() => {
+    if (isEditing || !livroNaturezaId || livroNaturezaId < 1) return;
+    const sugerido = proximoNumeroPorNatureza[livroNaturezaId];
+    if (sugerido == null) return;
+    form.setValue("numero_livro", sugerido, { shouldValidate: true });
+  }, [livroNaturezaId, proximoNumeroPorNatureza, isEditing, form]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -96,7 +140,7 @@ export function PLivroAndamentoForm({
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="Ex: 100"
+                    placeholder={numeroLivroPlaceholder}
                     name={field.name}
                     ref={field.ref}
                     onBlur={field.onBlur}

@@ -1,11 +1,8 @@
-export const PESPECIE_FAKE_ENDPOINTS = {
+/** Rotas em api/packages/v1/administrativo/endpoints/p_especie_endpoint.py */
+export const PESPECIE_ENDPOINTS = {
   index: 'administrativo/p_especie/',
-  show: (id: number) => `administrativo/p_especie/${id}/`,
+  show: (id: number) => `administrativo/p_especie/${id}`,
   create: 'administrativo/p_especie/',
-  update: (id: number) => `administrativo/p_especie/${id}/`,
-  delete: (id: number) => `administrativo/p_especie/${id}/`,
+  update: (id: number) => `administrativo/p_especie/${id}`,
+  delete: (id: number) => `administrativo/p_especie/${id}`,
 };
-
-export function usePEspecieMockData() {
-  return process.env.NEXT_PUBLIC_USE_MOCK_PESPECIE !== 'false';
-}

@@ -1,3 +1,4 @@
+from actions.data.query_params_parser import QueryParamsParser
 from packages.v1.administrativo.schemas.t_pessoa_schema import (
     TPessoaPyrosRepository,
     TPessoaTipoSchema,
@@ -12,6 +13,10 @@ class TPessoaIndexRepository:
     """
 
     def execute(self, data: TPessoaTipoSchema):
+        sort_field, sort_direction = QueryParamsParser.resolve_sort(
+            data.query_params,
+            primary_key="pessoa_id",
+        )
 
         response = (
             TPessoaPyrosRepository.select(
@@ -35,7 +40,7 @@ class TPessoaIndexRepository:
                 ]
             )
             .where({"pessoa_tipo": Equals(data.pessoa_tipo)})
-            .order_by(data.query_params.sort.field, data.query_params.sort.direction)
+            .order_by(sort_field, sort_direction)
             .paginate(data.query_params.page, data.query_params.per_page)
             .fetch_all()
         )

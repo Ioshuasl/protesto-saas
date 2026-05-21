@@ -6,6 +6,9 @@ from packages.v1.administrativo.endpoints import (
     g_cartorio_endpoint,
     g_feriado_endpoint,
     p_banco_endpoint,
+    p_especie_endpoint,
+    p_livro_natureza_endpoint,
+    p_livro_andamento_endpoint,
     g_emolumento_endpoint,
     g_emolumento_periodo_endpoint,
     g_gramatica_endpoint,
@@ -362,6 +365,27 @@ api_router.include_router(
     p_banco_endpoint.router,
     prefix="/administrativo/p_banco",
     tags=["Bancos"],
+)
+
+# Inclui as rotas de p_especie
+api_router.include_router(
+    p_especie_endpoint.router,
+    prefix="/administrativo/p_especie",
+    tags=["Especies"],
+)
+
+# Inclui as rotas de p_livro_natureza
+api_router.include_router(
+    p_livro_natureza_endpoint.router,
+    prefix="/administrativo/p_livro_natureza",
+    tags=["Livros de natureza"],
+)
+
+# Inclui as rotas de p_livro_andamento
+api_router.include_router(
+    p_livro_andamento_endpoint.router,
+    prefix="/administrativo/p_livro_andamento",
+    tags=["Livros de andamento"],
 )
 
 # Inclui as rotas de g_emolumento

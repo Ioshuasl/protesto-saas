@@ -1,10 +1,11 @@
 'use server';
 
 import { GFeriadoIndexData } from '@/packages/administrativo/data/GFeriado/GFeriadoIndexData';
+import type { GFeriadoIndexQuery } from '@/packages/administrativo/interfaces/GFeriado/GFeriadoIndexQuery';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 
-async function executeGFeriadoIndexService() {
-  const response = await GFeriadoIndexData();
+async function executeGFeriadoIndexService(query?: GFeriadoIndexQuery) {
+  const response = await GFeriadoIndexData(query);
 
   return response;
 }

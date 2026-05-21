@@ -1,11 +1,15 @@
-export const PLIVRO_NATUREZA_FAKE_ENDPOINTS = {
+/** Rotas em api/packages/v1/administrativo/endpoints/p_livro_natureza_endpoint.py */
+export const PLIVRO_NATUREZA_ENDPOINTS = {
   index: 'administrativo/p_livro_natureza/',
-  show: (id: number) => `administrativo/p_livro_natureza/${id}/`,
+  show: (id: number) => `administrativo/p_livro_natureza/${id}`,
   create: 'administrativo/p_livro_natureza/',
-  update: (id: number) => `administrativo/p_livro_natureza/${id}/`,
-  delete: (id: number) => `administrativo/p_livro_natureza/${id}/`,
+  update: (id: number) => `administrativo/p_livro_natureza/${id}`,
+  delete: (id: number) => `administrativo/p_livro_natureza/${id}`,
 };
 
-export function usePLivroNaturezaMockData() {
-  return process.env.NEXT_PUBLIC_USE_MOCK_PLIVRO_NATUREZA !== 'false';
-}
+/** Listagem ampla para selects (ex.: PLivroAndamento). */
+export const PLIVRO_NATUREZA_LIST_QUERY = {
+  page: 1,
+  per_page: 100,
+  sort: 'livro_natureza_id.asc',
+} as const;

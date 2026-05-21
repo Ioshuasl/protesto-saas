@@ -6,7 +6,6 @@ from typing import Any, Mapping, Optional
 from abstracts.repository import BaseRepository
 from database.orm_firebird import normalize_row_keys
 from database.orm_firebird_settings import use_orm_firebird
-from packages.v1.administrativo.model.p_banco import get_p_banco_model
 from packages.v1.administrativo.schemas.p_banco_schema import PBancoCodigoSchema
 
 
@@ -17,6 +16,7 @@ class GetByCodigoRepository(BaseRepository):
         return self._execute_sql(codigo_schema)
 
     def _execute_orm(self, codigo_schema: PBancoCodigoSchema) -> Optional[dict[str, Any]]:
+        # UPPER(TRIM(...)) em VARCHAR — SQL explícito (limitação do dialect).
         return self._execute_sql(codigo_schema)
 
     def _execute_sql(self, codigo_schema: PBancoCodigoSchema) -> Optional[dict[str, Any]]:

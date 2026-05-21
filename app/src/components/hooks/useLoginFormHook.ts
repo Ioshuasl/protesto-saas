@@ -10,7 +10,7 @@ export function useLoginFormHook(defaults?: Partial<GUsuarioLoginFormValues>) {
   return useForm<GUsuarioLoginFormValues>({
     resolver: zodResolver(GUsuarioLoginSchema),
     defaultValues: {
-      login: '',
+      identificador: '',
       senha_api: '',
       ...defaults,
     },

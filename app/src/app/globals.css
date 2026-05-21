@@ -1,14 +1,10 @@
 @import "tailwindcss";
 @import "react-day-picker/style.css";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: "Geist Variable", sans-serif;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
   @keyframes collapsible-down {
@@ -142,9 +138,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), Helvetica, Arial, sans-serif;
   }
-  html {
-    @apply font-sans;
+  .bg-brand {
+    background-color: #1a292f;
   }
 }
 

@@ -18,6 +18,7 @@ class GetByDataTipoRepository(BaseRepository):
         return self._execute_sql(feriado_schema)
 
     def _execute_orm(self, feriado_schema: GFeriadoDataTipoSchema) -> Optional[dict[str, Any]]:
+        # TIPO VARCHAR(1) + comparação — SQL explícito (limitação do dialect).
         return self._execute_sql(feriado_schema)
 
     def _execute_sql(self, feriado_schema: GFeriadoDataTipoSchema) -> Optional[dict[str, Any]]:

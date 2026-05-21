@@ -1,12 +1,12 @@
 'use server';
 
-import { PLivroAndamentoSaveCreateData } from '@/packages/administrativo/data/PLivroAndamento/PLivroAndamentoSaveData';
-import type { PLivroAndamentoInterface } from '@/packages/administrativo/interfaces/PLivroAndamento/PLivroAndamentoInterface';
+import {
+  PLivroAndamentoSaveCreateData,
+  type PLivroAndamentoSavePayload,
+} from '@/packages/administrativo/data/PLivroAndamento/PLivroAndamentoSaveData';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 
-async function executePLivroAndamentoSaveCreateService(
-  data: Omit<PLivroAndamentoInterface, 'livro_andamento_id'>,
-) {
+async function executePLivroAndamentoSaveCreateService(data: PLivroAndamentoSavePayload) {
   const response = await PLivroAndamentoSaveCreateData(data);
 
   return response;

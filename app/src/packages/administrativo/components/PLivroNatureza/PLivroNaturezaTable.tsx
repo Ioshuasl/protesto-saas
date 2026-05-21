@@ -1,5 +1,8 @@
 "use client";
 
+import { Pencil, Trash2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -8,10 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
 import { PLivroNaturezaInterface } from "@/packages/administrativo/interfaces";
-import { Badge } from "@/components/ui/badge";
+import { normalizeSituacaoKey } from "@/packages/administrativo/components/PLivroNatureza/plivroNaturezaSituacaoUtils";
+import { SituacoesBadge } from "@/shared/components/situacoes/SituacoesBadge";
 
 interface PLivroNaturezaTableProps {
   data: PLivroNaturezaInterface[];
@@ -42,10 +44,8 @@ export function PLivroNaturezaTable({ data, onEdit, onDelete, isLoading }: PLivr
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[80px]">ID</TableHead>
             <TableHead>Sigla</TableHead>
             <TableHead>Descrição</TableHead>
-            <TableHead>Tipo</TableHead>
             <TableHead>Situação</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -57,14 +57,10 @@ export function PLivroNaturezaTable({ data, onEdit, onDelete, isLoading }: PLivr
               className="cursor-pointer"
               onClick={() => onEdit(livro)}
             >
-              <TableCell className="font-medium">{livro.livro_natureza_id}</TableCell>
-              <TableCell>{livro.sigla}</TableCell>
-              <TableCell>{livro.descricao}</TableCell>
-              <TableCell>{livro.tipo}</TableCell>
+              <TableCell>{livro.sigla ?? "—"}</TableCell>
+              <TableCell>{livro.descricao?.trim() || "—"}</TableCell>
               <TableCell>
-                <Badge variant={livro.situacao === "Ativo" ? "default" : "secondary"}>
-                  {livro.situacao || "Ativo"}
-                </Badge>
+                <SituacoesBadge situacao={normalizeSituacaoKey(livro.situacao)} />
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">

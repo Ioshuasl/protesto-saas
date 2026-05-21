@@ -2,8 +2,8 @@ from fastapi import HTTPException, status
 
 from packages.v1.administrativo.actions.p_banco.p_banco_delete_action import DeleteAction
 from packages.v1.administrativo.actions.p_banco.p_banco_show_action import ShowAction
-from packages.v1.administrativo.repositories.p_banco.p_banco_count_titulo_repository import (
-    CountTituloRepository,
+from packages.v1.administrativo.repositories.p_titulo.p_titulo_count_by_banco_repository import (
+    CountByBancoRepository as CountTituloRepository,
 )
 from packages.v1.administrativo.schemas.p_banco_schema import PBancoIdSchema
 from packages.v1.sequencia.schemas.g_sequencia import GSequenciaDeleteSchema

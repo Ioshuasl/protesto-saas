@@ -5,17 +5,27 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PLivroAndamentoDialog } from "@/packages/administrativo/components/PLivroAndamento/PLivroAndamentoDialog";
 import { PLivroAndamentoFilter } from "@/packages/administrativo/components/PLivroAndamento/PLivroAndamentoFilter";
-import type { LivroAndamentoFormValues } from "@/packages/administrativo/schemas/PLivroAndamento/PLivroAndamentoFormSchema";
+import {
+  buildPLivroAndamentoIndexQuery,
+  defaultPLivroAndamentoFilterState,
+  type PLivroAndamentoFilterState,
+} from "@/packages/administrativo/components/PLivroAndamento/pLivroAndamentoFilterUtils";
 import { PLivroAndamentoTable } from "@/packages/administrativo/components/PLivroAndamento/PLivroAndamentoTable";
+import { PLIVRO_NATUREZA_LIST_QUERY } from "@/packages/administrativo/data/PLivroNatureza/plivroNaturezaDataConfig";
 import { usePLivroAndamentoDeleteHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoDeleteHook";
 import { usePLivroAndamentoReadHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoReadHook";
 import { usePLivroAndamentoSaveHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoSaveHook";
 import { usePLivroNaturezaReadHook } from "@/packages/administrativo/hooks/PLivroNatureza/usePLivroNaturezaReadHook";
 import type { PLivroAndamentoInterface } from "@/packages/administrativo/interfaces/PLivroAndamento/PLivroAndamentoInterface";
+import type { LivroAndamentoFormValues } from "@/packages/administrativo/schemas/PLivroAndamento/PLivroAndamentoFormSchema";
+import { DEFAULT_PAGINATION_META, Pagination } from "@/shared/components/pagination";
 import ConfirmDialog from "@/shared/components/confirmDialog/ConfirmDialog";
 
+const PLIVRO_ANDAMENTO_PER_PAGE = DEFAULT_PAGINATION_META.per_page;
+
 export default function PLivroAndamentoIndex() {
-  const { livrosAndamento, isLoading: isLoadingLivros, fetchLivrosAndamento } = usePLivroAndamentoReadHook();
+  const { livrosAndamento, pagination, isLoading: isLoadingLivros, fetchLivrosAndamento } =
+    usePLivroAndamentoReadHook();
   const { naturezas, isLoading: isLoadingNaturezas, fetchNaturezas } = usePLivroNaturezaReadHook();
   const { saveLivroAndamento } = usePLivroAndamentoSaveHook();
   const { deleteLivroAndamento } = usePLivroAndamentoDeleteHook();
@@ -23,27 +33,51 @@ export default function PLivroAndamentoIndex() {
   const isLoading = isLoadingLivros || isLoadingNaturezas;
 
   const [buttonIsLoading, setButtonIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<PLivroAndamentoFilterState>(defaultPLivroAndamentoFilterState);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selected, setSelected] = useState<PLivroAndamentoInterface | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [debouncedFilters, setDebouncedFilters] = useState<PLivroAndamentoFilterState>(filters);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedFilters(filters), 400);
+    return () => window.clearTimeout(timer);
+  }, [filters]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedFilters.search]);
+
+  const apiFilters = useMemo(
+    () => buildPLivroAndamentoIndexQuery(debouncedFilters),
+    [debouncedFilters],
+  );
+
+  const indexQuery = useMemo(
+    () => ({
+      ...apiFilters,
+      page,
+      per_page: PLIVRO_ANDAMENTO_PER_PAGE,
+    }),
+    [apiFilters, page],
+  );
 
   const fetchData = useCallback(async () => {
-    await Promise.all([fetchLivrosAndamento(), fetchNaturezas()]);
-  }, [fetchLivrosAndamento, fetchNaturezas]);
+    await Promise.all([
+      fetchLivrosAndamento(indexQuery),
+      fetchNaturezas(PLIVRO_NATUREZA_LIST_QUERY),
+    ]);
+  }, [fetchLivrosAndamento, fetchNaturezas, indexQuery]);
 
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
 
-  const filtered = useMemo(() => {
-    if (!searchQuery) return livrosAndamento;
-    const q = searchQuery.toLowerCase();
-    return livrosAndamento.filter(
-      (l) => l.numero_livro?.toString().includes(q) || l.sigla?.toLowerCase().includes(q),
-    );
-  }, [livrosAndamento, searchQuery]);
+  const handleFiltersChange = useCallback((next: PLivroAndamentoFilterState) => {
+    setFilters(next);
+  }, []);
 
   const handleOpenDialog = useCallback((row?: PLivroAndamentoInterface) => {
     setSelected(row ?? null);
@@ -60,7 +94,7 @@ export default function PLivroAndamentoIndex() {
       setButtonIsLoading(true);
       try {
         await saveLivroAndamento(formData, selected);
-        await fetchData();
+        await fetchLivrosAndamento(indexQuery);
         handleCloseDialog();
       } catch (e) {
         console.error("Erro ao salvar livro em andamento:", e);
@@ -68,7 +102,7 @@ export default function PLivroAndamentoIndex() {
         setButtonIsLoading(false);
       }
     },
-    [saveLivroAndamento, selected, fetchData, handleCloseDialog],
+    [saveLivroAndamento, selected, fetchLivrosAndamento, handleCloseDialog, indexQuery],
   );
 
   const openDeleteDialog = useCallback((id: number) => {
@@ -87,11 +121,11 @@ export default function PLivroAndamentoIndex() {
     closeDeleteDialog();
     try {
       await deleteLivroAndamento(id);
-      await fetchData();
+      await fetchLivrosAndamento(indexQuery);
     } catch (e) {
       console.error("Erro ao excluir:", e);
     }
-  }, [pendingDeleteId, closeDeleteDialog, deleteLivroAndamento, fetchData]);
+  }, [pendingDeleteId, closeDeleteDialog, deleteLivroAndamento, fetchLivrosAndamento, indexQuery]);
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -106,20 +140,22 @@ export default function PLivroAndamentoIndex() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <PLivroAndamentoFilter value={searchQuery} onChange={setSearchQuery} />
+        <PLivroAndamentoFilter value={filters} onChange={handleFiltersChange} />
         <PLivroAndamentoTable
-          data={filtered}
+          data={livrosAndamento}
           naturezas={naturezas}
           isLoading={isLoading}
           onEdit={handleOpenDialog}
           onDelete={openDeleteDialog}
         />
+        <Pagination pagination={pagination} onPageChange={setPage} disabled={isLoading} />
       </div>
 
       <PLivroAndamentoDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         livroAndamento={selected}
+        naturezas={naturezas}
         onSubmit={handleSave}
         isLoading={buttonIsLoading}
       />

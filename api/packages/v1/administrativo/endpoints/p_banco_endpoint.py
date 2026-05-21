@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, status
-from actions.data.get_url_params import get_url_params
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query, status
+from actions.data.query_params_parser import QueryParamsParser
 from actions.jwt.get_current_user import get_current_user
 from packages.v1.administrativo.controllers.p_banco_controller import PBancoController
 from packages.v1.administrativo.schemas.p_banco_schema import (
@@ -12,7 +14,6 @@ from packages.v1.administrativo.schemas.p_banco_schema import (
 router = APIRouter()
 p_banco_controller = PBancoController()
 
-
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
@@ -21,9 +22,16 @@ p_banco_controller = PBancoController()
 )
 async def index(
     current_user: dict = Depends(get_current_user),
-    url_params=Depends(get_url_params),
+    busca: Optional[str] = Query(
+        None,
+        description="Busca unificada: LIKE em CODIGO_BANCO ou DESCRICAO (OR)",
+    ),
+    query_params=Depends(QueryParamsParser.parse),
 ):
-    return p_banco_controller.index(PBancoIndexSchema(**url_params))
+    filter_data = {}
+    if busca is not None:
+        filter_data["busca"] = busca
+    return p_banco_controller.index(PBancoIndexSchema(**filter_data), query_params)
 
 
 @router.get(

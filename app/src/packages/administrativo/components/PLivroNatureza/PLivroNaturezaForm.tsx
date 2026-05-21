@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PLivroNaturezaInterface } from "@/packages/administrativo/interfaces";
+import { normalizeSituacaoKey } from "@/packages/administrativo/components/PLivroNatureza/plivroNaturezaSituacaoUtils";
 import {
   livroNaturezaFormSchema,
   type LivroNaturezaFormValues,
@@ -17,8 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect } from "react";
+import SituacoesSelect from "@/shared/components/situacoes/SituacoesSelect";
 
 export type { LivroNaturezaFormValues };
 
@@ -28,25 +29,25 @@ interface PLivroNaturezaFormProps {
   isLoading?: boolean;
 }
 
+function buildFormDefaults(
+  defaultValues?: Partial<PLivroNaturezaInterface>,
+): LivroNaturezaFormValues {
+  return {
+    sigla: defaultValues?.sigla?.trim() || "",
+    descricao: defaultValues?.descricao?.trim() || "",
+    situacao: normalizeSituacaoKey(defaultValues?.situacao),
+  };
+}
+
 export function PLivroNaturezaForm({ defaultValues, onSubmit, isLoading }: PLivroNaturezaFormProps) {
   const form = useForm<LivroNaturezaFormValues>({
     resolver: zodResolver(livroNaturezaFormSchema),
-    defaultValues: {
-      sigla: defaultValues?.sigla || "",
-      descricao: defaultValues?.descricao || "",
-      tipo: defaultValues?.tipo || "A",
-      situacao: defaultValues?.situacao || "Ativo",
-    },
+    defaultValues: buildFormDefaults(defaultValues),
   });
 
   useEffect(() => {
     if (defaultValues) {
-      form.reset({
-        sigla: defaultValues.sigla || "",
-        descricao: defaultValues.descricao || "",
-        tipo: defaultValues.tipo || "A",
-        situacao: defaultValues.situacao || "Ativo",
-      });
+      form.reset(buildFormDefaults(defaultValues));
     }
   }, [defaultValues, form]);
 
@@ -60,7 +61,7 @@ export function PLivroNaturezaForm({ defaultValues, onSubmit, isLoading }: PLivr
             <FormItem>
               <FormLabel>Sigla</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: A" {...field} />
+                <Input placeholder="Ex: AP" maxLength={3} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,59 +80,22 @@ export function PLivroNaturezaForm({ defaultValues, onSubmit, isLoading }: PLivr
             </FormItem>
           )}
         />
-        
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="tipo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="A">Apontamento</SelectItem>
-                    <SelectItem value="P">Protesto</SelectItem>
-                    <SelectItem value="PG">Pagamento</SelectItem>
-                    <SelectItem value="C">Cancelamento</SelectItem>
-                    <SelectItem value="PR">Protocolo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
-          <FormField
-            control={form.control}
-            name="situacao"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Situação</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a situação" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="situacao"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Situação</FormLabel>
+              <SituacoesSelect field={field} />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end pt-4">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading}
             className="bg-[#FF6B00] hover:bg-[#E56000] text-white"
           >

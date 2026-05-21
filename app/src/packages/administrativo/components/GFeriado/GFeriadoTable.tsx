@@ -11,9 +11,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { GFeriadoInterface } from "@/packages/administrativo/interfaces";
+import { SituacoesBadge } from "@/shared/components/situacoes/SituacoesBadge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
+
+function formatGFeriadoTipo(tipo?: string | null): string {
+  const code = (tipo ?? "").trim().toUpperCase();
+  if (code === "F" || code === "FIXO") return "Fixo";
+  if (code === "V" || code === "VARIAVEL" || code === "VARIÁVEL") return "Variável";
+  return tipo?.trim() || "-";
+}
 
 interface GFeriadoTableProps {
   data: GFeriadoInterface[];
@@ -62,11 +69,9 @@ export function GFeriadoTable({ data, onEdit, onDelete, isLoading }: GFeriadoTab
                 {feriado.data ? format(new Date(feriado.data), "dd/MM/yyyy", { locale: ptBR }) : "-"}
               </TableCell>
               <TableCell>{feriado.descricao}</TableCell>
-              <TableCell>{feriado.tipo}</TableCell>
+              <TableCell>{formatGFeriadoTipo(feriado.tipo)}</TableCell>
               <TableCell>
-                <Badge variant={feriado.situacao === "Ativo" ? "default" : "secondary"}>
-                  {feriado.situacao}
-                </Badge>
+                <SituacoesBadge situacao={feriado.situacao ?? "I"} />
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">

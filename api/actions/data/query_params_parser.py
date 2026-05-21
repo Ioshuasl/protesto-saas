@@ -167,6 +167,39 @@ class QueryParamsParser:
         return Pagination(page=page, per_page=per_page)
 
     @staticmethod
+    def resolve_sort(
+        query_params: QueryParams | None,
+        *,
+        primary_key: str,
+        field_map: dict[str, str] | None = None,
+    ) -> tuple[str, str]:
+        """
+        Retorna (campo, direcao) para ORDER BY.
+        Se sort vier vazio/null, usa primary_key em ordem decrescente.
+        Com field_map, converte nomes logicos (snake_case) para colunas do banco;
+        campos desconhecidos caem no fallback da PK desc.
+        """
+        sort = query_params.sort if query_params is not None else None
+        if sort is not None and sort.field:
+            logical_field = sort.field.strip()
+            direction = sort.direction
+        else:
+            logical_field = primary_key
+            direction = "desc"
+
+        if direction not in {"asc", "desc"}:
+            direction = "asc"
+
+        if field_map is None:
+            return logical_field, direction
+
+        key = logical_field.lower()
+        pk_key = primary_key.lower()
+        if key not in field_map:
+            return field_map[pk_key], "desc"
+        return field_map[key], direction
+
+    @staticmethod
     def _parse_sort(query_params: Mapping[str, str]) -> Sort | None:
         """
         sort=pessoa_id.desc  ->  {"field": "pessoa_id", "direction": "desc"}

@@ -70,45 +70,54 @@ class GUsuarioSchema(BaseModel):
 # Schema para acesso ao sistema
 # ----------------------------------------------------
 class GUsuarioAuthenticateSchema(BaseModel):
+    """
+    Autenticação com um único identificador (login, e-mail ou CPF) + senha_api.
+    Ex.: {"identificador": "admin", "senha_api": "123123"}
+    """
 
-    # Campos utilizados
-    email: str  # Email obrigatório
-    senha_api: str  # senha_api obrigatório
-    codigo_seguranca: Optional[str] = None  # codigo_seguranca obrigatório somente na segunda
+    identificador: str
+    senha_api: str
+    codigo_seguranca: Optional[str] = None
 
-    # Validação e sanitização do login
-    @field_validator("email")
-    def validar_e_sanitizar_email(cls, v):
+    @staticmethod
+    def _is_cpf_candidate(value: str) -> bool:
+        digits = re.sub(r"\D", "", value)
+        return len(digits) == 11
 
-        # Verifica se o email foi informado
-        if not v:
-
+    @field_validator("identificador")
+    @classmethod
+    def validar_identificador(cls, v: str) -> str:
+        if not v or not str(v).strip():
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Informe o email"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Informe o identificador",
             )
-
-        # Verifica se o email é válido
-        if not Email.is_valid_email(v):
+        identificador = Text.sanitize_input(str(v).strip())
+        if cls._is_cpf_candidate(identificador) and not CPF.is_valid_cpf(identificador):
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Email inválido"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="CPF inválido",
             )
+        return identificador
 
-        # Sanitiza o email para evitar XSS e SQL Injection
-        return Text.sanitize_input(v)
-
-    # Validação e sanitização da senha
     @field_validator("senha_api")
-    def validar_e_sanitizar_senha(cls, v):
-
-        # Verifica se a senha foi informada
+    @classmethod
+    def validar_e_sanitizar_senha(cls, v: str) -> str:
         if not v:
-
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Informe a senha"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Informe a senha",
             )
-
-        # Sanitiza a senha para evitar XSS e SQL Injection
         return Text.sanitize_input(v)
+
+    @property
+    def credential_mode(self) -> str:
+        """email | cpf | login — inferido a partir de identificador."""
+        if Email.is_valid_email(self.identificador):
+            return "email"
+        if self._is_cpf_candidate(self.identificador):
+            return "cpf"
+        return "login"
 
     class Config:
         from_attributes = True

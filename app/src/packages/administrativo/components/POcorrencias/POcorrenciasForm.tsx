@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { POcorrenciasInterface } from "@/packages/administrativo/interfaces";
@@ -7,6 +8,10 @@ import {
   ocorrenciaFormSchema,
   type OcorrenciaFormValues,
 } from "@/packages/administrativo/schemas/POcorrencias/POcorrenciasFormSchema";
+import {
+  POCORRENCIAS_TIPO_LABELS,
+  POCORRENCIAS_TIPO_OPCOES,
+} from "@/packages/administrativo/schemas/POcorrencias/pocorrenciasTipoConstants";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,9 +22,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type { OcorrenciaFormValues };
+
+const TIPO_NONE = "__none__";
 
 interface POcorrenciasFormProps {
   defaultValues?: Partial<POcorrenciasInterface>;
@@ -70,9 +83,26 @@ export function POcorrenciasForm({ defaultValues, onSubmit, isLoading }: POcorre
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex: A" {...field} />
-                </FormControl>
+                <Select
+                  value={field.value?.trim() ? field.value : TIPO_NONE}
+                  onValueChange={(value) =>
+                    field.onChange(value === TIPO_NONE ? "" : value)
+                  }
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Opcional" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={TIPO_NONE}>(Sem tipo)</SelectItem>
+                    {POCORRENCIAS_TIPO_OPCOES.map((tipo) => (
+                      <SelectItem key={tipo} value={tipo}>
+                        {POCORRENCIAS_TIPO_LABELS[tipo]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -85,15 +115,15 @@ export function POcorrenciasForm({ defaultValues, onSubmit, isLoading }: POcorre
             <FormItem>
               <FormLabel>Descrição</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Apontamento" {...field} />
+                <Input placeholder="Ex: Protestado" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <div className="flex justify-end pt-4">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading}
             className="bg-[#FF6B00] hover:bg-[#E56000] text-white"
           >

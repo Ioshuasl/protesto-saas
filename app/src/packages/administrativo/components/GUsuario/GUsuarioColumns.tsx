@@ -13,6 +13,7 @@ import {
 import GUsuarioInterface from '@/packages/administrativo/interfaces/GUsuario/GUsuarioInterface';
 import GetCapitalize from '@/shared/actions/text/GetCapitalize';
 import { SortableHeader } from '@/shared/components/dataTable/SortableHeader';
+import { formatEmptyField } from '@/shared/utils/emptyField';
 
 export default function GUsuarioColumns(
   onEdit: (item: GUsuarioInterface, isEditingFormStatus: boolean) => void,
@@ -34,7 +35,7 @@ export default function GUsuarioColumns(
     {
       accessorKey: 'cpf',
       header: ({ column }) => SortableHeader('CPF', column),
-      cell: ({ row }) => GetCapitalize(String(row.getValue('cpf') || '')),  
+      cell: ({ row }) => GetCapitalize(formatEmptyField(row.getValue('cpf') as string | null | undefined)),
       meta: { 
           headerClassName: 'w-[100px]text-center bg-muted', // Estilo só do Header
           cellClassName: 'w-[100px] text-center'    // Estilo só do Body
@@ -45,7 +46,7 @@ export default function GUsuarioColumns(
     {
       accessorKey: 'nome_completo',
       header: ({ column }) => SortableHeader('Nome', column),
-      cell: ({ row }) => GetCapitalize(String(row.getValue('nome_completo') || '')),  
+      cell: ({ row }) => GetCapitalize(formatEmptyField(row.getValue('nome_completo') as string | null | undefined)),
       filterFn: 'includesString',
       meta: { 
           headerClassName: 'text-center bg-muted', // Estilo só do Header
@@ -56,7 +57,7 @@ export default function GUsuarioColumns(
     {
       accessorKey: 'email',
       header: ({ column }) => SortableHeader('E-mail', column),
-      cell: ({ row }) => GetCapitalize(String(row.getValue('email') || '')),  
+      cell: ({ row }) => GetCapitalize(formatEmptyField(row.getValue('email') as string | null | undefined)),
       meta: { 
           headerClassName: 'text-center bg-muted', // Estilo só do Header
           cellClassName: 'text-left'    // Estilo só do Body
@@ -66,7 +67,7 @@ export default function GUsuarioColumns(
     {
       accessorKey: 'funcao',
       header: ({ column }) => SortableHeader('Função', column),
-      cell: ({ row }) => GetCapitalize(String(row.getValue('funcao') || '')),  
+      cell: ({ row }) => GetCapitalize(formatEmptyField(row.getValue('funcao') as string | null | undefined)),
       meta: { 
           headerClassName: 'text-center bg-muted', // Estilo só do Header
           cellClassName: 'text-left'    // Estilo só do Body

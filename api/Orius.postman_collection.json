@@ -67,10 +67,20 @@
                   ]
                 },
                 "method": "POST",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"identificador\": \"dev@oriustecnologia.com.br\",\r\n    \"senha_api\": \"123123\",\r\n    \"codigo_seguranca\": \"\"\r\n}"
+                  "raw": "{\r\n  \"identificador\": \"orius\",\r\n  \"senha_api\": \"123123\",\r\n  \"codigo_seguranca\": \"\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{BaseUrlV1}}administrativo/g_usuario/authenticate",
@@ -1468,6 +1478,779 @@
           "description": "CRUD P_BANCO — prefix /administrativo/p_banco. Siglas: apontamento_pag_posterior e custas_na_confirmacao S/N. Variável {{bancoId}} preenchida no Create."
         },
         {
+          "name": "Titulo",
+          "item": [
+            {
+              "name": "All",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Index retorna data e pagination\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData.pagination).to.have.keys(\"page\", \"per_page\", \"total\", \"total_pages\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_titulo?p=1&per_page=20&sort=titulo_id.desc",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_titulo"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "titulo_id.desc",
+                      "description": "Opcional. Formato: campo.asc ou campo.desc. Sem sort: titulo_id desc. Campos: titulo_id, numero_apontamento, valor_titulo, ocorrencia_id, numero_titulo, especie_id, banco_id"
+                    },
+                    {
+                      "key": "busca_pessoa",
+                      "value": "",
+                      "description": "LIKE em P_PESSOA_VINCULO (nome/cpfcnpj) e P_PESSOA vinculada",
+                      "disabled": true
+                    },
+                    {
+                      "key": "numero_apontamento",
+                      "value": "",
+                      "description": "Número de apontamento (igualdade)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "nosso_numero",
+                      "value": "",
+                      "description": "Nosso número (LIKE)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "numero_titulo",
+                      "value": "",
+                      "description": "Número do título (LIKE)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "numero_titulo_banco",
+                      "value": "",
+                      "description": "Número do título no banco (LIKE)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "ocorrencia_id",
+                      "value": "",
+                      "description": "FK P_OCORRENCIAS — opcional (ex.: 20=APONTADO, 21=INTIMADO)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "ocorrencia_andamento_id",
+                      "value": "",
+                      "description": "FK P_OCORRENCIA_ANDAMENTO",
+                      "disabled": true
+                    },
+                    {
+                      "key": "banco_id",
+                      "value": "",
+                      "description": "FK P_BANCO — filtra por BANCO_ID (opcional)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "especie_id",
+                      "value": "",
+                      "description": "FK P_ESPECIE",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              }
+            },
+            {
+              "name": "Create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "if (response && response.data && response.data.titulo_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"tituloId\", response.data.titulo_id);\r",
+                      "}\r",
+                      "\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_titulo",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_titulo"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"numero_titulo\": \"TST-API-001\",\r\n  \"valor_titulo\": 100.50,\r\n  \"especie_id\": 20,\r\n  \"ocorrencia_id\": 20,\r\n  \"banco_id\": 300039,\r\n  \"motivo_apontamento_id\": 1,\r\n  \"tipo_aceite\": \"A\",\r\n  \"tipo_endosso\": \"M\",\r\n  \"cobrar_juros\": \"N\",\r\n  \"pagamento_posterior\": \"S\",\r\n  \"status_importacao\": \"D\",\r\n  \"observacoes\": \"Título criado via API Postman\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Get",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_titulo/{{tituloId}}/",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_titulo",
+                    "{{tituloId}}",
+                    ""
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              }
+            },
+            {
+              "name": "Selos",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"data é array de selos vinculados\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_titulo/{{tituloId}}/selos",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_titulo",
+                    "{{tituloId}}",
+                    "selos"
+                  ]
+                },
+                "description": "Lista selos vinculados ao título (G_SELO_LIVRO + G_SELO_LIVRO_ANTIGO). Filtro: CAMPO_ID = titulo_id e TABELA = P_TITULO. Usa {{tituloId}}. Resposta: data[] com selo_agrupador, sigla, tipo_ato, descricao_completa, nome_completo, valores e selo_livro_id.",
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              }
+            },
+            {
+              "name": "Update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_titulo/{{tituloId}}/",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_titulo",
+                    "{{tituloId}}",
+                    ""
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"observacoes\": \"Título atualizado via API Postman\",\r\n  \"valor_titulo\": 150.75,\r\n  \"cobrar_juros\": \"N\",\r\n  \"pagamento_posterior\": \"S\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_titulo/{{tituloId}}/",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_titulo",
+                    "{{tituloId}}",
+                    ""
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              }
+            }
+          ],
+          "description": "CRUD P_TITULO — prefix /administrativo/p_titulo. Index paginado (formato3: p, per_page, sort) retorna shape enxuto: numero_titulo, numero_apontamento, especie_id+descricao, valor_titulo, ocorrencia_id+descricao, banco_id+descricao, quantidade_pessoas_vinculadas, apresentante_nome/cpfcnpj (TIPO_VINCULO=APRESENTANTE). Filtros opcionais: busca_pessoa, numero_apontamento, nosso_numero, numero_titulo, numero_titulo_banco, ocorrencia_id, ocorrencia_andamento_id, banco_id, especie_id. Variável {{tituloId}} no Create. Show retorna título completo (inclui vinculos_selos). Request Selos: GET /{tituloId}/selos — lista selos vinculados (atual + legado)."
+        },
+        {
+          "name": "Pessoa",
+          "item": [
+            {
+              "name": "All",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa?p=1&per_page=20&sort=pessoa_id.desc&nome=&cpfcnpj=&telefone=&cidade=&uf=",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "pessoa_id.desc",
+                      "description": "pessoa_id, nome, cpfcnpj, cidade, uf, telefone"
+                    },
+                    {
+                      "key": "nome",
+                      "value": "",
+                      "description": "LIKE em NOME"
+                    },
+                    {
+                      "key": "cpfcnpj",
+                      "value": "",
+                      "description": "LIKE em CPFCNPJ"
+                    },
+                    {
+                      "key": "telefone",
+                      "value": "",
+                      "description": "LIKE em TELEFONE"
+                    },
+                    {
+                      "key": "cidade",
+                      "value": "",
+                      "description": "Filtro exato CIDADE (seletor)"
+                    },
+                    {
+                      "key": "uf",
+                      "value": "",
+                      "description": "Filtro exato UF (seletor)"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "if (response && response.data && response.data.pessoa_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"pessoaId\", response.data.pessoa_id);\r",
+                      "}\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Pessoa Teste API\",\n  \"cpfcnpj\": \"12345678901\",\n  \"cidade\": \"GOIANIA\",\n  \"uf\": \"GO\",\n  \"micro_empresa\": \"N\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa/{{pessoaId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa",
+                    "{{pessoaId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Pessoa Teste API Atualizada\",\n  \"micro_empresa\": \"S\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa/{{pessoaId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa",
+                    "{{pessoaId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém message\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "});\r"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa/{{pessoaId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa",
+                    "{{pessoaId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Especie",
           "item": [
             {
@@ -1836,6 +2619,1912 @@
             }
           ],
           "description": "CRUD P_ESPECIE — prefix /administrativo/p_especie. Sigla em especie (até 3 chars). Variável {{especieId}} preenchida no Create."
+        },
+        {
+          "name": "Pessoa Vinculo",
+          "description": "CRUD P_PESSOA_VINCULO — prefix /administrativo/p_pessoa_vinculo. tipo_vinculo: APRESENTANTE, CEDENTE, CREDOR, DEVEDOR. gerar_selo/devedor_microempresa: S/N. devedor_tipo_aceite: A/E. Variável {{pessoaVinculoId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa_vinculo?p=1&per_page=20&sort=pessoa_vinculo_id.desc&titulo_id=316262&tipo_vinculo=DEVEDOR",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa_vinculo"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "pessoa_vinculo_id.desc",
+                      "description": "sort campo.asc|desc"
+                    },
+                    {
+                      "key": "titulo_id",
+                      "value": "316262",
+                      "description": "FK título (opcional)"
+                    },
+                    {
+                      "key": "tipo_vinculo",
+                      "value": "DEVEDOR",
+                      "description": "APRESENTANTE|CEDENTE|CREDOR|DEVEDOR"
+                    }
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa_vinculo",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa_vinculo"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo_id\": 316262,\n  \"tipo_vinculo\": \"DEVEDOR\",\n  \"nome\": \"Teste API Vinculo\",\n  \"cpfcnpj\": \"12345678901\",\n  \"gerar_selo\": \"S\",\n  \"devedor_tipo_aceite\": \"A\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\nif (response?.data?.pessoa_vinculo_id !== undefined) {\n    pm.collectionVariables.set(\"pessoaVinculoId\", response.data.pessoa_vinculo_id);\n}",
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa_vinculo/{{pessoaVinculoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa_vinculo",
+                    "{{pessoaVinculoId}}"
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa_vinculo/{{pessoaVinculoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa_vinculo",
+                    "{{pessoaVinculoId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Teste API Vinculo Atualizado\",\n  \"gerar_selo\": \"N\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_pessoa_vinculo/{{pessoaVinculoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_pessoa_vinculo",
+                    "{{pessoaVinculoId}}"
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Motivos",
+          "description": "CRUD P_MOTIVOS — prefix /administrativo/p_motivos. Situação A (ativo) / I (inativo). Busca index só por descricao. Variável {{motivosId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos?p=1&per_page=20&sort=motivos_id.desc&descricao=PAGAMENTO",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "motivos_id.desc",
+                      "description": "Opcional. Campos: motivos_id, codigo, descricao, situacao. Sem sort: motivos_id desc"
+                    },
+                    {
+                      "key": "descricao",
+                      "value": "PAGAMENTO",
+                      "description": "Busca LIKE apenas em DESCRICAO"
+                    }
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém dados paginados\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"data\");\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"codigo\": \"9\",\r\n  \"descricao\": \"Motivo Teste API\",\r\n  \"situacao\": \"A\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "if (response && response.data && response.data.motivos_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"motivosId\", response.data.motivos_id);\r",
+                      "}\r",
+                      "\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos/{{motivosId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos",
+                    "{{motivosId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Motivo Teste API Atualizado\",\r\n  \"situacao\": \"I\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos/{{motivosId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos",
+                    "{{motivosId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos/{{motivosId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos",
+                    "{{motivosId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Andamento",
+          "description": "CRUD P_ANDAMENTO — prefix /administrativo/p_andamento. arquivo_gerado: D=Aguardando, E=Exportado. Filtros index: titulo_id, data_ocorrencia, ocorrencia_andamento_id. Variável {{andamentoId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_andamento",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_andamento"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "andamento_id.desc",
+                      "description": "andamento_id, data_ocorrencia, titulo_id, ocorrencia_andamento_id, usuario_id, arquivo_gerado, data_geracao"
+                    },
+                    {
+                      "key": "titulo_id",
+                      "value": "316261",
+                      "description": "Filtro por título"
+                    },
+                    {
+                      "key": "ocorrencia_andamento_id",
+                      "value": "7",
+                      "description": "Filtro por ocorrência de andamento"
+                    }
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      "",
+                      "pm.test(\"Resposta contém dados paginados\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property(\"message\");",
+                      "    pm.expect(jsonData).to.have.property(\"data\");",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");",
+                      "});",
+                      ""
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "All by Titulo (include ocorrencia)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_andamento/titulo/316261?p=1&per_page=20&sort=andamento_id.desc",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_andamento",
+                    "titulo",
+                    "316261"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "andamento_id.desc"
+                    }
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      "",
+                      "pm.test(\"Resposta contém dados paginados\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property(\"message\");",
+                      "    pm.expect(jsonData).to.have.property(\"data\");",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");",
+                      "});",
+                      ""
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_andamento",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_andamento"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"ocorrencia_andamento_id\": 7,\r\n  \"data_ocorrencia\": \"2025-10-29T09:12:59\",\r\n  \"titulo_id\": 316261,\r\n  \"usuario_id\": 1000000009,\r\n  \"arquivo_gerado\": \"D\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "",
+                      "if (response && response.data && response.data.andamento_id !== undefined) {",
+                      "    pm.collectionVariables.set(\"andamentoId\", response.data.andamento_id);",
+                      "}",
+                      "",
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_andamento/{{andamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_andamento",
+                    "{{andamentoId}}"
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_andamento/{{andamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_andamento",
+                    "{{andamentoId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"arquivo_gerado\": \"E\",\r\n  \"data_geracao\": \"2025-10-29T10:00:00\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_andamento/{{andamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_andamento",
+                    "{{andamentoId}}"
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Ocorrencia Andamento",
+          "description": "CRUD P_OCORRENCIA_ANDAMENTO — prefix /administrativo/p_ocorrencia_andamento. Busca index só por descricao. Variável {{ocorrenciaAndamentoId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencia_andamento?p=1&per_page=20&sort=ocorrencia_andamento_id.desc&descricao=intima",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencia_andamento"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "ocorrencia_andamento_id.desc",
+                      "description": "Opcional. Campos: ocorrencia_andamento_id, codigo, descricao. Sem sort: ocorrencia_andamento_id desc"
+                    },
+                    {
+                      "key": "descricao",
+                      "value": "intima",
+                      "description": "Busca LIKE apenas em DESCRICAO"
+                    }
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Resposta contém dados paginados\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"data\");\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencia_andamento",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencia_andamento"
+                  ],
+                  "query": []
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"codigo\": \"ZZ\",\r\n  \"descricao\": \"Ocorrência Andamento Teste API\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "\r",
+                      "if (response && response.data && response.data.ocorrencia_andamento_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"ocorrenciaAndamentoId\", response.data.ocorrencia_andamento_id);\r",
+                      "}\r",
+                      "\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencia_andamento/{{ocorrenciaAndamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencia_andamento",
+                    "{{ocorrenciaAndamentoId}}"
+                  ],
+                  "query": []
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Ocorrência Andamento Teste Atualizada\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencia_andamento/{{ocorrenciaAndamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencia_andamento",
+                    "{{ocorrenciaAndamentoId}}"
+                  ],
+                  "query": []
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencia_andamento/{{ocorrenciaAndamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencia_andamento",
+                    "{{ocorrenciaAndamentoId}}"
+                  ],
+                  "query": []
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Mensagem indica sucesso\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Ocorrencias",
+          "description": "CRUD P_OCORRENCIAS — prefix /administrativo/p_ocorrencias. Index: busca (DESCRICAO ou CODIGO), tipo (CADASTRO, APONTADO, INTIMACAO, ACEITE, DESISTENCIA, PAGAMENTO, CANCELAMENTO ou vazio). Variável {{ocorrenciasId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencias?p=1&per_page=20&sort=ocorrencias_id.desc&busca=PAGO&tipo=CADASTRO",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencias"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "ocorrencias_id.desc",
+                      "description": "Opcional. Campos: ocorrencias_id, codigo, descricao, tipo"
+                    },
+                    {
+                      "key": "busca",
+                      "value": "PAGO",
+                      "description": "LIKE em DESCRICAO ou CODIGO"
+                    },
+                    {
+                      "key": "tipo",
+                      "value": "CADASTRO",
+                      "description": "Filtro exato: CADASTRO, APONTADO, INTIMACAO, ACEITE, DESISTENCIA, PAGAMENTO, CANCELAMENTO"
+                    }
+                  ]
+                },
+                "response": [],
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Resposta contém dados paginados\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property(\"message\");",
+                      "    pm.expect(jsonData).to.have.property(\"data\");",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencias",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencias"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"codigo\": \"Z9\",\r\n  \"descricao\": \"Ocorrência Teste API\",\r\n  \"tipo\": \"CADASTRO\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "",
+                      "if (response && response.data && response.data.ocorrencias_id !== undefined) {",
+                      "    pm.collectionVariables.set(\"ocorrenciasId\", response.data.ocorrencias_id);",
+                      "}",
+                      "",
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencias/{{ocorrenciasId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencias",
+                    "{{ocorrenciasId}}"
+                  ]
+                },
+                "response": [],
+                "protocolProfileBehavior": {
+                  "disableBodyPruning": true
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencias/{{ocorrenciasId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencias",
+                    "{{ocorrenciasId}}"
+                  ]
+                },
+                "response": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Ocorrência Teste API Atualizada\",\r\n  \"tipo\": \"APONTADO\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_ocorrencias/{{ocorrenciasId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_ocorrencias",
+                    "{{ocorrenciasId}}"
+                  ]
+                },
+                "response": []
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Motivos Cancelamento",
+          "description": "CRUD P_MOTIVOS_CANCELAMENTO — prefix /administrativo/p_motivos_cancelamento. Situação A (ativo) / I (inativo). Busca index só por descricao. Variável {{motivosCancelamentoId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos_cancelamento?p=1&per_page=20&sort=motivos_cancelamento_id.desc&descricao=judicial",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos_cancelamento"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "motivos_cancelamento_id.desc",
+                      "description": "Opcional. Campos: motivos_cancelamento_id, descricao, situacao"
+                    },
+                    {
+                      "key": "descricao",
+                      "value": "judicial",
+                      "description": "Busca LIKE apenas em DESCRICAO"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r",
+                      "pm.test(\"Resposta contém dados paginados\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData).to.have.property(\"message\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"data\");\r",
+                      "    pm.expect(jsonData.data).to.be.an(\"array\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"pagination\");\r",
+                      "});\r"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos_cancelamento",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos_cancelamento"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Motivo Cancelamento Teste API\",\r\n  \"situacao\": \"A\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();\r",
+                      "if (response && response.data && response.data.motivos_cancelamento_id !== undefined) {\r",
+                      "    pm.collectionVariables.set(\"motivosCancelamentoId\", response.data.motivos_cancelamento_id);\r",
+                      "}\r",
+                      "pm.test(\"Status code é 201 ou 200\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                      "});\r"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos_cancelamento/{{motivosCancelamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos_cancelamento",
+                    "{{motivosCancelamentoId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos_cancelamento/{{motivosCancelamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos_cancelamento",
+                    "{{motivosCancelamentoId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Motivo Cancelamento Atualizado\",\r\n  \"situacao\": \"I\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_motivos_cancelamento/{{motivosCancelamentoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_motivos_cancelamento",
+                    "{{motivosCancelamentoId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "Livro Natureza",
@@ -26294,6 +28983,10 @@
       "value": ""
     },
     {
+      "key": "tituloId",
+      "value": ""
+    },
+    {
       "key": "especieId",
       "value": ""
     },
@@ -26303,6 +28996,35 @@
     },
     {
       "key": "livroAndamentoId",
+      "value": ""
+    },
+    {
+      "key": "motivosId",
+      "value": ""
+    },
+    {
+      "key": "motivosCancelamentoId",
+      "value": ""
+    },
+    {
+      "key": "pessoaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ocorrenciasId",
+      "value": ""
+    },
+    {
+      "key": "ocorrenciaAndamentoId",
+      "value": ""
+    },
+    {
+      "key": "andamentoId",
+      "value": ""
+    },
+    {
+      "key": "pessoaVinculoId",
       "value": ""
     }
   ]

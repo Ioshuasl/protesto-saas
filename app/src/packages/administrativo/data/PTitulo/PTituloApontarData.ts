@@ -1,8 +1,8 @@
 import { enrichTitulo } from '@/packages/administrativo/data/PTitulo/ptituloEnrich';
 import { ptituloListRef } from '@/packages/administrativo/data/PTitulo/ptituloInMemory';
 import {
-  PTITULO_FAKE_ENDPOINTS,
-  isPTituloMockDataEnabled,
+  PTITULO_WORKFLOW_ENDPOINTS,
+  isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import type { PTituloApontarInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloApontarInterface';
 import type { PTituloInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloInterface';
@@ -13,12 +13,12 @@ import API from '@/shared/services/api/Api';
 import { Methods } from '@/shared/services/api/enums/ApiMethodEnum';
 
 export async function PTituloApontarData(id: number, payload: PTituloApontarInterface): Promise<TituloListItem> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.PUT,
-        endpoint: PTITULO_FAKE_ENDPOINTS.apontarTitulo(id),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.apontarTitulo(id),
         body: payload,
       }),
     );

@@ -6,3 +6,9 @@ export interface POcorrenciaAndamentoInterface {
   codigo?: string;
   descricao?: string;
 }
+
+/** Payload de create/update antes do formulário dedicado. */
+export type POcorrenciaAndamentoSavePayload = {
+  codigo: string;
+  descricao: string;
+};

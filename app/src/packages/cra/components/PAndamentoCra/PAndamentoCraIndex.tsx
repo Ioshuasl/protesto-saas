@@ -33,7 +33,7 @@ export default function PAndamentoCraIndex() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(getTodayRange);
 
   useEffect(() => {
-    void fetchTitulos();
+    void fetchTitulos({ page: 1, per_page: 500, sort: 'titulo_id.desc' });
     void fetchBancos();
     void fetchOcorrencias();
   }, [fetchTitulos, fetchBancos, fetchOcorrencias]);

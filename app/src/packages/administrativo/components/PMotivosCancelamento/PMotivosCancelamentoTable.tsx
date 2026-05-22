@@ -10,7 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
+import { normalizeSituacaoKey } from "@/packages/administrativo/components/PLivroNatureza/plivroNaturezaSituacaoUtils";
 import { PMotivosCancelamentoInterface } from "@/packages/administrativo/interfaces";
+import { SituacoesBadge } from "@/shared/components/situacoes/SituacoesBadge";
+import { formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 interface PMotivosCancelamentoTableProps {
   data: PMotivosCancelamentoInterface[];
@@ -49,7 +52,6 @@ export function PMotivosCancelamentoTable({
             <TableHead className="w-[80px]">ID</TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Situação</TableHead>
-            <TableHead>Tipo (Ord. Jud./Rem. Ind.)</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -61,9 +63,10 @@ export function PMotivosCancelamentoTable({
               onClick={() => onEdit(item)}
             >
               <TableCell className="font-medium">{item.motivos_cancelamento_id}</TableCell>
-              <TableCell>{item.descricao}</TableCell>
-              <TableCell>{item.situacao}</TableCell>
-              <TableCell>{item.ord_jud_ou_rem_ind}</TableCell>
+              <TableCell>{formatEmptyFieldTrimmed(item.descricao)}</TableCell>
+              <TableCell>
+                <SituacoesBadge situacao={normalizeSituacaoKey(item.situacao)} />
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" size="icon" onClick={(event) => { event.stopPropagation(); onEdit(item); }} title="Editar" className="group">

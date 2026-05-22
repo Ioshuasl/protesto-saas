@@ -21,6 +21,8 @@ export interface PPessoaInterface {
   observacoes?: string;
   email?: string;
   cpfcnpj?: string;
+  /** Inferido na API pelo documento: F (CPF) ou J (CNPJ). */
+  tipo_pessoa?: 'F' | 'J';
   uf?: string;
   cep?: string;
   telefone?: string;
@@ -28,4 +30,6 @@ export interface PPessoaInterface {
   micro_empresa?: string;
   cod_cra?: string;
   nome_fantasia?: string;
+  /** Quantidade de títulos distintos em que a pessoa participou (index). */
+  total_titulos?: number;
 }

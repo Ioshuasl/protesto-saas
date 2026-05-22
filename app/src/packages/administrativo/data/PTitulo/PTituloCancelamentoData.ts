@@ -1,6 +1,6 @@
 import {
-    PTITULO_FAKE_ENDPOINTS,
-    isPTituloMockDataEnabled,
+    PTITULO_WORKFLOW_ENDPOINTS,
+    isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import { enrichTitulo } from '@/packages/administrativo/data/PTitulo/ptituloEnrich';
 import { ptituloListRef } from '@/packages/administrativo/data/PTitulo/ptituloInMemory';
@@ -16,12 +16,12 @@ export async function PTituloCancelamentoData(
   id: number,
   payload?: PTituloCancelamentoFormInterface,
 ): Promise<TituloListItem> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.PUT,
-        endpoint: PTITULO_FAKE_ENDPOINTS.cancelarTitulo(id),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.cancelarTitulo(id),
         ...(payload ? { body: payload } : {}),
       }),
     );

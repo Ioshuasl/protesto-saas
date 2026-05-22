@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PTituloProtestarBatchInterface } from "@/packages/protesto-lote/interface/PTituloProtestarBatch/PTituloProtestarBatchInterface";
+import { formatEmptyField, formatEmptyFieldDate } from "@/shared/utils/emptyField";
 
 interface PTituloProtestarBatchTableProps {
   data: PTituloProtestarBatchInterface[];
@@ -38,10 +39,7 @@ function formatMoney(value?: number): string {
 }
 
 function formatDate(value?: Date): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString("pt-BR");
+  return formatEmptyFieldDate(value, (date) => date.toLocaleDateString("pt-BR"));
 }
 
 function getStatusProtestoLabel(item: PTituloProtestarBatchInterface): string {
@@ -116,14 +114,14 @@ export function PTituloProtestarBatchTable({
                 <TableCell>
                   <div className="flex min-w-[190px] flex-col">
                     <span className="font-medium">{titulo.numero_titulo ?? `Título ${titulo.titulo_id}`}</span>
-                    <span className="text-xs text-muted-foreground">Nosso n. {titulo.nosso_numero ?? "-"}</span>
+                    <span className="text-xs text-muted-foreground">Nosso n. {formatEmptyField(titulo.nosso_numero)}</span>
                   </div>
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-medium">{titulo.numero_apontamento ?? "-"}</TableCell>
+                <TableCell className="whitespace-nowrap font-medium">{formatEmptyField(titulo.numero_apontamento)}</TableCell>
                 <TableCell>
                   <div className="flex min-w-[240px] flex-col">
-                    <span className="truncate font-medium">{titulo.apresentante ?? "-"}</span>
-                    <span className="truncate text-xs text-muted-foreground">{titulo.cpfcnpj ?? "-"}</span>
+                    <span className="truncate font-medium">{formatEmptyField(titulo.apresentante)}</span>
+                    <span className="truncate text-xs text-muted-foreground">{formatEmptyField(titulo.cpfcnpj)}</span>
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">{formatDate(titulo.data_intimacao)}</TableCell>

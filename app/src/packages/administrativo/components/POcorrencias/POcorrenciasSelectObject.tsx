@@ -1,24 +1,28 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  SearchComboboxSelect,
+} from "@/packages/administrativo/components/shared/SearchComboboxSelect";
+import { buildSearchComboboxOptions } from "@/packages/administrativo/components/shared/buildSearchComboboxOptions";
 import { usePOcorrenciasReadHook } from "@/packages/administrativo/hooks/POcorrencias/usePOcorrenciasReadHook";
 import type { PTituloSelectOption } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
-import { cn } from "@/lib/utils";
 
 export interface POcorrenciasSelectObjectProps {
   /** Valor controlado: `ocorrencias_id` como string. */
   value?: string;
   onValueChange?: (ocorrenciasId: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
   disabled?: boolean;
   className?: string;
   triggerClassName?: string;
   emptyMessage?: string;
   optionsOverride?: PTituloSelectOption[];
+  selectedLabel?: string;
 }
 
-function ocorrenciaLabel(o: {
+export function ocorrenciaLabel(o: {
   ocorrencias_id: number;
   descricao?: string;
   tipo?: string;
@@ -27,15 +31,31 @@ function ocorrenciaLabel(o: {
   return o.descricao?.trim() || o.tipo?.trim() || o.codigo?.trim() || `Ocorrência ${o.ocorrencias_id}`;
 }
 
+function ocorrenciaSearchValue(o: {
+  ocorrencias_id: number;
+  descricao?: string;
+  tipo?: string;
+  codigo?: string;
+}) {
+  const label = ocorrenciaLabel(o);
+  const parts = [o.descricao, o.tipo, o.codigo, label, String(o.ocorrencias_id)];
+  return parts
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function POcorrenciasSelectObject({
   value,
   onValueChange,
   placeholder = "Selecione a ocorrência",
+  searchPlaceholder = "Buscar ocorrência...",
   disabled,
   className,
   triggerClassName,
   emptyMessage = "Nenhuma ocorrência disponível",
   optionsOverride,
+  selectedLabel,
 }: POcorrenciasSelectObjectProps) {
   const { ocorrencias, isLoading, fetchOcorrencias } = usePOcorrenciasReadHook();
 
@@ -43,39 +63,35 @@ export function POcorrenciasSelectObject({
     void fetchOcorrencias();
   }, [fetchOcorrencias]);
 
-  const options = useMemo(() => {
-    if (optionsOverride && optionsOverride.length > 0) {
-      return optionsOverride;
-    }
-    return ocorrencias.map((o) => ({ value: String(o.ocorrencias_id), label: ocorrenciaLabel(o) }));
-  }, [optionsOverride, ocorrencias]);
+  const options = useMemo(
+    () =>
+      buildSearchComboboxOptions({
+        fromFetch: ocorrencias.map((o) => ({
+          value: String(o.ocorrencias_id),
+          label: ocorrenciaLabel(o),
+          searchValue: ocorrenciaSearchValue(o),
+        })),
+        optionsOverride,
+        value,
+        selectedLabel,
+      }),
+    [ocorrencias, optionsOverride, value, selectedLabel],
+  );
 
   return (
-    <Select
-      value={value && value.length > 0 ? value : undefined}
+    <SearchComboboxSelect
+      value={value}
       onValueChange={onValueChange}
-      disabled={disabled || (isLoading && !(optionsOverride && optionsOverride.length > 0))}
-    >
-      <SelectTrigger className={cn("w-full", triggerClassName, className)}>
-        <SelectValue placeholder={isLoading && options.length === 0 ? "Carregando..." : placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading && options.length === 0 ? (
-          <SelectItem value="__pocorrencias_loading" disabled>
-            Carregando ocorrências...
-          </SelectItem>
-        ) : null}
-        {!isLoading && options.length === 0 ? (
-          <SelectItem value="__pocorrencias_empty" disabled>
-            {emptyMessage}
-          </SelectItem>
-        ) : null}
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      options={options}
+      isLoading={isLoading}
+      placeholder={placeholder}
+      searchPlaceholder={searchPlaceholder}
+      disabled={disabled}
+      className={className}
+      triggerClassName={triggerClassName}
+      emptyMessage={emptyMessage}
+      loadingMessage="Carregando ocorrências..."
+      clearAriaLabel="Limpar ocorrência"
+    />
   );
 }

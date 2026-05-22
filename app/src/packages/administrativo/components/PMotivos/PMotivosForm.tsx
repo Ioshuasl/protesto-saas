@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { normalizeSituacaoKey } from "@/packages/administrativo/components/PLivroNatureza/plivroNaturezaSituacaoUtils";
 import { PMotivosInterface } from "@/packages/administrativo/interfaces";
 import {
   motivoFormSchema,
@@ -18,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SituacoesSelect from "@/shared/components/situacoes/SituacoesSelect";
 
 export type { MotivoFormValues };
 
@@ -28,23 +29,23 @@ interface PMotivosFormProps {
   isLoading?: boolean;
 }
 
+function buildFormDefaults(defaultValues?: Partial<PMotivosInterface>): MotivoFormValues {
+  return {
+    codigo: defaultValues?.codigo?.trim() || "",
+    descricao: defaultValues?.descricao?.trim() || "",
+    situacao: normalizeSituacaoKey(defaultValues?.situacao),
+  };
+}
+
 export function PMotivosForm({ defaultValues, onSubmit, isLoading }: PMotivosFormProps) {
   const form = useForm<MotivoFormValues>({
     resolver: zodResolver(motivoFormSchema),
-    defaultValues: {
-      codigo: defaultValues?.codigo || "",
-      descricao: defaultValues?.descricao || "",
-      situacao: defaultValues?.situacao || "Ativo",
-    },
+    defaultValues: buildFormDefaults(defaultValues),
   });
 
   useEffect(() => {
     if (defaultValues) {
-      form.reset({
-        codigo: defaultValues.codigo || "",
-        descricao: defaultValues.descricao || "",
-        situacao: defaultValues.situacao || "Ativo",
-      });
+      form.reset(buildFormDefaults(defaultValues));
     }
   }, [defaultValues, form]);
 
@@ -71,17 +72,7 @@ export function PMotivosForm({ defaultValues, onSubmit, isLoading }: PMotivosFor
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Situação</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione a situação" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
+                <SituacoesSelect field={field} />
                 <FormMessage />
               </FormItem>
             )}

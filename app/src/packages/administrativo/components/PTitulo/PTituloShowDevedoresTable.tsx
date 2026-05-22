@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PTituloShowDevedoresItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloShowDevedoresItem";
+import { formatEmptyField, formatEmptyFieldDate } from "@/shared/utils/emptyField";
 
 interface PTituloShowDevedoresTableProps {
   data: PTituloShowDevedoresItem[];
@@ -53,13 +54,13 @@ export function PTituloShowDevedoresTable({ data, isLoading, onRowClick }: PTitu
               onClick={onRowClick ? () => onRowClick(devedor) : undefined}
             >
               <TableCell className="font-medium">{devedor.titulo_id}</TableCell>
-              <TableCell>{devedor.devedor_nome ?? "-"}</TableCell>
-              <TableCell>{devedor.devedor_cpfcnpj ?? "-"}</TableCell>
-              <TableCell>{devedor.devedor_tipo_aceite ?? "-"}</TableCell>
+              <TableCell>{formatEmptyField(devedor.devedor_nome)}</TableCell>
+              <TableCell>{formatEmptyField(devedor.devedor_cpfcnpj)}</TableCell>
+              <TableCell>{formatEmptyField(devedor.devedor_tipo_aceite)}</TableCell>
               <TableCell>
-                {devedor.devedor_data_aceite instanceof Date
-                  ? devedor.devedor_data_aceite.toLocaleDateString("pt-BR")
-                  : "-"}
+                {formatEmptyFieldDate(devedor.devedor_data_aceite, (date) =>
+                  date.toLocaleDateString("pt-BR"),
+                )}
               </TableCell>
             </TableRow>
           ))}

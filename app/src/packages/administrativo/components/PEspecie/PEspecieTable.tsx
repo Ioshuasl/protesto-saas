@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { PEspecieInterface } from "@/packages/administrativo/interfaces";
 import { cn } from "@/lib/utils";
+import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatEmptyField, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 interface PEspecieTableProps {
   data: PEspecieInterface[];
@@ -44,11 +46,11 @@ function useIsTextTruncated(ref: RefObject<HTMLSpanElement | null>, text: string
 
 function TruncatedDescription({ text }: { text?: string | null }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const label = text?.trim() || "—";
+  const label = formatEmptyFieldTrimmed(text);
   const isTruncated = useIsTextTruncated(ref, label);
 
-  if (label === "—") {
-    return <span className="text-muted-foreground">—</span>;
+  if (label === EMPTY_FIELD_LABEL) {
+    return <span className="text-muted-foreground">{EMPTY_FIELD_LABEL}</span>;
   }
 
   return (
@@ -106,7 +108,7 @@ export function PEspecieTable({ data, onEdit, onDelete, isLoading }: PEspecieTab
               className="cursor-pointer"
               onClick={() => onEdit(especie)}
             >
-              <TableCell className="w-[88px] truncate">{especie.especie ?? "—"}</TableCell>
+              <TableCell className="w-[88px] truncate">{formatEmptyField(especie.especie)}</TableCell>
               <TableCell className="max-w-0 min-w-0 overflow-visible">
                 <TruncatedDescription text={especie.descricao} />
               </TableCell>

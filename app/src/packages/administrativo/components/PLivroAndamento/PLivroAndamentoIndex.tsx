@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PLivroAndamentoDialog } from "@/packages/administrativo/components/PLivroAndamento/PLivroAndamentoDialog";
+import {
+  PLivroAndamentoFinalizarFormDialog,
+  type PLivroAndamentoFinalizarFormValues,
+} from "@/packages/administrativo/components/PLivroAndamento/PLivroAndamentoFinalizarFormDialog";
 import { PLivroAndamentoFilter } from "@/packages/administrativo/components/PLivroAndamento/PLivroAndamentoFilter";
 import {
   buildPLivroAndamentoIndexQuery,
@@ -13,6 +17,7 @@ import {
 import { PLivroAndamentoTable } from "@/packages/administrativo/components/PLivroAndamento/PLivroAndamentoTable";
 import { PLIVRO_NATUREZA_LIST_QUERY } from "@/packages/administrativo/data/PLivroNatureza/plivroNaturezaDataConfig";
 import { usePLivroAndamentoDeleteHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoDeleteHook";
+import { usePLivroAndamentoFinalizarHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoFinalizarHook";
 import { usePLivroAndamentoReadHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoReadHook";
 import { usePLivroAndamentoSaveHook } from "@/packages/administrativo/hooks/PLivroAndamento/usePLivroAndamentoSaveHook";
 import { usePLivroNaturezaReadHook } from "@/packages/administrativo/hooks/PLivroNatureza/usePLivroNaturezaReadHook";
@@ -28,14 +33,19 @@ export default function PLivroAndamentoIndex() {
     usePLivroAndamentoReadHook();
   const { naturezas, isLoading: isLoadingNaturezas, fetchNaturezas } = usePLivroNaturezaReadHook();
   const { saveLivroAndamento } = usePLivroAndamentoSaveHook();
+  const { finalizarLivroAndamento } = usePLivroAndamentoFinalizarHook();
   const { deleteLivroAndamento } = usePLivroAndamentoDeleteHook();
 
   const isLoading = isLoadingLivros || isLoadingNaturezas;
 
   const [buttonIsLoading, setButtonIsLoading] = useState(false);
+  const [finalizarButtonIsLoading, setFinalizarButtonIsLoading] = useState(false);
   const [filters, setFilters] = useState<PLivroAndamentoFilterState>(defaultPLivroAndamentoFilterState);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFinalizarDialogOpen, setIsFinalizarDialogOpen] = useState(false);
   const [selected, setSelected] = useState<PLivroAndamentoInterface | null>(null);
+  const [selectedForFinalizar, setSelectedForFinalizar] =
+    useState<PLivroAndamentoInterface | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -105,6 +115,55 @@ export default function PLivroAndamentoIndex() {
     [saveLivroAndamento, selected, fetchLivrosAndamento, handleCloseDialog, indexQuery],
   );
 
+  const handleOpenFinalizarDialog = useCallback((row: PLivroAndamentoInterface) => {
+    setSelectedForFinalizar(row);
+    setIsFinalizarDialogOpen(true);
+  }, []);
+
+  const handleCloseFinalizarDialog = useCallback(() => {
+    setSelectedForFinalizar(null);
+    setIsFinalizarDialogOpen(false);
+  }, []);
+
+  const handleFinalizarDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        handleCloseFinalizarDialog();
+        return;
+      }
+      setIsFinalizarDialogOpen(true);
+    },
+    [handleCloseFinalizarDialog],
+  );
+
+  const handleFinalizar = useCallback(
+    async (formData: PLivroAndamentoFinalizarFormValues) => {
+      const livro = selectedForFinalizar;
+      if (!livro?.livro_andamento_id) return;
+
+      setFinalizarButtonIsLoading(true);
+      try {
+        await finalizarLivroAndamento(livro.livro_andamento_id, {
+          data_fechamento: formData.data_fechamento,
+          folha_atual: livro.folha_atual,
+        });
+        await fetchLivrosAndamento(indexQuery);
+        handleCloseFinalizarDialog();
+      } catch (e) {
+        console.error("Erro ao finalizar livro em andamento:", e);
+      } finally {
+        setFinalizarButtonIsLoading(false);
+      }
+    },
+    [
+      selectedForFinalizar,
+      finalizarLivroAndamento,
+      fetchLivrosAndamento,
+      handleCloseFinalizarDialog,
+      indexQuery,
+    ],
+  );
+
   const openDeleteDialog = useCallback((id: number) => {
     setPendingDeleteId(id);
     setDeleteDialogOpen(true);
@@ -146,6 +205,7 @@ export default function PLivroAndamentoIndex() {
           naturezas={naturezas}
           isLoading={isLoading}
           onEdit={handleOpenDialog}
+          onFinalize={handleOpenFinalizarDialog}
           onDelete={openDeleteDialog}
         />
         <Pagination pagination={pagination} onPageChange={setPage} disabled={isLoading} />
@@ -159,6 +219,16 @@ export default function PLivroAndamentoIndex() {
         onSubmit={handleSave}
         isLoading={buttonIsLoading}
       />
+
+      {selectedForFinalizar ? (
+        <PLivroAndamentoFinalizarFormDialog
+          open={isFinalizarDialogOpen}
+          onOpenChange={handleFinalizarDialogOpenChange}
+          livroAndamento={selectedForFinalizar}
+          onSubmit={handleFinalizar}
+          isLoading={finalizarButtonIsLoading}
+        />
+      ) : null}
 
       <ConfirmDialog
         isOpen={deleteDialogOpen}

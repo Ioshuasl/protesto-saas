@@ -5,26 +5,63 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PPessoaDialog } from "@/packages/administrativo/components/PPessoa/PPessoaDialog";
 import { PPessoaFilter } from "@/packages/administrativo/components/PPessoa/PPessoaFilter";
+import {
+  buildPPessoaIndexQuery,
+  defaultPPessoaFilterState,
+  type PPessoaFilterState,
+} from "@/packages/administrativo/components/PPessoa/ppessoaFilterUtils";
 import type { PessoaFormValues } from "@/packages/administrativo/schemas/PPessoa/PPessoaFormSchema";
 import { PPessoaTable } from "@/packages/administrativo/components/PPessoa/PPessoaTable";
 import { usePPessoaDeleteHook } from "@/packages/administrativo/hooks/PPessoa/usePPessoaDeleteHook";
 import { usePPessoaReadHook } from "@/packages/administrativo/hooks/PPessoa/usePPessoaReadHook";
 import { usePPessoaSaveHook } from "@/packages/administrativo/hooks/PPessoa/usePPessoaSaveHook";
 import type { PPessoaInterface } from "@/packages/administrativo/interfaces/PPessoa/PPessoaInterface";
+import { DEFAULT_PAGINATION_META, Pagination } from "@/shared/components/pagination";
 import ConfirmDialog from "@/shared/components/confirmDialog/ConfirmDialog";
 
-/** Tela de cadastro no estilo `TCensecIndex`: Read + Save + Delete hooks. */
+const PPESSOA_PER_PAGE = DEFAULT_PAGINATION_META.per_page;
+
+/** Tela de cadastro: listagem via API com formato3 e filtros nome/cpfcnpj/telefone. */
 export default function PPessoaIndex() {
-  const { pessoas, isLoading, fetchPessoas } = usePPessoaReadHook();
+  const { pessoas, pagination, isLoading, fetchPessoas } = usePPessoaReadHook();
   const { savePessoa } = usePPessoaSaveHook();
   const { deletePessoa } = usePPessoaDeleteHook();
 
   const [buttonIsLoading, setButtonIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<PPessoaFilterState>(defaultPPessoaFilterState);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPessoa, setSelectedPessoa] = useState<PPessoaInterface | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [debouncedFilters, setDebouncedFilters] = useState<PPessoaFilterState>(filters);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedFilters(filters), 400);
+    return () => window.clearTimeout(timer);
+  }, [filters]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedFilters.search, debouncedFilters.tipo_pessoa]);
+
+  const apiFilters = useMemo(
+    () => buildPPessoaIndexQuery(debouncedFilters),
+    [debouncedFilters],
+  );
+
+  const indexQuery = useMemo(
+    () => ({
+      ...apiFilters,
+      page,
+      per_page: PPESSOA_PER_PAGE,
+    }),
+    [apiFilters, page],
+  );
+
+  const handleFiltersChange = useCallback((next: PPessoaFilterState) => {
+    setFilters(next);
+  }, []);
 
   const handleOpenDialog = useCallback((pessoa?: PPessoaInterface) => {
     setSelectedPessoa(pessoa ?? null);
@@ -41,7 +78,7 @@ export default function PPessoaIndex() {
       setButtonIsLoading(true);
       try {
         await savePessoa(formData, selectedPessoa);
-        await fetchPessoas();
+        await fetchPessoas(indexQuery);
         handleCloseDialog();
       } catch (e) {
         console.error("Erro ao salvar pessoa:", e);
@@ -49,7 +86,7 @@ export default function PPessoaIndex() {
         setButtonIsLoading(false);
       }
     },
-    [savePessoa, selectedPessoa, fetchPessoas, handleCloseDialog],
+    [savePessoa, selectedPessoa, fetchPessoas, handleCloseDialog, indexQuery],
   );
 
   const openDeleteDialog = useCallback((id: number) => {
@@ -68,25 +105,15 @@ export default function PPessoaIndex() {
     closeDeleteDialog();
     try {
       await deletePessoa(id);
-      await fetchPessoas();
+      await fetchPessoas(indexQuery);
     } catch (e) {
       console.error("Erro ao excluir pessoa:", e);
     }
-  }, [pendingDeleteId, closeDeleteDialog, deletePessoa, fetchPessoas]);
+  }, [pendingDeleteId, closeDeleteDialog, deletePessoa, fetchPessoas, indexQuery]);
 
   useEffect(() => {
-    void fetchPessoas();
-  }, [fetchPessoas]);
-
-  const filteredPessoas = useMemo(() => {
-    if (!searchQuery) return pessoas;
-    const query = searchQuery.toLowerCase();
-    return pessoas.filter(
-      (p) =>
-        p.nome?.toLowerCase().includes(query) ||
-        p.cpfcnpj?.replace(/\D/g, "").includes(query.replace(/\D/g, "")),
-    );
-  }, [pessoas, searchQuery]);
+    void fetchPessoas(indexQuery);
+  }, [fetchPessoas, indexQuery]);
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -104,16 +131,16 @@ export default function PPessoaIndex() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <PPessoaFilter value={searchQuery} onChange={setSearchQuery} />
-        </div>
+        <PPessoaFilter value={filters} onChange={handleFiltersChange} />
 
         <PPessoaTable
-          data={filteredPessoas}
+          data={pessoas}
           isLoading={isLoading}
           onEdit={handleOpenDialog}
           onDelete={openDeleteDialog}
         />
+
+        <Pagination pagination={pagination} onPageChange={setPage} disabled={isLoading} />
       </div>
 
       <PPessoaDialog

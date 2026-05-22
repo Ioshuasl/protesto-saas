@@ -23,7 +23,7 @@ Fluxo alvo: `components` → `hooks` → `services` → `data` → API.
 - **Hook:** `use<Entidade>ReadHook.ts` / `use<Entidade>SaveHook.ts` / `use<Entidade>DeleteHook.ts` (nomenclatura alinhada a `useTCensecReadHook`, `useTCensecSaveHook`, `useTCensecDeleteHook`).
 - **Schema:** `<Entidade>FormSchema.ts` na pasta da entidade em `schemas/`.
 
-**PTitulo:** mutação mock exposta como `PTituloSaveUpdateStatusData` / `PTituloSaveUpdateStatusService` (sem `Delete` no protótipo). **GUsuario:** apenas `Index` (lista para selects).
+**PTitulo:** `Index` e `Show` consomem `administrativo/p_titulo` (paginação formato3). Ações de fluxo (apontar, intimar, etc.) permanecem mock via `PTITULO_WORKFLOW_ENDPOINTS` até existirem na API. **GUsuario:** apenas `Index` (lista para selects).
 
 ## Fachadas `*Service.ts`
 

@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  PPessoaVinculoTipoEnum,
+  formatPPessoaVinculoTipoLabel,
+  normalizePPessoaVinculoTipo,
+  type PPessoaVinculoTipo,
+} from "@/packages/administrativo/interfaces/PPessoaVinculo/PPessoaVinculoTipoEnum";
+
 export interface PTituloParteItem {
   pessoa_id?: number;
   tipo: string;
@@ -8,18 +15,24 @@ export interface PTituloParteItem {
   cpfcnpj?: string;
 }
 
-export const pTituloParteRoleOptions = [
-  { value: "A", label: "Apresentante" },
-  { value: "D", label: "Devedor" },
-  { value: "R", label: "Credor" },
-  { value: "C", label: "Cedente" },
-  { value: "E", label: "Endossante" },
-  { value: "V", label: "Avalista" },
-  { value: "S", label: "Sacador" },
-  { value: "P", label: "Portador" },
-  { value: "O", label: "Outros" },
-] as const;
+export const PTITULO_PARTE_DEFAULT_TIPO = PPessoaVinculoTipoEnum.DEVEDOR;
 
-export const pTituloParteRoleLabelMap: Map<string, string> = new Map(
-  pTituloParteRoleOptions.map((item) => [item.value, item.label]),
-);
+export function parteTipoDescricao(tipo?: string | null): string {
+  return formatPPessoaVinculoTipoLabel(tipo);
+}
+
+export function buildPTituloParteItem(
+  partial: Omit<PTituloParteItem, "tipo" | "descricao"> & {
+    tipo?: string | null;
+    descricao?: string;
+  },
+): PTituloParteItem {
+  const tipo = normalizePPessoaVinculoTipo(partial.tipo) ?? PTITULO_PARTE_DEFAULT_TIPO;
+  return {
+    ...partial,
+    tipo,
+    descricao: partial.descricao?.trim() || parteTipoDescricao(tipo),
+  };
+}
+
+export type { PPessoaVinculoTipo };

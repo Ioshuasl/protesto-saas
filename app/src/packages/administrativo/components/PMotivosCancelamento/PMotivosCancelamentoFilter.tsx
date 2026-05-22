@@ -2,10 +2,11 @@
 
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import type { PMotivosCancelamentoFilterState } from "@/packages/administrativo/components/PMotivosCancelamento/pmotivosCancelamentoFilterUtils";
 
 interface PMotivosCancelamentoFilterProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: PMotivosCancelamentoFilterState;
+  onChange: (value: PMotivosCancelamentoFilterState) => void;
 }
 
 export function PMotivosCancelamentoFilter({ value, onChange }: PMotivosCancelamentoFilterProps) {
@@ -16,8 +17,8 @@ export function PMotivosCancelamentoFilter({ value, onChange }: PMotivosCancelam
         type="search"
         placeholder="Buscar por descrição..."
         className="pl-8"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={value.search}
+        onChange={(e) => onChange({ search: e.target.value })}
       />
     </div>
   );

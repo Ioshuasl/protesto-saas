@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { normalizeSituacaoKey } from "@/packages/administrativo/components/PLivroNatureza/plivroNaturezaSituacaoUtils";
 import { PMotivosCancelamentoInterface } from "@/packages/administrativo/interfaces";
 import {
   motivoCancelamentoFormSchema,
@@ -18,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SituacoesSelect from "@/shared/components/situacoes/SituacoesSelect";
 
 export type { MotivoCancelamentoFormValues };
 
@@ -28,6 +29,15 @@ interface PMotivosCancelamentoFormProps {
   isLoading?: boolean;
 }
 
+function buildFormDefaults(
+  defaultValues?: Partial<PMotivosCancelamentoInterface>,
+): MotivoCancelamentoFormValues {
+  return {
+    descricao: defaultValues?.descricao?.trim() || "",
+    situacao: normalizeSituacaoKey(defaultValues?.situacao),
+  };
+}
+
 export function PMotivosCancelamentoForm({
   defaultValues,
   onSubmit,
@@ -35,22 +45,11 @@ export function PMotivosCancelamentoForm({
 }: PMotivosCancelamentoFormProps) {
   const form = useForm<MotivoCancelamentoFormValues>({
     resolver: zodResolver(motivoCancelamentoFormSchema),
-    defaultValues: {
-      descricao: defaultValues?.descricao || "",
-      situacao: defaultValues?.situacao || "Ativo",
-      ord_jud_ou_rem_ind: (defaultValues?.ord_jud_ou_rem_ind as MotivoCancelamentoFormValues["ord_jud_ou_rem_ind"]) || "Outros",
-    },
+    defaultValues: buildFormDefaults(defaultValues),
   });
 
   useEffect(() => {
-    if (defaultValues) {
-      form.reset({
-        descricao: defaultValues.descricao || "",
-        situacao: defaultValues.situacao || "Ativo",
-        ord_jud_ou_rem_ind:
-          (defaultValues.ord_jud_ou_rem_ind as MotivoCancelamentoFormValues["ord_jud_ou_rem_ind"]) || "Outros",
-      });
-    }
+    form.reset(buildFormDefaults(defaultValues));
   }, [defaultValues, form]);
 
   return (
@@ -63,59 +62,24 @@ export function PMotivosCancelamentoForm({
             <FormItem>
               <FormLabel>Descrição</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Cumprimento de ordem judicial" {...field} />
+                <Input placeholder="Ex: Determinação judicial" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="situacao"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Situação</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione a situação" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="ord_jud_ou_rem_ind"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Ordem Judicial">Ordem Judicial</SelectItem>
-                    <SelectItem value="Remessa Indireta">Remessa Indireta</SelectItem>
-                    <SelectItem value="Outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="situacao"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Situação</FormLabel>
+              <SituacoesSelect field={field} />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading} className="bg-[#FF6B00] hover:bg-[#E56000] text-white">

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { isPTituloMockDataEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
+import { isPTituloWorkflowMockEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
 import { usePTituloLiquidacaoHook } from "@/packages/administrativo/hooks/PTitulo/usePTituloLiquidacaoHook";
 import type { TituloListItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloListItem";
 import { useState } from "react";
@@ -19,7 +19,7 @@ export function PTituloLiquidacaoButton({ id, onSuccess }: { id: number; onSucce
       onClick={async () => {
         setIsLoading(true);
         try {
-          if (isPTituloMockDataEnabled()) {
+          if (isPTituloWorkflowMockEnabled()) {
             window.alert('Protótipo: confirmar "Liquidar Título"');
           }
           const response = await liquidarTitulo(id);

@@ -9,14 +9,45 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, Pencil, Trash2 } from "lucide-react";
 import { PPessoaInterface } from "@/packages/administrativo/interfaces";
+import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatEmptyField, isEmptyFieldValue } from "@/shared/utils/emptyField";
 
 interface PPessoaTableProps {
   data: PPessoaInterface[];
   onEdit: (pessoa: PPessoaInterface) => void;
   onDelete: (id: number) => void;
   isLoading?: boolean;
+}
+
+function formatCidadeUf(cidade?: string | null, uf?: string | null): string {
+  const cidadeFmt = formatEmptyField(cidade);
+  const ufFmt = formatEmptyField(uf);
+
+  if (cidadeFmt === EMPTY_FIELD_LABEL && ufFmt === EMPTY_FIELD_LABEL) {
+    return EMPTY_FIELD_LABEL;
+  }
+  if (cidadeFmt === EMPTY_FIELD_LABEL) {
+    return ufFmt;
+  }
+  if (ufFmt === EMPTY_FIELD_LABEL) {
+    return cidadeFmt;
+  }
+  return `${cidadeFmt} / ${ufFmt}`;
+}
+
+function CpfcnpjCell({ cpfcnpj }: { cpfcnpj?: string | null }) {
+  if (!isEmptyFieldValue(cpfcnpj)) {
+    return <>{formatEmptyField(cpfcnpj)}</>;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1.5 text-destructive">
+      <span>{EMPTY_FIELD_LABEL}</span>
+      <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+    </span>
+  );
 }
 
 export function PPessoaTable({ data, onEdit, onDelete, isLoading }: PPessoaTableProps) {
@@ -41,10 +72,10 @@ export function PPessoaTable({ data, onEdit, onDelete, isLoading }: PPessoaTable
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[80px]">ID</TableHead>
             <TableHead>Nome / Razão Social</TableHead>
             <TableHead>CPF / CNPJ</TableHead>
             <TableHead>Cidade / UF</TableHead>
+            <TableHead className="text-center">Qtd. Títulos</TableHead>
             <TableHead>Telefone</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -56,13 +87,15 @@ export function PPessoaTable({ data, onEdit, onDelete, isLoading }: PPessoaTable
               className="cursor-pointer"
               onClick={() => onEdit(pessoa)}
             >
-              <TableCell className="font-medium">{pessoa.pessoa_id}</TableCell>
-              <TableCell>{pessoa.nome}</TableCell>
-              <TableCell>{pessoa.cpfcnpj}</TableCell>
+              <TableCell className="font-medium">{formatEmptyField(pessoa.nome)}</TableCell>
               <TableCell>
-                {pessoa.cidade ? `${pessoa.cidade} / ${pessoa.uf || "-"}` : "-"}
+                <CpfcnpjCell cpfcnpj={pessoa.cpfcnpj} />
               </TableCell>
-              <TableCell>{pessoa.telefone || "-"}</TableCell>
+              <TableCell>{formatCidadeUf(pessoa.cidade, pessoa.uf)}</TableCell>
+              <TableCell className="text-center tabular-nums">
+                {pessoa.total_titulos ?? 0}
+              </TableCell>
+              <TableCell>{formatEmptyField(pessoa.telefone)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button

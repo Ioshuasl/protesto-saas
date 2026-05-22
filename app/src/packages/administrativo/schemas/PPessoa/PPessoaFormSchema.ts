@@ -53,4 +53,4 @@ export const pessoaFormSchema = z
   });
 
 export type PessoaFormSchemaValues = z.infer<typeof pessoaFormSchema>;
-export type PessoaFormValues = Omit<PessoaFormSchemaValues, "tipo_pessoa">;
+export type PessoaFormValues = PessoaFormSchemaValues;

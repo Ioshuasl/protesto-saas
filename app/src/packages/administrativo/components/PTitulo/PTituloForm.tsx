@@ -11,6 +11,8 @@ import { PTituloVoltarApontamentoButton } from "@/packages/administrativo/compon
 import { PTituloVoltarIntimacaoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloVoltarIntimacaoButton";
 import { PTituloVoltarProtestoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloVoltarProtestoButton";
 import { PTituloCancelamentoOptionsDIalog } from "@/packages/administrativo/components/PTitulo/PTituloCancelamentoOptionsDIalog";
+import { formatBancoSelectLabel } from "@/packages/administrativo/components/PBanco/PBancoSelectObject";
+import { formatEspecieSelectLabel } from "@/packages/administrativo/components/PEspecie/PEspecieSelectObject";
 import { usePBancoReadHook } from "@/packages/administrativo/hooks/PBanco/usePBancoReadHook";
 import { usePEspecieReadHook } from "@/packages/administrativo/hooks/PEspecie/usePEspecieReadHook";
 import { usePMotivosReadHook } from "@/packages/administrativo/hooks/PMotivos/usePMotivosReadHook";
@@ -21,6 +23,7 @@ import type {
   PTituloDetailsFormValues,
   PTituloSelectOptionsByField,
 } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
+import { ensureTituloSelectOption } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormUtils";
 import {
   getWorkflowActionButtons,
   getPTituloCancelamentoOptions,
@@ -46,8 +49,8 @@ export function PTituloForm({ id }: { id?: string }) {
   const { motivosCancelamento, fetchMotivosCancelamento } = usePMotivosCancelamentoReadHook();
 
   useEffect(() => {
-    void fetchBancos();
-    void fetchEspecies();
+    void fetchBancos({ page: 1, per_page: 500, sort: "banco_id.desc" });
+    void fetchEspecies({ page: 1, per_page: 500, sort: "especie_id.asc" });
     void fetchOcorrencias();
     void fetchMotivos();
     void fetchMotivosCancelamento();
@@ -68,16 +71,46 @@ export function PTituloForm({ id }: { id?: string }) {
     void fetchTituloByIdRef.current(numericId);
   }, [id, isNew, setTitulo]);
 
-  const selectOptionsByField = useMemo<PTituloSelectOptionsByField>(
-    () => ({
-      especie_id: especies.map((especie) => ({
-        value: String(especie.especie_id),
-        label: especie.descricao || especie.especie || "-",
-      })),
-      banco_id: bancos.map((banco) => ({
-        value: String(banco.banco_id),
-        label: banco.descricao || banco.codigo_banco || "-",
-      })),
+  const selectOptionsByField = useMemo<PTituloSelectOptionsByField>(() => {
+    const especieFromList = especies.map((especie) => ({
+      value: String(especie.especie_id),
+      label: formatEspecieSelectLabel(especie),
+    }));
+    const bancoFromList = bancos.map((banco) => ({
+      value: String(banco.banco_id),
+      label: formatBancoSelectLabel(banco),
+    }));
+
+    const especieId =
+      titulo?.especie_id != null
+        ? String(titulo.especie_id)
+        : titulo?.especie?.especie_id != null
+          ? String(titulo.especie.especie_id)
+          : undefined;
+    const bancoId =
+      titulo?.banco_id != null
+        ? String(titulo.banco_id)
+        : titulo?.banco?.banco_id != null
+          ? String(titulo.banco.banco_id)
+          : undefined;
+
+    const especieLabelFromTitulo = titulo?.especie
+      ? formatEspecieSelectLabel(titulo.especie)
+      : titulo?.especie_id != null
+        ? formatEspecieSelectLabel({
+            especie_id: titulo.especie_id,
+            especie: titulo.especie_sigla,
+          })
+        : undefined;
+    const bancoLabelFromTitulo = titulo?.banco
+      ? formatBancoSelectLabel(titulo.banco)
+      : titulo?.banco_id != null
+        ? formatBancoSelectLabel({ banco_id: titulo.banco_id })
+        : undefined;
+
+    return {
+      especie_id: ensureTituloSelectOption(especieFromList, especieId, especieLabelFromTitulo),
+      banco_id: ensureTituloSelectOption(bancoFromList, bancoId, bancoLabelFromTitulo),
       ocorrencia_id: ocorrencias.map((ocorrencia) => ({
         value: String(ocorrencia.ocorrencias_id),
         label: ocorrencia.descricao || ocorrencia.tipo || ocorrencia.codigo || "-",
@@ -90,9 +123,8 @@ export function PTituloForm({ id }: { id?: string }) {
         value: String(motivoCancelamento.motivos_cancelamento_id),
         label: motivoCancelamento.descricao || motivoCancelamento.ord_jud_ou_rem_ind || "-",
       })),
-    }),
-    [bancos, especies, motivos, motivosCancelamento, ocorrencias],
-  );
+    };
+  }, [bancos, especies, motivos, motivosCancelamento, ocorrencias, titulo]);
 
   const workflowActionButtons = useMemo(() => {
     return getWorkflowActionButtons(titulo);

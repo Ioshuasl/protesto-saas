@@ -31,6 +31,33 @@ Planejar a montagem das rotas em `api/` mantendo:
 | [modulos/](./modulos/) | Planejamento por entidade |
 | [templates/](./templates/) | Templates reutilizáveis |
 | [checklists/](./checklists/) | Checklists pré e pós implementação |
+| Coleção Postman | `api/Orius.postman_collection.json` + sync: [`api/scripts/sync_postman_collection.py`](../api/scripts/sync_postman_collection.py) |
+
+## Coleção Postman (`api/Orius.postman_collection.json`)
+
+Toda implementação ou alteração de CRUD deve refletir na coleção **Orius** (ver [agent_planejamento_protesto_api.md](./agents/agent_planejamento_protesto_api.md) e `docs/workflows/workflow_backend_crud_package.md`).
+
+### Sincronizar com a nuvem
+
+O script [`api/scripts/sync_postman_collection.py`](../api/scripts/sync_postman_collection.py) envia o JSON local para a coleção no Postman via API oficial.
+
+**Configuração** (`api/.env`, modelo em [`api/postman.sync.env.example`](../api/postman.sync.env.example)):
+
+```env
+POSTMAN_API_KEY=          # Postman → Settings → API keys
+POSTMAN_COLLECTION_UID=   # opcional; Info da coleção Orius → UID
+```
+
+**Comandos** (na pasta `api/`):
+
+```bash
+python3 scripts/sync_postman_collection.py --dry-run   # valida JSON
+python3 scripts/sync_postman_collection.py --list      # UIDs das coleções
+python3 scripts/sync_postman_collection.py             # upload único
+python3 scripts/sync_postman_collection.py --watch     # sync ao salvar o arquivo
+```
+
+Documentação completa: [`api/README.md`](../api/README.md#14-sincronização-da-coleção-postman).
 
 ## Agentes
 

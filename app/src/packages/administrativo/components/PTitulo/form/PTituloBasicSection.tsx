@@ -11,20 +11,28 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PBancoSelectObject } from "@/packages/administrativo/components/PBanco/PBancoSelectObject";
+import {
+  formatBancoSelectLabel,
+  PBancoSelectObject,
+} from "@/packages/administrativo/components/PBanco/PBancoSelectObject";
 import { POcorrenciasSelectObject } from "@/packages/administrativo/components/POcorrencias/POcorrenciasSelectObject";
-import { PEspecieSelectObject } from "@/packages/administrativo/components/PEspecie/PEspecieSelectObject";
+import {
+  formatEspecieSelectLabel,
+  PEspecieSelectObject,
+} from "@/packages/administrativo/components/PEspecie/PEspecieSelectObject";
 import { cn } from "@/lib/utils";
 import { statusImportacaoOptions, tipoEndossoOptions } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailSelectOptions";
+import type { TituloListItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloListItem";
 import type { PTituloDetailsFormValues, PTituloSelectOptionsByField } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
 import { mergeTituloSelectOptions, parsePTituloIsoDate, sanitizePTituloPositiveNumber } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormUtils";
 
 interface PTituloBasicSectionProps {
   control: Control<PTituloDetailsFormValues>;
+  titulo?: TituloListItem | null;
   selectOptionsByField?: PTituloSelectOptionsByField;
 }
 
-export function PTituloBasicSection({ control, selectOptionsByField }: PTituloBasicSectionProps) {
+export function PTituloBasicSection({ control, titulo, selectOptionsByField }: PTituloBasicSectionProps) {
   return (
     <div className="space-y-3 rounded-md border p-4">
       <h3 className="text-sm font-semibold text-foreground">Dados gerais</h3>
@@ -109,6 +117,16 @@ export function PTituloBasicSection({ control, selectOptionsByField }: PTituloBa
                   onValueChange={field.onChange}
                   placeholder="Selecione a espécie"
                   optionsOverride={selectOptionsByField?.especie_id}
+                  selectedLabel={
+                    titulo?.especie
+                      ? formatEspecieSelectLabel(titulo.especie)
+                      : titulo?.especie_id != null
+                        ? formatEspecieSelectLabel({
+                            especie_id: titulo.especie_id,
+                            especie: titulo.especie_sigla,
+                          })
+                        : undefined
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -145,6 +163,13 @@ export function PTituloBasicSection({ control, selectOptionsByField }: PTituloBa
                   onValueChange={field.onChange}
                   placeholder="Selecione o banco"
                   optionsOverride={selectOptionsByField?.banco_id}
+                  selectedLabel={
+                    titulo?.banco
+                      ? formatBancoSelectLabel(titulo.banco)
+                      : titulo?.banco_id != null
+                        ? formatBancoSelectLabel({ banco_id: titulo.banco_id })
+                        : undefined
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -156,14 +181,13 @@ export function PTituloBasicSection({ control, selectOptionsByField }: PTituloBa
           name="tipo_endosso"
           render={({ field }) => {
             const merged = mergeTituloSelectOptions("tipo_endosso", tipoEndossoOptions, selectOptionsByField);
-            const selected = merged.find((option) => option.value === (field.value || ""));
             return (
               <FormItem>
                 <FormLabel>Tipo de endosso</FormLabel>
                 <Select value={field.value || ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione o tipo de endosso">{selected?.label}</SelectValue>
+                      <SelectValue placeholder="Selecione o tipo de endosso" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -188,14 +212,13 @@ export function PTituloBasicSection({ control, selectOptionsByField }: PTituloBa
               statusImportacaoOptions,
               selectOptionsByField,
             );
-            const selected = merged.find((option) => option.value === (field.value || ""));
             return (
               <FormItem>
                 <FormLabel>Status de importação</FormLabel>
                 <Select value={field.value || ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione o status de importação">{selected?.label}</SelectValue>
+                      <SelectValue placeholder="Selecione o status de importação" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

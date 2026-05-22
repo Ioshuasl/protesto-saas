@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { isPTituloMockDataEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
+import { isPTituloWorkflowMockEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
 import { usePTituloDesistenciaHook } from "@/packages/administrativo/hooks/PTitulo/usePTituloDesistenciaHook";
 import type { TituloListItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloListItem";
 import { useState } from "react";
@@ -19,7 +19,7 @@ export function PTituloDesistenciaButton({ id, onSuccess }: { id: number; onSucc
       onClick={async () => {
         setIsLoading(true);
         try {
-          if (isPTituloMockDataEnabled()) {
+          if (isPTituloWorkflowMockEnabled()) {
             window.alert('Protótipo: confirmar "Desistir Título"');
           }
           const response = await desistirTitulo(id);

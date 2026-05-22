@@ -4,6 +4,7 @@ export const PLIVRO_ANDAMENTO_ENDPOINTS = {
   show: (id: number) => `administrativo/p_livro_andamento/${id}`,
   create: 'administrativo/p_livro_andamento/',
   update: (id: number) => `administrativo/p_livro_andamento/${id}`,
+  finalizar: (id: number) => `administrativo/p_livro_andamento/finalizar/${id}`,
   delete: (id: number) => `administrativo/p_livro_andamento/${id}`,
   proximoNumeroLivro: (livroNaturezaId: number) =>
     `administrativo/p_livro_andamento/proximo-numero-livro/${livroNaturezaId}`,

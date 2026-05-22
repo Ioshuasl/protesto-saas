@@ -7,7 +7,7 @@ from orm_py import Op
 
 from abstracts.repository import BaseRepository
 from actions.data.query_params_parser import QueryParams, QueryParamsParser
-from database.orm_firebird import normalize_row_keys
+from database.orm_firebird import firebird_orm_supports_string_where, normalize_row_keys
 from database.orm_firebird_settings import use_orm_firebird
 from packages.v1.administrativo.model.g_feriado import get_g_feriado_model
 from packages.v1.administrativo.schemas.g_feriado_schema import GFeriadoIndexSchema
@@ -52,7 +52,10 @@ class IndexRepository(BaseRepository):
             field_map=_GFERIADO_SORT_FIELD_MAP,
         )
 
-        if use_orm_firebird() and not self._has_string_filters(feriado_index_schema):
+        if use_orm_firebird() and (
+            firebird_orm_supports_string_where()
+            or not self._has_string_filters(feriado_index_schema)
+        ):
             return self._execute_orm(
                 feriado_index_schema, page, per_page, sort_field, sort_direction
             )
@@ -119,19 +122,45 @@ class IndexRepository(BaseRepository):
         }
 
     @staticmethod
+    def _has_string_filters(feriado_index_schema: GFeriadoIndexSchema) -> bool:
+        return any(
+            [
+                feriado_index_schema.tipo is not None,
+                feriado_index_schema.situacao is not None,
+                feriado_index_schema.descricao is not None,
+            ]
+        )
+
+    @staticmethod
     def _build_orm_where(feriado_index_schema: GFeriadoIndexSchema) -> dict[str, Any]:
-        where: dict[str, Any] = {}
+        clauses: list[dict[str, Any]] = []
 
         if feriado_index_schema.ano is not None:
-            where["ANO"] = feriado_index_schema.ano
+            clauses.append({"ANO": feriado_index_schema.ano})
         if feriado_index_schema.tipo is not None:
-            where["TIPO"] = feriado_index_schema.tipo
-        if feriado_index_schema.situacao is not None:
-            where["SITUACAO"] = feriado_index_schema.situacao
+            clauses.append({"TIPO": feriado_index_schema.tipo})
+        if feriado_index_schema.situacao == SITUACAO_CODIGO_ATIVO:
+            clauses.append({"SITUACAO": SITUACAO_CODIGO_ATIVO})
+        elif feriado_index_schema.situacao == SITUACAO_CODIGO_INATIVO:
+            clauses.append(
+                {
+                    Op.or_: [
+                        {"SITUACAO": {Op.is_: None}},
+                        {"SITUACAO": ""},
+                        {"SITUACAO": SITUACAO_CODIGO_INATIVO},
+                    ]
+                }
+            )
         if feriado_index_schema.descricao is not None:
-            where["DESCRICAO"] = {Op.like: f"%{feriado_index_schema.descricao}%"}
+            clauses.append(
+                {"DESCRICAO": {Op.like: f"%{feriado_index_schema.descricao}%"}}
+            )
 
-        return where
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {Op.and_: clauses}
 
     def _build_sql_filters(
         self, feriado_index_schema: GFeriadoIndexSchema
@@ -166,16 +195,6 @@ class IndexRepository(BaseRepository):
             "total": total,
             "total_pages": total_pages,
         }
-
-    @staticmethod
-    def _has_string_filters(feriado_index_schema: GFeriadoIndexSchema) -> bool:
-        return any(
-            [
-                feriado_index_schema.tipo is not None,
-                feriado_index_schema.situacao is not None,
-                feriado_index_schema.descricao is not None,
-            ]
-        )
 
     @staticmethod
     def _append_situacao_filter(

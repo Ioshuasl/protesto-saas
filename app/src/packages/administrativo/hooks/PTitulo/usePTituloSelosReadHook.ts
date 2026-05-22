@@ -18,15 +18,17 @@ export const usePTituloSelosReadHook = () => {
           setSelos(response);
           setResponse({
             status: 200,
-            message: 'Selos listados com sucesso',
+            message: 'Selos do título localizados com sucesso',
+          });
+        } else if (response && typeof response === 'object' && 'status' in response) {
+          setSelos([]);
+          setResponse({
+            status: Number(response.status) || 600,
+            message: String(response.message ?? 'Erro ao listar selos'),
+            error: String(response.message ?? 'Erro ao listar selos'),
           });
         } else {
           setSelos([]);
-          setResponse({
-            status: response.status,
-            message: response.message,
-            error: response.message,
-          });
         }
         return response;
       } finally {

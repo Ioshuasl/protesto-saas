@@ -5,6 +5,11 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PMotivosCancelamentoDialog } from "@/packages/administrativo/components/PMotivosCancelamento/PMotivosCancelamentoDialog";
 import { PMotivosCancelamentoFilter } from "@/packages/administrativo/components/PMotivosCancelamento/PMotivosCancelamentoFilter";
+import {
+  buildPMotivosCancelamentoIndexQuery,
+  defaultPMotivosCancelamentoFilterState,
+  type PMotivosCancelamentoFilterState,
+} from "@/packages/administrativo/components/PMotivosCancelamento/pmotivosCancelamentoFilterUtils";
 import type { MotivoCancelamentoFormValues } from "@/packages/administrativo/schemas/PMotivosCancelamento/PMotivosCancelamentoFormSchema";
 import { PMotivosCancelamentoTable } from "@/packages/administrativo/components/PMotivosCancelamento/PMotivosCancelamentoTable";
 import { usePMotivosCancelamentoDeleteHook } from "@/packages/administrativo/hooks/PMotivosCancelamento/usePMotivosCancelamentoDeleteHook";
@@ -19,11 +24,19 @@ export default function PMotivosCancelamentoIndex() {
   const { deleteMotivoCancelamento } = usePMotivosCancelamentoDeleteHook();
 
   const [buttonIsLoading, setButtonIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<PMotivosCancelamentoFilterState>(
+    defaultPMotivosCancelamentoFilterState,
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selected, setSelected] = useState<PMotivosCancelamentoInterface | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
+  const apiFilters = useMemo(() => buildPMotivosCancelamentoIndexQuery(filters), [filters]);
+
+  const handleFiltersChange = useCallback((next: PMotivosCancelamentoFilterState) => {
+    setFilters(next);
+  }, []);
 
   const handleOpenDialog = useCallback((row?: PMotivosCancelamentoInterface) => {
     setSelected(row ?? null);
@@ -40,7 +53,7 @@ export default function PMotivosCancelamentoIndex() {
       setButtonIsLoading(true);
       try {
         await saveMotivoCancelamento(formData, selected);
-        await fetchMotivosCancelamento();
+        await fetchMotivosCancelamento(apiFilters);
         handleCloseDialog();
       } catch (e) {
         console.error("Erro ao salvar motivo de cancelamento:", e);
@@ -48,7 +61,7 @@ export default function PMotivosCancelamentoIndex() {
         setButtonIsLoading(false);
       }
     },
-    [saveMotivoCancelamento, selected, fetchMotivosCancelamento, handleCloseDialog],
+    [saveMotivoCancelamento, selected, fetchMotivosCancelamento, handleCloseDialog, apiFilters],
   );
 
   const openDeleteDialog = useCallback((id: number) => {
@@ -67,21 +80,15 @@ export default function PMotivosCancelamentoIndex() {
     closeDeleteDialog();
     try {
       await deleteMotivoCancelamento(id);
-      await fetchMotivosCancelamento();
+      await fetchMotivosCancelamento(apiFilters);
     } catch (e) {
       console.error("Erro ao excluir:", e);
     }
-  }, [pendingDeleteId, closeDeleteDialog, deleteMotivoCancelamento, fetchMotivosCancelamento]);
+  }, [pendingDeleteId, closeDeleteDialog, deleteMotivoCancelamento, fetchMotivosCancelamento, apiFilters]);
 
   useEffect(() => {
-    void fetchMotivosCancelamento();
-  }, [fetchMotivosCancelamento]);
-
-  const filtered = useMemo(() => {
-    if (!searchQuery) return motivosCancelamento;
-    const q = searchQuery.toLowerCase();
-    return motivosCancelamento.filter((m) => m.descricao?.toLowerCase().includes(q));
-  }, [motivosCancelamento, searchQuery]);
+    void fetchMotivosCancelamento(apiFilters);
+  }, [fetchMotivosCancelamento, apiFilters]);
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -96,9 +103,9 @@ export default function PMotivosCancelamentoIndex() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <PMotivosCancelamentoFilter value={searchQuery} onChange={setSearchQuery} />
+        <PMotivosCancelamentoFilter value={filters} onChange={handleFiltersChange} />
         <PMotivosCancelamentoTable
-          data={filtered}
+          data={motivosCancelamento}
           isLoading={isLoading}
           onEdit={handleOpenDialog}
           onDelete={openDeleteDialog}
@@ -107,8 +114,11 @@ export default function PMotivosCancelamentoIndex() {
 
       <PMotivosCancelamentoDialog
         open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        motivo={selected}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) handleCloseDialog();
+        }}
+        motivoCancelamento={selected}
         onSubmit={handleSave}
         isLoading={buttonIsLoading}
       />

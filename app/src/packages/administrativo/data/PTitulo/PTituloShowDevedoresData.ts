@@ -1,8 +1,8 @@
 import db from "@/db.json";
 import { pPessoaVinculoListRef } from '@/packages/administrativo/data/PTitulo/ptituloPessoasVinculoInMemory';
 import {
-  PTITULO_FAKE_ENDPOINTS,
-  isPTituloMockDataEnabled,
+  PTITULO_WORKFLOW_ENDPOINTS,
+  isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import type { PPessoaVinculoInterface } from '@/packages/administrativo/interfaces/PPessoaVinculo/PPessoaVinculoInterface';
 import type { PPessoaInterface } from '@/packages/administrativo/interfaces/PPessoa/PPessoaInterface';
@@ -27,12 +27,12 @@ function mapVinculoToDevedor(item: PPessoaVinculoInterface): PTituloShowDevedore
 }
 
 export async function PTituloShowDevedoresData(tituloId: number): Promise<PTituloShowDevedoresItem[]> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.GET,
-        endpoint: PTITULO_FAKE_ENDPOINTS.showDevedores(tituloId),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.showDevedores(tituloId),
       }),
     );
     const response = await apiCall();

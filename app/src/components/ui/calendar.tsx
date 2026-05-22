@@ -17,8 +17,12 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+export type CalendarSize = 'default' | 'compact';
+
 type CalendarProps = React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
+  /** Densidade visual: `compact` para dialogs e telas baixas. */
+  size?: CalendarSize;
   /** Exibe botão para selecionar a data atual (apenas em `mode="single"`). Padrão: true. */
   showTodayButton?: boolean;
   todayLabel?: string;
@@ -30,6 +34,7 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = 'label',
   buttonVariant = 'ghost',
+  size = 'default',
   locale,
   formatters,
   components,
@@ -41,6 +46,7 @@ function Calendar({
   ...props
 }: CalendarProps) {
   const defaultClassNames = getDefaultClassNames();
+  const isCompact = size === 'compact';
   const { Footer: userFooter, ...restComponents } = components ?? {};
   const shouldShowTodayButton =
     showTodayButton !== false && mode === 'single' && typeof onSelect === 'function';
@@ -52,7 +58,10 @@ function Calendar({
       disabled={disabled}
       showOutsideDays={showOutsideDays}
       className={cn(
-        'group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(7)] [--rdp-selected-border:0px_solid_transparent] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
+        'group/calendar bg-background [--cell-radius:var(--radius-md)] [--rdp-selected-border:0px_solid_transparent] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
+        isCompact
+          ? 'p-1 [--cell-size:1.75rem]'
+          : 'p-2 [--cell-size:--spacing(7)]',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className,
@@ -65,8 +74,16 @@ function Calendar({
       }}
       classNames={{
         root: cn('w-fit', defaultClassNames.root),
-        months: cn('relative flex flex-col gap-4 md:flex-row', defaultClassNames.months),
-        month: cn('flex w-full flex-col gap-4', defaultClassNames.month),
+        months: cn(
+          'relative flex flex-col md:flex-row',
+          isCompact ? 'gap-2' : 'gap-4',
+          defaultClassNames.months,
+        ),
+        month: cn(
+          'flex w-full flex-col',
+          isCompact ? 'gap-2' : 'gap-4',
+          defaultClassNames.month,
+        ),
         nav: cn(
           'absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1',
           defaultClassNames.nav,
@@ -94,17 +111,23 @@ function Calendar({
         caption_label: cn(
           'font-medium select-none',
           captionLayout === 'label'
-            ? 'text-sm'
-            : 'flex items-center gap-1 rounded-(--cell-radius) text-sm [&>svg]:size-3.5 [&>svg]:text-muted-foreground',
+            ? isCompact
+              ? 'text-xs'
+              : 'text-sm'
+            : cn(
+                'flex items-center gap-1 rounded-(--cell-radius) [&>svg]:text-muted-foreground',
+                isCompact ? 'text-xs [&>svg]:size-3' : 'text-sm [&>svg]:size-3.5',
+              ),
           defaultClassNames.caption_label,
         ),
         table: 'w-full border-collapse',
         weekdays: cn('flex', defaultClassNames.weekdays),
         weekday: cn(
-          'flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none',
+          'flex-1 rounded-(--cell-radius) font-normal text-muted-foreground select-none',
+          isCompact ? 'text-[0.65rem]' : 'text-[0.8rem]',
           defaultClassNames.weekday,
         ),
-        week: cn('mt-2 flex w-full', defaultClassNames.week),
+        week: cn('flex w-full', isCompact ? 'mt-0.5' : 'mt-2', defaultClassNames.week),
         week_number_header: cn('w-(--cell-size) select-none', defaultClassNames.week_number_header),
         week_number: cn('text-[0.8rem] text-muted-foreground select-none', defaultClassNames.week_number),
         day: cn(
@@ -140,15 +163,18 @@ function Calendar({
           return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...rootProps} />;
         },
         Chevron: ({ className, orientation, ...chevronProps }) => {
+          const iconSize = isCompact ? 'size-3.5' : 'size-4';
           if (orientation === 'left') {
-            return <ChevronLeftIcon className={cn('size-4', className)} {...chevronProps} />;
+            return <ChevronLeftIcon className={cn(iconSize, className)} {...chevronProps} />;
           }
           if (orientation === 'right') {
-            return <ChevronRightIcon className={cn('size-4', className)} {...chevronProps} />;
+            return <ChevronRightIcon className={cn(iconSize, className)} {...chevronProps} />;
           }
-          return <ChevronDownIcon className={cn('size-4', className)} {...chevronProps} />;
+          return <ChevronDownIcon className={cn(iconSize, className)} {...chevronProps} />;
         },
-        DayButton: ({ ...dayProps }) => <CalendarDayButton locale={locale} {...dayProps} />,
+        DayButton: ({ ...dayProps }) => (
+          <CalendarDayButton locale={locale} size={size} {...dayProps} />
+        ),
         WeekNumber: ({ children, ...weekProps }) => {
           return (
             <td {...weekProps}>
@@ -163,6 +189,7 @@ function Calendar({
                 <CalendarTodayButton
                   label={todayLabel}
                   disabled={disabled}
+                  size={size}
                   onSelect={onSelect as OnSelectHandler<Date | undefined>}
                 />
               </div>
@@ -183,21 +210,24 @@ function isDateDisabledByMatcher(date: Date, disabled: Matcher | Matcher[] | boo
 function CalendarTodayButton({
   label,
   disabled,
+  size = 'default',
   onSelect,
 }: {
   label: string;
   disabled: CalendarProps['disabled'];
+  size?: CalendarSize;
   onSelect: OnSelectHandler<Date | undefined>;
 }) {
   const today = React.useMemo(() => startOfDay(new Date()), []);
   const isDisabled = isDateDisabledByMatcher(today, disabled);
+  const isCompact = size === 'compact';
 
   return (
-    <div className="border-t px-2 pt-2">
+    <div className={cn('border-t', isCompact ? 'px-1 pt-1' : 'px-2 pt-2')}>
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className={cn('w-full', isCompact && 'h-8 text-xs')}
         disabled={isDisabled}
         onClick={(event) => {
           onSelect(today, today, {} as Modifiers, event);
@@ -214,8 +244,10 @@ function CalendarDayButton({
   day,
   modifiers,
   locale,
+  size = 'default',
   ...props
-}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
+}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale>; size?: CalendarSize }) {
+  const isCompact = size === 'compact';
   const defaultClassNames = getDefaultClassNames();
 
   const ref = React.useRef<HTMLButtonElement>(null);
@@ -227,7 +259,7 @@ function CalendarDayButton({
     <Button
       ref={ref}
       variant="ghost"
-      size="icon"
+      size={isCompact ? 'icon-sm' : 'icon'}
       data-day={day.date.toLocaleDateString(locale?.code)}
       data-selected-single={
         modifiers.selected &&

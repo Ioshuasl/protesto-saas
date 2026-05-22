@@ -20,6 +20,7 @@ import { TituloListItem } from "@/packages/administrativo/services/PTitulo/PTitu
 import { Cog, EllipsisVertical, Eye } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { getTriduoMessage, moneyFormatter } from "./titulo-list-utils";
+import { formatEmptyField } from "@/shared/utils/emptyField";
 
 type PTituloTableWorkflowItem = TituloListItem & {
   hasApontamentoBase?: boolean;
@@ -69,7 +70,6 @@ export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }:
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[60px]">ID</TableHead>
             <TableHead>Número/Nosso Número</TableHead>
             <TableHead>Protocolo</TableHead>
             <TableHead>Apresentante (Nome/CPF-CNPJ)</TableHead>
@@ -83,9 +83,11 @@ export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }:
           {data.map((titulo) => {
             const triduo = getTriduoMessage(titulo);
             const valorTotal = titulo.valor_total ?? titulo.valor_total_custas ?? titulo.valor_titulo ?? 0;
-            const ocorrenciaLabel = titulo.ocorrencia_id
-              ? ocorrenciaLabelById.get(titulo.ocorrencia_id) || "Sem ocorrência"
-              : "Sem ocorrência";
+            const ocorrenciaLabel =
+              titulo.status_descricao ||
+              (titulo.ocorrencia_id
+                ? ocorrenciaLabelById.get(titulo.ocorrencia_id) || "Sem ocorrência"
+                : "Sem ocorrência");
             const hasValue = (value: unknown) => value !== null && value !== undefined && value !== "";
             const hasApontamentoBase =
               titulo.hasApontamentoBase ??
@@ -104,23 +106,24 @@ export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }:
                 className="cursor-pointer"
                 onClick={() => onViewDetails(titulo)}
               >
-                <TableCell className="font-medium">{titulo.titulo_id}</TableCell>
                 <TableCell>
                   <div className="flex max-w-[140px] flex-col">
-                    <span className="truncate">{titulo.numero_titulo ?? "-"}</span>
+                    <span className="truncate">{formatEmptyField(titulo.numero_titulo)}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      Nosso n. {titulo.nosso_numero ?? "-"}
+                      Nosso n. {formatEmptyField(titulo.nosso_numero)}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="whitespace-nowrap">{titulo.numero_apontamento ?? "-"}</TableCell>
+                <TableCell className="whitespace-nowrap">{formatEmptyField(titulo.numero_apontamento)}</TableCell>
                 <TableCell>
                   <div className="flex max-w-[220px] flex-col">
-                    <span className="truncate">{titulo.apresentante_nome ?? "-"}</span>
-                    <span className="truncate text-xs text-muted-foreground">{titulo.apresentante_cpfcnpj ?? "-"}</span>
+                    <span className="truncate">{formatEmptyField(titulo.apresentante_nome)}</span>
+                    <span className="truncate text-xs text-muted-foreground">{formatEmptyField(titulo.apresentante_cpfcnpj)}</span>
                   </div>
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">{titulo.especie_sigla ?? "-"}</TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {formatEmptyField(titulo.especie?.especie ?? titulo.especie_sigla)}
+                </TableCell>
                 <TableCell className="whitespace-nowrap">{moneyFormatter.format(valorTotal)}</TableCell>
                 <TableCell>
                   <div className="flex min-w-[120px] flex-col gap-1">

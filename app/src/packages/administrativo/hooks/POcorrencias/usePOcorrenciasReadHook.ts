@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import type { POcorrenciasInterface } from '@/packages/administrativo/interfaces/POcorrencias/POcorrenciasInterface';
+import type { POcorrenciasIndexQuery } from '@/packages/administrativo/interfaces/POcorrencias/POcorrenciasIndexQuery';
 import { POcorrenciasIndexService } from '@/packages/administrativo/services/POcorrencias/POcorrenciasIndexService';
 import { useResponse } from '@/shared/components/response/ResponseContext';
 
@@ -9,10 +10,10 @@ export const usePOcorrenciasReadHook = () => {
   const [ocorrencias, setOcorrencias] = useState<POcorrenciasInterface[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchOcorrencias = useCallback(async () => {
+  const fetchOcorrencias = useCallback(async (query?: POcorrenciasIndexQuery) => {
     setIsLoading(true);
     try {
-      const response = await POcorrenciasIndexService();
+      const response = await POcorrenciasIndexService(query);
       if (Array.isArray(response)) {
         setOcorrencias(response);
         setResponse({

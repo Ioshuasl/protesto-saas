@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PArquivoTituloInterface } from "@/packages/cra/interface/PArquivoTitulo/PArquivoTituloInterface";
+import { formatEmptyField, formatEmptyFieldDate } from "@/shared/utils/emptyField";
 
 interface PArquivoTituloTableProps {
   data: PArquivoTituloInterface[];
@@ -20,17 +21,15 @@ interface PArquivoTituloTableProps {
 }
 
 function formatImportDate(value?: Date): string {
-  if (!value) return "-";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return formatEmptyFieldDate(value, (date) =>
+    new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date),
+  );
 }
 
 export function PArquivoTituloTable({
@@ -73,7 +72,7 @@ export function PArquivoTituloTable({
               className="cursor-pointer"
               onClick={() => onGerarArquivoConfirmacao(arquivo)}
             >
-              <TableCell className="max-w-[280px] truncate font-medium">{arquivo.nome_arquivo ?? "-"}</TableCell>
+              <TableCell className="max-w-[280px] truncate font-medium">{formatEmptyField(arquivo.nome_arquivo)}</TableCell>
               <TableCell className="whitespace-nowrap">{formatImportDate(arquivo.data_importacao)}</TableCell>
               <TableCell>{arquivo.quantidade ?? 0}</TableCell>
               <TableCell>

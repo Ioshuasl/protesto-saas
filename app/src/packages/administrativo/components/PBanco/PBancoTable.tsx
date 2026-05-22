@@ -14,13 +14,15 @@ import {
 } from "@/components/ui/table";
 import { PBancoInterface, PBancoSimNao } from "@/packages/administrativo/interfaces";
 import { cn } from "@/lib/utils";
+import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatEmptyField, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 function formatApontamentoPagPosterior(
   value: PBancoInterface["apontamento_pag_posterior"],
 ): string {
   if (value === PBancoSimNao.Sim) return "Sim";
   if (value === PBancoSimNao.Nao) return "Não";
-  return "—";
+  return EMPTY_FIELD_LABEL;
 }
 
 interface PBancoTableProps {
@@ -52,11 +54,11 @@ function useIsTextTruncated(ref: RefObject<HTMLSpanElement | null>, text: string
 
 function TruncatedTableText({ text }: { text?: string | null }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const label = text?.trim() || "—";
+  const label = formatEmptyFieldTrimmed(text);
   const isTruncated = useIsTextTruncated(ref, label);
 
-  if (label === "—") {
-    return <span className="text-muted-foreground">—</span>;
+  if (label === EMPTY_FIELD_LABEL) {
+    return <span className="text-muted-foreground">{EMPTY_FIELD_LABEL}</span>;
   }
 
   return (
@@ -117,7 +119,7 @@ export function PBancoTable({ data, onEdit, onDelete, isLoading }: PBancoTablePr
               className="cursor-pointer"
               onClick={() => onEdit(banco)}
             >
-              <TableCell className="w-[88px] truncate">{banco.codigo_banco ?? "—"}</TableCell>
+              <TableCell className="w-[88px] truncate">{formatEmptyField(banco.codigo_banco)}</TableCell>
               <TableCell className="max-w-0 min-w-0 overflow-visible">
                 <TruncatedTableText text={banco.descricao} />
               </TableCell>

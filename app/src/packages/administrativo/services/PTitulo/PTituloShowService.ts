@@ -4,9 +4,7 @@ import { PTituloShowData } from '@/packages/administrativo/data/PTitulo/PTituloS
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 
 async function executePTituloShowService(id: number) {
-  const response = await PTituloShowData(id);
-
-  return response;
+  return await PTituloShowData(id);
 }
 
 export const PTituloShowService = withClientErrorHandler(executePTituloShowService);

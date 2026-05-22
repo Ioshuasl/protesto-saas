@@ -34,6 +34,29 @@ def _build_connection_config() -> dict[str, Any]:
 
 
 _ORM_SINGLETON: OrmFirebird | None = None
+_FIREBIRD_DIALECT_PATCH_APPLIED = False
+
+
+def ensure_firebird_dialect_patch() -> bool:
+    """
+    orm-firebird-py >= 0.1.2: corrige sqlalchemy_firebird VARCHAR bind cast
+    (TypeError: int + str em _render_string_type) ao usar Op.like/eq em STRING.
+    """
+    global _FIREBIRD_DIALECT_PATCH_APPLIED
+    if _FIREBIRD_DIALECT_PATCH_APPLIED:
+        return True
+    try:
+        from orm_py.dialect_patch import apply_firebird_type_compiler_patch
+    except ImportError:
+        return False
+    apply_firebird_type_compiler_patch()
+    _FIREBIRD_DIALECT_PATCH_APPLIED = True
+    return True
+
+
+def firebird_orm_supports_string_where() -> bool:
+    """Filtros ORM em colunas VARCHAR (LIKE/eq) exigem dialect_patch (0.1.2+)."""
+    return ensure_firebird_dialect_patch()
 
 
 def get_orm() -> OrmFirebird:
@@ -45,6 +68,7 @@ def get_orm() -> OrmFirebird:
         raise RuntimeError(
             "ORM Firebird desabilitado. Defina USE_ORM_FIREBIRD=true no .env para usar orm-firebird-py."
         )
+    ensure_firebird_dialect_patch()
     orm = OrmFirebird(_build_connection_config())
     orm.authenticate()
     _ORM_SINGLETON = orm
@@ -98,6 +122,10 @@ def describe_g_feriado_schema() -> dict[str, Any]:
 
 def describe_p_pessoa_schema() -> dict[str, Any]:
     return describe_table_schema("P_PESSOA")
+
+
+def describe_p_pessoa_vinculo_schema() -> dict[str, Any]:
+    return describe_table_schema("P_PESSOA_VINCULO")
 
 
 def describe_p_titulo_schema() -> dict[str, Any]:

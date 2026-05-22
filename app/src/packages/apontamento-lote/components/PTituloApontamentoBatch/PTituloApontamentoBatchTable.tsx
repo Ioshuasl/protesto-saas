@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PTituloApontamentoBatchInterface } from "@/packages/apontamento-lote/interface/PTituloApontamentoBatch/PTituloApontamentoBatchInterface";
+import { formatEmptyField, formatEmptyFieldDate } from "@/shared/utils/emptyField";
 
 interface PTituloApontamentoBatchTableProps {
   data: PTituloApontamentoBatchInterface[];
@@ -28,10 +29,7 @@ function formatMoney(value?: number): string {
 }
 
 function formatDate(value?: Date): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString("pt-BR");
+  return formatEmptyFieldDate(value, (date) => date.toLocaleDateString("pt-BR"));
 }
 
 function getStatusApontamentoLabel(item: PTituloApontamentoBatchInterface): string {
@@ -102,13 +100,13 @@ export function PTituloApontamentoBatchTable({
                 <TableCell>
                   <div className="flex min-w-[190px] flex-col">
                     <span className="font-medium">{titulo.numero_titulo ?? `Título ${titulo.titulo_id}`}</span>
-                    <span className="text-xs text-muted-foreground">Nosso n. {titulo.nosso_numero ?? "-"}</span>
+                    <span className="text-xs text-muted-foreground">Nosso n. {formatEmptyField(titulo.nosso_numero)}</span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex min-w-[240px] flex-col">
-                    <span className="truncate font-medium">{titulo.apresentante ?? "-"}</span>
-                    <span className="truncate text-xs text-muted-foreground">{titulo.cpfcnpj ?? "-"}</span>
+                    <span className="truncate font-medium">{formatEmptyField(titulo.apresentante)}</span>
+                    <span className="truncate text-xs text-muted-foreground">{formatEmptyField(titulo.cpfcnpj)}</span>
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">{formatMoney(titulo.valor_titulo)}</TableCell>

@@ -3,6 +3,8 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any, Mapping, Optional
 
+from orm_py import Op
+
 from abstracts.repository import BaseRepository
 from actions.data.query_params_parser import QueryParams, QueryParamsParser
 from database.orm_firebird import normalize_row_keys
@@ -50,7 +52,7 @@ class IndexRepository(BaseRepository):
             primary_key="banco_id",
             field_map=_PBANCO_SORT_FIELD_MAP,
         )
-        if use_orm_firebird() and not self._has_unified_search(banco_index_schema):
+        if use_orm_firebird():
             return self._execute_orm(
                 banco_index_schema, page, per_page, sort_field, sort_direction
             )
@@ -117,12 +119,20 @@ class IndexRepository(BaseRepository):
         }
 
     @staticmethod
-    def _has_unified_search(banco_index_schema: PBancoIndexSchema) -> bool:
-        return banco_index_schema.busca is not None
-
-    @staticmethod
     def _build_orm_where(banco_index_schema: PBancoIndexSchema) -> dict[str, Any]:
-        return {}
+        if banco_index_schema.busca is None:
+            return {}
+
+        term = str(banco_index_schema.busca).strip()
+        if not term:
+            return {}
+
+        return {
+            Op.or_: [
+                {"CODIGO_BANCO": {Op.like: f"%{term}%"}},
+                {"DESCRICAO": {Op.like: f"%{term}%"}},
+            ]
+        }
 
     def _build_sql_filters(
         self, banco_index_schema: PBancoIndexSchema

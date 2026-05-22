@@ -1,8 +1,8 @@
 import { enrichTitulo } from '@/packages/administrativo/data/PTitulo/ptituloEnrich';
 import { ptituloListRef } from '@/packages/administrativo/data/PTitulo/ptituloInMemory';
 import {
-  PTITULO_FAKE_ENDPOINTS,
-  isPTituloMockDataEnabled,
+  PTITULO_WORKFLOW_ENDPOINTS,
+  isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import type { PTituloInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloInterface';
 import type { PTituloRetiradaFormInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloRetiradaFormInterface';
@@ -13,12 +13,12 @@ import { Methods } from '@/shared/services/api/enums/ApiMethodEnum';
 
 /** Mock: `data_retirada` não existe em `PTituloInterface`; persistimos ocorrência e motivo e atualizamos situação. */
 export async function PTituloRetiradaData(id: number, payload: PTituloRetiradaFormInterface): Promise<TituloListItem> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.PUT,
-        endpoint: PTITULO_FAKE_ENDPOINTS.retiradaTitulo(id),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.retiradaTitulo(id),
         body: payload,
       }),
     );

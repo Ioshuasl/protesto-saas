@@ -14,6 +14,7 @@ import {
 import { PLivroNaturezaInterface } from "@/packages/administrativo/interfaces";
 import { normalizeSituacaoKey } from "@/packages/administrativo/components/PLivroNatureza/plivroNaturezaSituacaoUtils";
 import { SituacoesBadge } from "@/shared/components/situacoes/SituacoesBadge";
+import { formatEmptyField, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 interface PLivroNaturezaTableProps {
   data: PLivroNaturezaInterface[];
@@ -57,8 +58,8 @@ export function PLivroNaturezaTable({ data, onEdit, onDelete, isLoading }: PLivr
               className="cursor-pointer"
               onClick={() => onEdit(livro)}
             >
-              <TableCell>{livro.sigla ?? "—"}</TableCell>
-              <TableCell>{livro.descricao?.trim() || "—"}</TableCell>
+              <TableCell>{formatEmptyField(livro.sigla)}</TableCell>
+              <TableCell>{formatEmptyFieldTrimmed(livro.descricao)}</TableCell>
               <TableCell>
                 <SituacoesBadge situacao={normalizeSituacaoKey(livro.situacao)} />
               </TableCell>

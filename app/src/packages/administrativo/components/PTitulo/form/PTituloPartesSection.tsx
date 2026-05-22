@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PPessoaVinculoTable } from "@/packages/administrativo/components/PPessoaVinculo/PPessoaVinculoTable";
 import { PPessoaDialog } from "@/packages/administrativo/components/PPessoa/PPessoaDialog";
 import type { PessoaFormValues } from "@/packages/administrativo/components/PPessoa/PPessoaForm";
 import type { PPessoaInterface } from "@/packages/administrativo/interfaces";
+import type { PPessoaVinculoTipo } from "@/packages/administrativo/interfaces/PPessoaVinculo/PPessoaVinculoTipoEnum";
 import { PessoaService } from "@/packages/administrativo/services/PPessoa/PPessoaService";
 import type { PTituloDetailsFormValues } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
 import { PTituloParteDialog } from "../PTituloParteDialog";
-import { pTituloParteRoleLabelMap, pTituloParteRoleOptions, type PTituloParteItem } from "../PTituloParteTypes";
+import { buildPTituloParteItem, type PTituloParteItem } from "../PTituloParteTypes";
 
 export function PTituloPartesSection() {
   const { control, getValues } = useFormContext<PTituloDetailsFormValues>();
@@ -25,16 +25,12 @@ export function PTituloPartesSection() {
   const [isSubmittingPessoa, setIsSubmittingPessoa] = useState(false);
 
   const handleAddPartesBatch = (novasPartes: PTituloParteItem[]) => {
-    novasPartes.forEach((item) => append(item));
+    novasPartes.forEach((item) => append(buildPTituloParteItem(item)));
   };
 
-  const handleUpdateTipoVinculo = (index: number, tipo: string) => {
+  const handleUpdateTipoVinculo = (index: number, tipo: PPessoaVinculoTipo) => {
     const current = getValues(`partes.${index}`);
-    update(index, {
-      ...current,
-      tipo,
-      descricao: pTituloParteRoleLabelMap.get(tipo) ?? "Outros",
-    });
+    update(index, buildPTituloParteItem({ ...current, tipo }));
   };
 
   const handleEditParte = async (index: number) => {
@@ -46,7 +42,11 @@ export function PTituloPartesSection() {
           : undefined;
 
       if (!pessoa && parte.cpfcnpj) {
-        const pessoas = (await PessoaService.getAll()) as unknown as PPessoaInterface[];
+        const pessoas = await PessoaService.getAll({
+          page: 1,
+          per_page: 500,
+          sort: "pessoa_id.desc",
+        });
         pessoa = pessoas.find((item) => item.cpfcnpj === parte.cpfcnpj);
       }
 
@@ -79,12 +79,15 @@ export function PTituloPartesSection() {
         : await PessoaService.create(payload)) as unknown as PPessoaInterface;
 
       const current = getValues(`partes.${selectedParteIndex}`);
-      update(selectedParteIndex, {
-        ...current,
-        pessoa_id: savedPessoa.pessoa_id,
-        nome: savedPessoa.nome,
-        cpfcnpj: savedPessoa.cpfcnpj,
-      });
+      update(
+        selectedParteIndex,
+        buildPTituloParteItem({
+          ...current,
+          pessoa_id: savedPessoa.pessoa_id,
+          nome: savedPessoa.nome,
+          cpfcnpj: savedPessoa.cpfcnpj,
+        }),
+      );
 
       setIsEditPPessoaDialogOpen(false);
       setSelectedParteIndex(null);
@@ -105,73 +108,18 @@ export function PTituloPartesSection() {
         </Button>
       </div>
 
-      {fields.length > 0 ? (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tipo de vínculo</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
-                <TableHead className="w-[100px] text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fields.map((field, index) => (
-                <TableRow key={field.id}>
-                  <TableCell className="min-w-[220px]">
-                    <Select
-                      value={field.tipo || "D"}
-                      onValueChange={(value) => handleUpdateTipoVinculo(index, value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Tipo de vínculo">
-                          {pTituloParteRoleLabelMap.get(field.tipo || "D")}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {pTituloParteRoleOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>{field.nome ?? "-"}</TableCell>
-                  <TableCell>{field.cpfcnpj ?? "-"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-foreground hover:text-[#FF6B00]"
-                        onClick={() => void handleEditParte(index)}
-                        aria-label="Editar parte"
-                      >
-                        <Pencil className="h-4 w-4" strokeWidth={1.5} />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-foreground hover:text-[#FF6B00]"
-                        onClick={() => remove(index)}
-                        aria-label="Excluir parte"
-                      >
-                        <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="rounded-md border p-3 text-sm text-muted-foreground">Nenhuma parte vinculada encontrada.</div>
-      )}
+      <PPessoaVinculoTable
+        rows={fields.map((field) => ({
+          id: field.id,
+          tipo: field.tipo,
+          nome: field.nome,
+          cpfcnpj: field.cpfcnpj,
+        }))}
+        onTipoChange={handleUpdateTipoVinculo}
+        onEdit={(index) => void handleEditParte(index)}
+        onRemove={remove}
+        emptyMessage="Nenhuma parte vinculada encontrada."
+      />
 
       <PTituloParteDialog
         open={isParteDialogOpen}

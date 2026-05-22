@@ -5,7 +5,13 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { POcorrenciasDialog } from "@/packages/administrativo/components/POcorrencias/POcorrenciasDialog";
 import { POcorrenciasFilter } from "@/packages/administrativo/components/POcorrencias/POcorrenciasFilter";
+import {
+  buildPOcorrenciasIndexQuery,
+  defaultPOcorrenciasFilterState,
+  type POcorrenciasFilterState,
+} from "@/packages/administrativo/components/POcorrencias/pocorrenciasFilterUtils";
 import type { OcorrenciaFormValues } from "@/packages/administrativo/schemas/POcorrencias/POcorrenciasFormSchema";
+import { formValuesToApiPayload } from "@/packages/administrativo/schemas/POcorrencias/POcorrenciasFormSchema";
 import { POcorrenciasTable } from "@/packages/administrativo/components/POcorrencias/POcorrenciasTable";
 import { usePOcorrenciasDeleteHook } from "@/packages/administrativo/hooks/POcorrencias/usePOcorrenciasDeleteHook";
 import { usePOcorrenciasReadHook } from "@/packages/administrativo/hooks/POcorrencias/usePOcorrenciasReadHook";
@@ -19,11 +25,17 @@ export default function POcorrenciasIndex() {
   const { deleteOcorrencia } = usePOcorrenciasDeleteHook();
 
   const [buttonIsLoading, setButtonIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<POcorrenciasFilterState>(defaultPOcorrenciasFilterState);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selected, setSelected] = useState<POcorrenciasInterface | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
+  const apiFilters = useMemo(() => buildPOcorrenciasIndexQuery(filters), [filters]);
+
+  const handleFiltersChange = useCallback((next: POcorrenciasFilterState) => {
+    setFilters(next);
+  }, []);
 
   const handleOpenDialog = useCallback((row?: POcorrenciasInterface) => {
     setSelected(row ?? null);
@@ -39,8 +51,9 @@ export default function POcorrenciasIndex() {
     async (formData: OcorrenciaFormValues) => {
       setButtonIsLoading(true);
       try {
-        await saveOcorrencia(formData, selected);
-        await fetchOcorrencias();
+        const payload = formValuesToApiPayload(formData);
+        await saveOcorrencia(payload, selected);
+        await fetchOcorrencias(apiFilters);
         handleCloseDialog();
       } catch (e) {
         console.error("Erro ao salvar ocorrência:", e);
@@ -48,7 +61,7 @@ export default function POcorrenciasIndex() {
         setButtonIsLoading(false);
       }
     },
-    [saveOcorrencia, selected, fetchOcorrencias, handleCloseDialog],
+    [saveOcorrencia, selected, fetchOcorrencias, handleCloseDialog, apiFilters],
   );
 
   const openDeleteDialog = useCallback((id: number) => {
@@ -67,26 +80,15 @@ export default function POcorrenciasIndex() {
     closeDeleteDialog();
     try {
       await deleteOcorrencia(id);
-      await fetchOcorrencias();
+      await fetchOcorrencias(apiFilters);
     } catch (e) {
       console.error("Erro ao excluir ocorrência:", e);
     }
-  }, [pendingDeleteId, closeDeleteDialog, deleteOcorrencia, fetchOcorrencias]);
+  }, [pendingDeleteId, closeDeleteDialog, deleteOcorrencia, fetchOcorrencias, apiFilters]);
 
   useEffect(() => {
-    void fetchOcorrencias();
-  }, [fetchOcorrencias]);
-
-  const filtered = useMemo(() => {
-    if (!searchQuery) return ocorrencias;
-    const q = searchQuery.toLowerCase();
-    return ocorrencias.filter(
-      (o) =>
-        o.descricao?.toLowerCase().includes(q) ||
-        o.codigo?.toLowerCase().includes(q) ||
-        o.tipo?.toLowerCase().includes(q),
-    );
-  }, [ocorrencias, searchQuery]);
+    void fetchOcorrencias(apiFilters);
+  }, [fetchOcorrencias, apiFilters]);
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -101,8 +103,13 @@ export default function POcorrenciasIndex() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <POcorrenciasFilter value={searchQuery} onChange={setSearchQuery} />
-        <POcorrenciasTable data={filtered} isLoading={isLoading} onEdit={handleOpenDialog} onDelete={openDeleteDialog} />
+        <POcorrenciasFilter value={filters} onChange={handleFiltersChange} />
+        <POcorrenciasTable
+          data={ocorrencias}
+          isLoading={isLoading}
+          onEdit={handleOpenDialog}
+          onDelete={openDeleteDialog}
+        />
       </div>
 
       <POcorrenciasDialog

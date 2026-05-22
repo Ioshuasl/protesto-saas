@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { consultarCep, consultarCnpj } from "@/functions";
 import { cn } from "@/lib/utils";
+import { GCidadeSelectObject } from "@/packages/administrativo/components/GCidade/GCidadeSelectObject";
+import { GUFSelectObject } from "@/packages/administrativo/components/GUF/GUFSelectObject";
 import { PPessoaInterface } from "@/packages/administrativo/interfaces";
 import {
   pessoaFormSchema,
@@ -114,6 +116,7 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
   });
 
   const tipoPessoa = form.watch("tipo_pessoa");
+  const ufSelecionada = form.watch("uf");
   const isPessoaJuridica = tipoPessoa === "J";
   const documentoPlaceholder = isPessoaJuridica ? "00.000.000/0000-00" : "000.000.000-00";
   const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
@@ -151,8 +154,7 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
   }, [defaultValues, form]);
 
   const handleSubmit = (data: PessoaFormSchemaValues) => {
-    const { tipo_pessoa: _tipoPessoa, ...payload } = data;
-    onSubmit(payload);
+    onSubmit(data);
   };
 
   const parseBrDate = (value?: string): Date | undefined => {
@@ -542,12 +544,23 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
               />
               <FormField
                 control={form.control}
-                name="cidade"
+                name="uf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cidade</FormLabel>
+                    <FormLabel>UF</FormLabel>
                     <FormControl>
-                      <Input placeholder="Cidade" {...field} />
+                      <GUFSelectObject
+                        value={field.value}
+                        onValueChange={(value) => {
+                          const ufAnterior = field.value?.trim().toUpperCase();
+                          const ufNova = value.trim().toUpperCase();
+                          field.onChange(ufNova);
+                          if (ufAnterior && ufAnterior !== ufNova) {
+                            form.setValue("cidade", "");
+                          }
+                        }}
+                        placeholder="Selecione a UF"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -555,22 +568,18 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
               />
               <FormField
                 control={form.control}
-                name="uf"
+                name="cidade"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>UF</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="UF" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"].map((uf) => (
-                          <SelectItem key={uf} value={uf}>{uf}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Cidade</FormLabel>
+                    <FormControl>
+                      <GCidadeSelectObject
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        uf={ufSelecionada}
+                        placeholder="Selecione a cidade"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

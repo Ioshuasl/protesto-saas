@@ -80,7 +80,12 @@ export async function PCertidaoConsultaApresentanteData(
     }
   }
 
-  const titulos = await PTituloIndexData();
+  const indexResult = await PTituloIndexData({
+    busca_pessoa: payload.cpfcnpj.trim() || payload.apresentante.trim(),
+    per_page: 500,
+    page: 1,
+  });
+  const titulos = indexResult.rows;
   const base = titulos.filter((t) => {
     const ref = getTituloReferenceDate(t);
     if (!isInSearchPeriod(ref, payload.data_inicio, payload.data_fim)) return false;

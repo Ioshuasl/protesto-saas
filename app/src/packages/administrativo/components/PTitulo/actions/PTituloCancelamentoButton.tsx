@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { isPTituloMockDataEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
+import { isPTituloWorkflowMockEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
 import { usePTituloCancelamentoHook } from "@/packages/administrativo/hooks/PTitulo/usePTituloCancelamentoHook";
 import type { TituloListItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloListItem";
 import { useState } from "react";
@@ -19,7 +19,7 @@ export function PTituloCancelamentoButton({ id, onSuccess }: { id: number; onSuc
       onClick={async () => {
         setIsLoading(true);
         try {
-          if (isPTituloMockDataEnabled()) {
+          if (isPTituloWorkflowMockEnabled()) {
             window.alert('Protótipo: confirmar "Cancelar Título"');
           }
           const response = await cancelarTitulo(id);

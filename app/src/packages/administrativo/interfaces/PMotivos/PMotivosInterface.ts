@@ -6,4 +6,6 @@ export interface PMotivosInterface {
   descricao?: string;
   situacao?: string;
   codigo?: string;
+  /** Presente na listagem (index): quantidade de títulos com MOTIVO_APONTAMENTO_ID. */
+  total_titulos?: number;
 }

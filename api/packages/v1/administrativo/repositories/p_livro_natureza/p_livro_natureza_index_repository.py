@@ -3,6 +3,8 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any, Mapping, Optional
 
+from orm_py import Op
+
 from abstracts.repository import BaseRepository
 from actions.data.query_params_parser import QueryParams, QueryParamsParser
 from database.orm_firebird import normalize_row_keys
@@ -51,13 +53,12 @@ class IndexRepository(BaseRepository):
             field_map=_PLIVRO_NATUREZA_SORT_FIELD_MAP,
         )
 
-        if self._has_unified_search(livro_natureza_index_schema):
-            return self._execute_busca_merged(
-                livro_natureza_index_schema, page, per_page, sort_field, sort_direction
-            )
-
         if use_orm_firebird():
             return self._execute_orm(
+                livro_natureza_index_schema, page, per_page, sort_field, sort_direction
+            )
+        if self._has_unified_search(livro_natureza_index_schema):
+            return self._execute_busca_merged(
                 livro_natureza_index_schema, page, per_page, sort_field, sort_direction
             )
         return self._execute_sql(
@@ -153,12 +154,15 @@ class IndexRepository(BaseRepository):
         sort_field: str,
         sort_direction: str,
     ) -> dict[str, Any]:
+        where = self._build_orm_where(livro_natureza_index_schema)
         offset = (page - 1) * per_page
         options: dict[str, Any] = {
             "order": [(sort_field, sort_direction.upper())],
             "limit": per_page,
             "offset": offset,
         }
+        if where:
+            options["where"] = where
         result = get_p_livro_natureza_model().findAndCountAll(options)
         total = int(result.get("count") or 0)
         rows = result.get("rows") or []
@@ -192,6 +196,29 @@ class IndexRepository(BaseRepository):
             "rows": [self._map_livro_natureza_row(row) or {} for row in rows],
             "pagination": self._build_pagination_meta(page, per_page, total),
         }
+
+    @staticmethod
+    def _build_orm_where(
+        livro_natureza_index_schema: PLivroNaturezaIndexSchema,
+    ) -> dict[str, Any]:
+        if livro_natureza_index_schema.busca is None:
+            return {}
+
+        term = str(livro_natureza_index_schema.busca).strip()
+        if not term:
+            return {}
+
+        or_clauses: list[dict[str, Any]] = [
+            {"DESCRICAO": {Op.like: f"%{term}%"}},
+        ]
+        term_upper = term.upper()
+        if len(term_upper) <= SIGLA_MAX_LENGTH:
+            term_exact = term_upper[:SIGLA_MAX_LENGTH]
+            prefix_base = term_upper[: max(1, SIGLA_MAX_LENGTH - 1)]
+            or_clauses.append({"SIGLA": term_exact})
+            or_clauses.append({"SIGLA": {Op.like: f"{prefix_base}%"}})
+
+        return {Op.or_: or_clauses}
 
     @staticmethod
     def _has_unified_search(

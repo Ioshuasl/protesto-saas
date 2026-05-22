@@ -2,6 +2,8 @@
  * Selo vinculado ao título (camada de apresentação / resposta de API enriquecida).
  */
 export interface PTituloSeloVinculadoItem {
+  nota_fiscal?: string;
+  campo_id?: number;
   /** Agrupador do selo. */
   selo_agrupador?: string;
   /** Identificador / série do selo. */

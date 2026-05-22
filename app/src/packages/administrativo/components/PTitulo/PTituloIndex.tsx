@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import {
+  buildPTituloIndexQuery,
+  defaultPTituloFilterState,
+  type PTituloFilterState,
+} from "@/packages/administrativo/components/PTitulo/pTituloFilterUtils";
 import { usePTituloReadHook } from "@/packages/administrativo/hooks/PTitulo/usePTituloReadHook";
 import { usePTituloSaveHook } from "@/packages/administrativo/hooks/PTitulo/usePTituloSaveHook";
 import type { TituloListItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloListItem";
+import { DEFAULT_PAGINATION_META, Pagination } from "@/shared/components/pagination";
 import { PTituloFilter } from "./PTituloFilter";
 import { toInputDate } from "./titulo-list-utils";
 import { PTituloTable } from "./PTituloTable";
@@ -16,6 +22,8 @@ export interface PTituloWorkflowState {
   hasIntimacao: boolean;
   hasProtestoCompleto: boolean;
 }
+
+const PTITULO_PER_PAGE = DEFAULT_PAGINATION_META.per_page;
 
 function getPTituloWorkflowState(titulo: TituloListItem): PTituloWorkflowState {
   const hasValue = (value: unknown) => value !== null && value !== undefined && value !== "";
@@ -32,41 +40,48 @@ function getPTituloWorkflowState(titulo: TituloListItem): PTituloWorkflowState {
 
 export default function PTituloIndex() {
   const router = useRouter();
-  const { titulos, isLoading, fetchTitulos } = usePTituloReadHook();
+  const { titulos, pagination, isLoading, fetchTitulos } = usePTituloReadHook();
   const { saveTituloStatus } = usePTituloSaveHook();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [filters, setFilters] = useState<PTituloFilterState>(defaultPTituloFilterState);
+  const [debouncedFilters, setDebouncedFilters] = useState<PTituloFilterState>(filters);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    void fetchTitulos();
-  }, [fetchTitulos]);
+    const timer = window.setTimeout(() => setDebouncedFilters(filters), 400);
+    return () => window.clearTimeout(timer);
+  }, [filters]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedFilters.search, debouncedFilters.status, debouncedFilters.startDate, debouncedFilters.endDate]);
+
+  const indexQuery = useMemo(
+    () => ({
+      ...buildPTituloIndexQuery(debouncedFilters),
+      page,
+      per_page: PTITULO_PER_PAGE,
+    }),
+    [debouncedFilters, page],
+  );
+
+  useEffect(() => {
+    void fetchTitulos(indexQuery);
+  }, [fetchTitulos, indexQuery]);
 
   const filteredTitulos = useMemo(() => {
     return titulos.filter((titulo) => {
-      const query = searchQuery.trim().toLowerCase();
       const status = titulo.status_descricao ?? titulo.situacao_aceite ?? "";
       const apontamento = toInputDate(titulo.data_apontamento as unknown as string);
 
-      const matchesSearch =
-        !query ||
-        titulo.devedor_nome?.toLowerCase().includes(query) ||
-        titulo.devedor_cpfcnpj?.toLowerCase().includes(query) ||
-        titulo.apresentante_nome?.toLowerCase().includes(query) ||
-        titulo.credor_nome?.toLowerCase().includes(query) ||
-        titulo.cedente_nome?.toLowerCase().includes(query) ||
-        titulo.partes_label?.toLowerCase().includes(query) ||
-        titulo.partes_documentos?.toLowerCase().includes(query);
+      const matchesStatus =
+        filters.status === "all" || status.toLowerCase() === filters.status.toLowerCase();
+      const matchesStartDate = !filters.startDate || (apontamento && apontamento >= filters.startDate);
+      const matchesEndDate = !filters.endDate || (apontamento && apontamento <= filters.endDate);
 
-      const matchesStatus = statusFilter === "all" || status.toLowerCase() === statusFilter.toLowerCase();
-      const matchesStartDate = !startDate || (apontamento && apontamento >= startDate);
-      const matchesEndDate = !endDate || (apontamento && apontamento <= endDate);
-
-      return Boolean(matchesSearch && matchesStatus && matchesStartDate && matchesEndDate);
+      return Boolean(matchesStatus && matchesStartDate && matchesEndDate);
     });
-  }, [titulos, searchQuery, statusFilter, startDate, endDate]);
+  }, [titulos, filters.status, filters.startDate, filters.endDate]);
 
   const tableData = useMemo(
     () => filteredTitulos.map((titulo) => ({ ...titulo, ...getPTituloWorkflowState(titulo) })),
@@ -80,7 +95,7 @@ export default function PTituloIndex() {
   const handleUpdateStatus = async (tituloId: number, status: "Em Tríduo" | "Pago" | "Protestado") => {
     try {
       await saveTituloStatus(tituloId, status);
-      await fetchTitulos();
+      await fetchTitulos(indexQuery);
     } catch (error) {
       console.error("Erro ao atualizar status do título:", error);
     }
@@ -100,14 +115,14 @@ export default function PTituloIndex() {
 
       <div className="flex flex-col gap-4">
         <PTituloFilter
-          searchQuery={searchQuery}
-          status={statusFilter}
-          startDate={startDate}
-          endDate={endDate}
-          onSearchChange={setSearchQuery}
-          onStatusChange={setStatusFilter}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
+          searchQuery={filters.search}
+          status={filters.status}
+          startDate={filters.startDate}
+          endDate={filters.endDate}
+          onSearchChange={(search) => setFilters((prev) => ({ ...prev, search }))}
+          onStatusChange={(status) => setFilters((prev) => ({ ...prev, status }))}
+          onStartDateChange={(startDate) => setFilters((prev) => ({ ...prev, startDate }))}
+          onEndDateChange={(endDate) => setFilters((prev) => ({ ...prev, endDate }))}
         />
 
         <PTituloTable
@@ -116,6 +131,8 @@ export default function PTituloIndex() {
           onViewDetails={handleViewDetails}
           onUpdateStatus={handleUpdateStatus}
         />
+
+        <Pagination pagination={pagination} onPageChange={setPage} disabled={isLoading} />
       </div>
     </div>
   );

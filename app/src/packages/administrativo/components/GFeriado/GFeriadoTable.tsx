@@ -14,12 +14,13 @@ import { GFeriadoInterface } from "@/packages/administrativo/interfaces";
 import { SituacoesBadge } from "@/shared/components/situacoes/SituacoesBadge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatEmptyField, formatEmptyFieldDate, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 function formatGFeriadoTipo(tipo?: string | null): string {
   const code = (tipo ?? "").trim().toUpperCase();
   if (code === "F" || code === "FIXO") return "Fixo";
   if (code === "V" || code === "VARIAVEL" || code === "VARIÁVEL") return "Variável";
-  return tipo?.trim() || "-";
+  return formatEmptyFieldTrimmed(tipo);
 }
 
 interface GFeriadoTableProps {
@@ -66,9 +67,11 @@ export function GFeriadoTable({ data, onEdit, onDelete, isLoading }: GFeriadoTab
               onClick={() => onEdit(feriado)}
             >
               <TableCell className="font-medium">
-                {feriado.data ? format(new Date(feriado.data), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                {formatEmptyFieldDate(feriado.data, (date) =>
+                  format(date, "dd/MM/yyyy", { locale: ptBR }),
+                )}
               </TableCell>
-              <TableCell>{feriado.descricao}</TableCell>
+              <TableCell>{formatEmptyFieldTrimmed(feriado.descricao)}</TableCell>
               <TableCell>{formatGFeriadoTipo(feriado.tipo)}</TableCell>
               <TableCell>
                 <SituacoesBadge situacao={feriado.situacao ?? "I"} />

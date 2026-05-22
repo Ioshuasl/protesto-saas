@@ -1,29 +1,41 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  SearchComboboxSelect,
+} from "@/packages/administrativo/components/shared/SearchComboboxSelect";
+import { buildSearchComboboxOptions } from "@/packages/administrativo/components/shared/buildSearchComboboxOptions";
 import { PLIVRO_NATUREZA_LIST_QUERY } from "@/packages/administrativo/data/PLivroNatureza/plivroNaturezaDataConfig";
 import { usePLivroNaturezaReadHook } from "@/packages/administrativo/hooks/PLivroNatureza/usePLivroNaturezaReadHook";
-import { cn } from "@/lib/utils";
 
 export interface PLivroNaturezaSelectObjectProps {
   value?: string;
   onValueChange?: (livroNaturezaId: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
   disabled?: boolean;
   className?: string;
   triggerClassName?: string;
   emptyMessage?: string;
 }
 
-function naturezaLabel(n: { livro_natureza_id: number; descricao?: string }) {
+export function naturezaLabel(n: { livro_natureza_id: number; descricao?: string }) {
   return n.descricao?.trim() || `Natureza ${n.livro_natureza_id}`;
+}
+
+function naturezaSearchValue(n: { livro_natureza_id: number; descricao?: string }) {
+  const label = naturezaLabel(n);
+  return [n.descricao, label, String(n.livro_natureza_id)]
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function PLivroNaturezaSelectObject({
   value,
   onValueChange,
   placeholder = "Selecione a natureza",
+  searchPlaceholder = "Buscar natureza...",
   disabled,
   className,
   triggerClassName,
@@ -37,46 +49,31 @@ export function PLivroNaturezaSelectObject({
 
   const options = useMemo(
     () =>
-      naturezas.map((n) => ({
-        value: String(n.livro_natureza_id),
-        label: naturezaLabel(n),
-      })),
-    [naturezas],
-  );
-
-  const selectedLabel = useMemo(
-    () => options.find((o) => o.value === (value ?? ""))?.label,
-    [options, value],
+      buildSearchComboboxOptions({
+        fromFetch: naturezas.map((n) => ({
+          value: String(n.livro_natureza_id),
+          label: naturezaLabel(n),
+          searchValue: naturezaSearchValue(n),
+        })),
+        value,
+      }),
+    [naturezas, value],
   );
 
   return (
-    <Select
-      value={value && value.length > 0 ? value : undefined}
+    <SearchComboboxSelect
+      value={value}
       onValueChange={onValueChange}
-      disabled={disabled || isLoading}
-    >
-      <SelectTrigger className={cn("w-full", triggerClassName, className)}>
-        <SelectValue placeholder={isLoading && options.length === 0 ? "Carregando..." : placeholder}>
-          {selectedLabel}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading && options.length === 0 ? (
-          <SelectItem value="__plivro_natureza_loading" disabled>
-            Carregando naturezas...
-          </SelectItem>
-        ) : null}
-        {!isLoading && options.length === 0 ? (
-          <SelectItem value="__plivro_natureza_empty" disabled>
-            {emptyMessage}
-          </SelectItem>
-        ) : null}
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      options={options}
+      isLoading={isLoading}
+      placeholder={placeholder}
+      searchPlaceholder={searchPlaceholder}
+      disabled={disabled}
+      className={className}
+      triggerClassName={triggerClassName}
+      emptyMessage={emptyMessage}
+      loadingMessage="Carregando naturezas..."
+      clearAriaLabel="Limpar natureza"
+    />
   );
 }

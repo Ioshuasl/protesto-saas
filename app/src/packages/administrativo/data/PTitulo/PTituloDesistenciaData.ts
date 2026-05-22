@@ -1,8 +1,8 @@
 import { enrichTitulo } from '@/packages/administrativo/data/PTitulo/ptituloEnrich';
 import { ptituloListRef } from '@/packages/administrativo/data/PTitulo/ptituloInMemory';
 import {
-  PTITULO_FAKE_ENDPOINTS,
-  isPTituloMockDataEnabled,
+  PTITULO_WORKFLOW_ENDPOINTS,
+  isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import type { PTituloDesistenciaFormInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloDesistenciaFormInterface';
 import type { PTituloInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloInterface';
@@ -16,12 +16,12 @@ export async function PTituloDesistenciaData(
   id: number,
   payload?: PTituloDesistenciaFormInterface,
 ): Promise<TituloListItem> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.PUT,
-        endpoint: PTITULO_FAKE_ENDPOINTS.desistirTitulo(id),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.desistirTitulo(id),
         ...(payload ? { body: payload } : {}),
       }),
     );

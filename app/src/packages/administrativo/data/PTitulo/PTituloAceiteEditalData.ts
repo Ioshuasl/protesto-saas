@@ -2,8 +2,8 @@ import { enrichTitulo } from '@/packages/administrativo/data/PTitulo/ptituloEnri
 import { ptituloListRef } from '@/packages/administrativo/data/PTitulo/ptituloInMemory';
 import { pPessoaVinculoListRef } from '@/packages/administrativo/data/PTitulo/ptituloPessoasVinculoInMemory';
 import {
-  PTITULO_FAKE_ENDPOINTS,
-  isPTituloMockDataEnabled,
+  PTITULO_WORKFLOW_ENDPOINTS,
+  isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import type { PTituloAceiteEditalInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloAceiteEditalInterface';
 import type { PTituloInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloInterface';
@@ -17,12 +17,12 @@ export async function PTituloAceiteEditalData(
   id: number,
   payload: PTituloAceiteEditalInterface,
 ): Promise<TituloListItem> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.PUT,
-        endpoint: PTITULO_FAKE_ENDPOINTS.aceiteEdital(id),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.aceiteEdital(id),
         body: payload,
       }),
     );

@@ -1,28 +1,49 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  SearchComboboxSelect,
+} from "@/packages/administrativo/components/shared/SearchComboboxSelect";
+import { buildSearchComboboxOptions } from "@/packages/administrativo/components/shared/buildSearchComboboxOptions";
 import { useGUsuarioReadHook } from "@/packages/administrativo/hooks/GUsuario/useGUsuarioReadHook";
-import { cn } from "@/lib/utils";
 
 export interface GUsuarioSelectObjectProps {
   value?: string;
   onValueChange?: (usuarioId: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
   disabled?: boolean;
   className?: string;
   triggerClassName?: string;
   emptyMessage?: string;
 }
 
-function usuarioLabel(u: { usuario_id: number; nome_completo?: string; login?: string }) {
+export function usuarioLabel(u: {
+  usuario_id: number;
+  nome_completo?: string;
+  login?: string;
+}) {
   return u.nome_completo?.trim() || u.login?.trim() || `Usuário ${u.usuario_id}`;
+}
+
+function usuarioSearchValue(u: {
+  usuario_id: number;
+  nome_completo?: string;
+  login?: string;
+}) {
+  const label = usuarioLabel(u);
+  const parts = [u.nome_completo, u.login, label, String(u.usuario_id)];
+  return parts
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function GUsuarioSelectObject({
   value,
   onValueChange,
   placeholder = "Selecione o usuário",
+  searchPlaceholder = "Buscar usuário (nome ou login)...",
   disabled,
   className,
   triggerClassName,
@@ -36,46 +57,31 @@ export function GUsuarioSelectObject({
 
   const options = useMemo(
     () =>
-      usuarios.map((u) => ({
-        value: String(u.usuario_id),
-        label: usuarioLabel(u),
-      })),
-    [usuarios],
-  );
-
-  const selectedLabel = useMemo(
-    () => options.find((o) => o.value === (value ?? ""))?.label,
-    [options, value],
+      buildSearchComboboxOptions({
+        fromFetch: usuarios.map((u) => ({
+          value: String(u.usuario_id),
+          label: usuarioLabel(u),
+          searchValue: usuarioSearchValue(u),
+        })),
+        value,
+      }),
+    [usuarios, value],
   );
 
   return (
-    <Select
-      value={value && value.length > 0 ? value : undefined}
+    <SearchComboboxSelect
+      value={value}
       onValueChange={onValueChange}
-      disabled={disabled || isLoading}
-    >
-      <SelectTrigger className={cn("w-full", triggerClassName, className)}>
-        <SelectValue placeholder={isLoading && options.length === 0 ? "Carregando..." : placeholder}>
-          {selectedLabel}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading && options.length === 0 ? (
-          <SelectItem value="__gusuario_loading" disabled>
-            Carregando usuários...
-          </SelectItem>
-        ) : null}
-        {!isLoading && options.length === 0 ? (
-          <SelectItem value="__gusuario_empty" disabled>
-            {emptyMessage}
-          </SelectItem>
-        ) : null}
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      options={options}
+      isLoading={isLoading}
+      placeholder={placeholder}
+      searchPlaceholder={searchPlaceholder}
+      disabled={disabled}
+      className={className}
+      triggerClassName={triggerClassName}
+      emptyMessage={emptyMessage}
+      loadingMessage="Carregando usuários..."
+      clearAriaLabel="Limpar usuário"
+    />
   );
 }

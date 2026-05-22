@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { isPTituloMockDataEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
+import { isPTituloWorkflowMockEnabled } from "@/packages/administrativo/data/PTitulo/ptituloDataConfig";
 import { usePTituloVoltarProtestoHook } from "@/packages/administrativo/hooks/PTitulo/usePTituloVoltarProtestoHook";
 import type { TituloListItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloListItem";
 import { useState } from "react";
@@ -19,7 +19,7 @@ export function PTituloVoltarProtestoButton({ id, onSuccess }: { id: number; onS
       onClick={async () => {
         setIsLoading(true);
         try {
-          if (isPTituloMockDataEnabled()) {
+          if (isPTituloWorkflowMockEnabled()) {
             window.alert('Protótipo: confirmar "Voltar para Protesto"');
           }
           const response = await voltarParaProtesto(id);

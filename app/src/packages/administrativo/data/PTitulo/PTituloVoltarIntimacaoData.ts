@@ -1,8 +1,8 @@
 import { enrichTitulo } from '@/packages/administrativo/data/PTitulo/ptituloEnrich';
 import { ptituloListRef } from '@/packages/administrativo/data/PTitulo/ptituloInMemory';
 import {
-  PTITULO_FAKE_ENDPOINTS,
-  isPTituloMockDataEnabled,
+  PTITULO_WORKFLOW_ENDPOINTS,
+  isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import type { PTituloInterface } from '@/packages/administrativo/interfaces/PTitulo/PTituloInterface';
 import type { TituloListItem } from '@/packages/administrativo/interfaces/PTitulo/PTituloListItem';
@@ -15,12 +15,12 @@ export async function PTituloVoltarIntimacaoData(
   id: number,
   payload: PTituloVoltarIntimacaoInterface,
 ): Promise<TituloListItem> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.PUT,
-        endpoint: PTITULO_FAKE_ENDPOINTS.voltarIntimacao(id),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.voltarIntimacao(id),
         body: payload,
       }),
     );

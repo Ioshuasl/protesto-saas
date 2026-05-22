@@ -15,7 +15,7 @@ Legenda de status:
 | 1 | administrativo | GFeriado | `/administrativo/g_feriado` | index, show, create, update, delete | planejado | [modulos/administrativo/g_feriado.md](./modulos/administrativo/g_feriado.md) |
 | 2 | administrativo | PBanco | `/administrativo/p_banco` | CRUD | planejado | [p_banco.md](./modulos/administrativo/p_banco.md) |
 | 3 | administrativo | PEspecie | `/administrativo/p_especie` | CRUD | implementado | [p_especie.md](./modulos/administrativo/p_especie.md) |
-| 4 | administrativo | POcorrencias | `/administrativo/p_ocorrencias` | CRUD | planejado | [p_ocorrencias.md](./modulos/administrativo/p_ocorrencias.md) |
+| 4 | administrativo | POcorrencias | `/administrativo/p_ocorrencias` | CRUD | implementado | [p_ocorrencias.md](./modulos/administrativo/p_ocorrencias.md) |
 | 5 | administrativo | PMotivos | `/administrativo/p_motivos` | CRUD | planejado | [p_motivos.md](./modulos/administrativo/p_motivos.md) |
 | 6 | administrativo | PMotivosCancelamento | `/administrativo/p_motivos_cancelamento` | CRUD | planejado | [p_motivos_cancelamento.md](./modulos/administrativo/p_motivos_cancelamento.md) |
 | 7 | administrativo | PPessoa | `/administrativo/p_pessoa` | CRUD | parcial (`t_pessoa`) | [p_pessoa.md](./modulos/administrativo/p_pessoa.md) |

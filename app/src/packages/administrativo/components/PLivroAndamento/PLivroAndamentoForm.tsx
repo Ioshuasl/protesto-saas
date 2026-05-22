@@ -17,16 +17,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GUsuarioSelectObject } from "@/packages/administrativo/components/GUsuario/GUsuarioSelectObject";
 import { PLivroNaturezaSelectObject } from "@/packages/administrativo/components/PLivroNatureza/PLivroNaturezaSelectObject";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { useEffect, useMemo } from "react";
+
+function isLivroDateDisabled(date: Date) {
+  return date > new Date() || date < new Date("1900-01-01");
+}
 
 export type { LivroAndamentoFormValues };
 
@@ -249,40 +248,19 @@ export function PLivroAndamentoForm({
           <FormField
             control={form.control}
             name="data_abertura"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Data de Abertura</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP", { locale: ptBR })
-                        ) : (
-                          <span>Selecione uma data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <DatePicker
+                    variant="hybrid"
+                    value={field.value}
+                    onChange={field.onChange}
+                    calendarDisabled={isLivroDateDisabled}
+                    placeholder="dd/mm/aaaa"
+                    aria-invalid={!!fieldState.error}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -291,40 +269,19 @@ export function PLivroAndamentoForm({
           <FormField
             control={form.control}
             name="data_fechamento"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Data de Fechamento</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP", { locale: ptBR })
-                        ) : (
-                          <span>Selecione uma data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value || undefined}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <DatePicker
+                    variant="hybrid"
+                    value={field.value ?? undefined}
+                    onChange={field.onChange}
+                    calendarDisabled={isLivroDateDisabled}
+                    placeholder="dd/mm/aaaa"
+                    aria-invalid={!!fieldState.error}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

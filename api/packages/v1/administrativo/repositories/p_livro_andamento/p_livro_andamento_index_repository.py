@@ -3,6 +3,8 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any, Mapping, Optional
 
+from orm_py import Op
+
 from abstracts.repository import BaseRepository
 from actions.data.query_params_parser import QueryParams, QueryParamsParser
 from database.orm_firebird import normalize_row_keys
@@ -53,6 +55,14 @@ class IndexRepository(BaseRepository):
             field_map=_PLIVRO_ANDAMENTO_SORT_FIELD_MAP,
         )
 
+        if use_orm_firebird():
+            return self._execute_orm(
+                livro_andamento_index_schema,
+                page,
+                per_page,
+                sort_field,
+                sort_direction,
+            )
         if self._has_unified_search(livro_andamento_index_schema):
             return self._execute_busca_merged(
                 livro_andamento_index_schema,
@@ -61,18 +71,6 @@ class IndexRepository(BaseRepository):
                 sort_field,
                 sort_direction,
             )
-
-        if use_orm_firebird() and not self._has_business_filters(
-            livro_andamento_index_schema
-        ):
-            return self._execute_orm(
-                livro_andamento_index_schema,
-                page,
-                per_page,
-                sort_field,
-                sort_direction,
-            )
-
         return self._execute_sql(
             livro_andamento_index_schema,
             page,
@@ -164,12 +162,15 @@ class IndexRepository(BaseRepository):
         sort_field: str,
         sort_direction: str,
     ) -> dict[str, Any]:
+        where = self._build_orm_where(livro_andamento_index_schema)
         offset = (page - 1) * per_page
         options: dict[str, Any] = {
             "order": [(sort_field, sort_direction.upper())],
             "limit": per_page,
             "offset": offset,
         }
+        if where:
+            options["where"] = where
         result = get_p_livro_andamento_model().findAndCountAll(options)
         total = int(result.get("count") or 0)
         rows = result.get("rows") or []
@@ -208,19 +209,43 @@ class IndexRepository(BaseRepository):
         }
 
     @staticmethod
+    def _build_orm_where(
+        livro_andamento_index_schema: PLivroAndamentoIndexSchema,
+    ) -> dict[str, Any]:
+        clauses: list[dict[str, Any]] = []
+
+        if livro_andamento_index_schema.livro_natureza_id is not None:
+            clauses.append(
+                {
+                    "LIVRO_NATUREZA_ID": livro_andamento_index_schema.livro_natureza_id
+                }
+            )
+        if livro_andamento_index_schema.aberto == "S":
+            clauses.append({"DATA_FECHAMENTO": {Op.is_: None}})
+        elif livro_andamento_index_schema.aberto == "N":
+            clauses.append({"DATA_FECHAMENTO": {Op.not_: None}})
+
+        if livro_andamento_index_schema.busca is not None:
+            term = str(livro_andamento_index_schema.busca).strip()
+            if term:
+                busca_clauses: list[dict[str, Any]] = [
+                    {"SIGLA": {Op.like: f"%{term.upper()[:3]}%"}},
+                ]
+                if term.isdigit():
+                    busca_clauses.append({"NUMERO_LIVRO": int(term)})
+                clauses.append({Op.or_: busca_clauses})
+
+        if not clauses:
+            return {}
+        if len(clauses) == 1:
+            return clauses[0]
+        return {Op.and_: clauses}
+
+    @staticmethod
     def _has_unified_search(
         livro_andamento_index_schema: PLivroAndamentoIndexSchema,
     ) -> bool:
         return livro_andamento_index_schema.busca is not None
-
-    @staticmethod
-    def _has_business_filters(
-        livro_andamento_index_schema: PLivroAndamentoIndexSchema,
-    ) -> bool:
-        return (
-            livro_andamento_index_schema.livro_natureza_id is not None
-            or livro_andamento_index_schema.aberto is not None
-        )
 
     def _build_filter_clause(
         self, livro_andamento_index_schema: PLivroAndamentoIndexSchema

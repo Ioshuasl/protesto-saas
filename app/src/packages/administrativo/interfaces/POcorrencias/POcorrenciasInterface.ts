@@ -6,4 +6,6 @@ export interface POcorrenciasInterface {
   tipo?: string;
   codigo?: string;
   descricao?: string;
+  /** Preenchido no index da API quando há vínculo em P_TITULO. */
+  total_titulos?: number;
 }

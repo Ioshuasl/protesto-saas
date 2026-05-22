@@ -5,6 +5,11 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PMotivosDialog } from "@/packages/administrativo/components/PMotivos/PMotivosDialog";
 import { PMotivosFilter } from "@/packages/administrativo/components/PMotivos/PMotivosFilter";
+import {
+  buildPMotivosIndexQuery,
+  defaultPMotivosFilterState,
+  type PMotivosFilterState,
+} from "@/packages/administrativo/components/PMotivos/pmotivosFilterUtils";
 import type { MotivoFormValues } from "@/packages/administrativo/schemas/PMotivos/PMotivosFormSchema";
 import { PMotivosTable } from "@/packages/administrativo/components/PMotivos/PMotivosTable";
 import { usePMotivosDeleteHook } from "@/packages/administrativo/hooks/PMotivos/usePMotivosDeleteHook";
@@ -19,11 +24,17 @@ export default function PMotivosIndex() {
   const { deleteMotivo } = usePMotivosDeleteHook();
 
   const [buttonIsLoading, setButtonIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<PMotivosFilterState>(defaultPMotivosFilterState);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMotivo, setSelectedMotivo] = useState<PMotivosInterface | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+
+  const apiFilters = useMemo(() => buildPMotivosIndexQuery(filters), [filters]);
+
+  const handleFiltersChange = useCallback((next: PMotivosFilterState) => {
+    setFilters(next);
+  }, []);
 
   const handleOpenDialog = useCallback((motivo?: PMotivosInterface) => {
     setSelectedMotivo(motivo ?? null);
@@ -40,7 +51,7 @@ export default function PMotivosIndex() {
       setButtonIsLoading(true);
       try {
         await saveMotivo(formData, selectedMotivo);
-        await fetchMotivos();
+        await fetchMotivos(apiFilters);
         handleCloseDialog();
       } catch (e) {
         console.error("Erro ao salvar motivo:", e);
@@ -48,7 +59,7 @@ export default function PMotivosIndex() {
         setButtonIsLoading(false);
       }
     },
-    [saveMotivo, selectedMotivo, fetchMotivos, handleCloseDialog],
+    [saveMotivo, selectedMotivo, fetchMotivos, handleCloseDialog, apiFilters],
   );
 
   const openDeleteDialog = useCallback((id: number) => {
@@ -67,23 +78,23 @@ export default function PMotivosIndex() {
     closeDeleteDialog();
     try {
       await deleteMotivo(id);
-      await fetchMotivos();
+      await fetchMotivos(apiFilters);
     } catch (e) {
       console.error("Erro ao excluir motivo:", e);
     }
-  }, [pendingDeleteId, closeDeleteDialog, deleteMotivo, fetchMotivos]);
+  }, [pendingDeleteId, closeDeleteDialog, deleteMotivo, fetchMotivos, apiFilters]);
 
   useEffect(() => {
-    void fetchMotivos();
-  }, [fetchMotivos]);
+    void fetchMotivos(apiFilters);
+  }, [fetchMotivos, apiFilters]);
 
   const filteredMotivos = useMemo(() => {
-    if (!searchQuery) return motivos;
-    const query = searchQuery.toLowerCase();
+    if (!filters.search) return motivos;
+    const query = filters.search.toLowerCase();
     return motivos.filter(
       (m) => m.codigo?.toLowerCase().includes(query) || m.descricao?.toLowerCase().includes(query),
     );
-  }, [motivos, searchQuery]);
+  }, [motivos, filters.search]);
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -99,7 +110,7 @@ export default function PMotivosIndex() {
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <PMotivosFilter value={searchQuery} onChange={setSearchQuery} />
+          <PMotivosFilter value={filters} onChange={handleFiltersChange} />
         </div>
 
         <PMotivosTable

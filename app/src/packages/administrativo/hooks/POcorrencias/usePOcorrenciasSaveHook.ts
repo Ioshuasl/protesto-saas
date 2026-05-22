@@ -1,7 +1,10 @@
 import { useState } from 'react';
 
 import type { POcorrenciasInterface } from '@/packages/administrativo/interfaces/POcorrencias/POcorrenciasInterface';
-import type { OcorrenciaFormValues } from '@/packages/administrativo/schemas/POcorrencias/POcorrenciasFormSchema';
+export type POcorrenciasSavePayload = Omit<
+  POcorrenciasInterface,
+  'ocorrencias_id' | 'total_titulos'
+>;
 import { POcorrenciasSaveCreateService } from '@/packages/administrativo/services/POcorrencias/POcorrenciasSaveCreateService';
 import { POcorrenciasSaveUpdateService } from '@/packages/administrativo/services/POcorrencias/POcorrenciasSaveUpdateService';
 import { useResponse } from '@/shared/components/response/ResponseContext';
@@ -11,7 +14,7 @@ export const usePOcorrenciasSaveHook = () => {
   const [pOcorrencias, setPOcorrencias] = useState<POcorrenciasInterface | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  const saveOcorrencia = async (data: OcorrenciaFormValues, selected: POcorrenciasInterface | null) => {
+  const saveOcorrencia = async (data: POcorrenciasSavePayload, selected: POcorrenciasInterface | null) => {
     const response = selected
       ? await POcorrenciasSaveUpdateService(selected.ocorrencias_id, data)
       : await POcorrenciasSaveCreateService(data);

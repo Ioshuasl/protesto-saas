@@ -35,7 +35,8 @@ export function PMotivosCancelamentoDialog({
           </DialogTitle>
         </DialogHeader>
         <PMotivosCancelamentoForm
-          defaultValues={motivoCancelamento || undefined}
+          key={motivoCancelamento?.motivos_cancelamento_id ?? "new"}
+          defaultValues={motivoCancelamento ?? undefined}
           onSubmit={onSubmit}
           isLoading={isLoading}
         />

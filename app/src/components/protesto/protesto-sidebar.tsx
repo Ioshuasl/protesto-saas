@@ -69,6 +69,7 @@ export const protestoNavItems: ReadonlyArray<ProtestoNavItem> = [
     items: [
       { title: "Pessoas", url: "/cadastro/pessoas" },
       { title: "Ocorrência", url: "/cadastro/ocorrencia" },
+      { title: "Ocorrência de Andamento", url: "/cadastro/ocorrencia-andamento" },
       { title: "Motivo de Apontamento", url: "/cadastro/motivo-apontamento" },
       { title: "Motivo de Cancelamento", url: "/cadastro/motivo-cancelamento" },
       { title: "Espécie", url: "/cadastro/especie" },

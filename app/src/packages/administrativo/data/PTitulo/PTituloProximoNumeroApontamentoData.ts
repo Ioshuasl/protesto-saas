@@ -1,7 +1,7 @@
 import { ptituloListRef } from '@/packages/administrativo/data/PTitulo/ptituloInMemory';
 import {
-  PTITULO_FAKE_ENDPOINTS,
-  isPTituloMockDataEnabled,
+  PTITULO_WORKFLOW_ENDPOINTS,
+  isPTituloWorkflowMockEnabled,
 } from '@/packages/administrativo/data/PTitulo/ptituloDataConfig';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 import API from '@/shared/services/api/Api';
@@ -15,12 +15,12 @@ function getMaxNumeroApontamentoFromMock(): number {
 }
 
 export async function PTituloProximoNumeroApontamentoData(): Promise<number> {
-  if (!isPTituloMockDataEnabled()) {
+  if (!isPTituloWorkflowMockEnabled()) {
     const api = new API();
     const apiCall = withClientErrorHandler(async () =>
       api.send({
         method: Methods.GET,
-        endpoint: PTITULO_FAKE_ENDPOINTS.proximoNumeroApontamento(),
+        endpoint: PTITULO_WORKFLOW_ENDPOINTS.proximoNumeroApontamento(),
       }),
     );
     const response = await apiCall();

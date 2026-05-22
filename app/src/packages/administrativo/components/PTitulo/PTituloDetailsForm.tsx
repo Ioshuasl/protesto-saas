@@ -65,7 +65,11 @@ export function PTituloDetailsForm({
           </TabsContent>
 
           <TabsContent value="basicos" className="space-y-3">
-            <PTituloBasicSection control={form.control} selectOptionsByField={selectOptionsByField} />
+            <PTituloBasicSection
+              control={form.control}
+              titulo={titulo}
+              selectOptionsByField={selectOptionsByField}
+            />
             <PTituloValuesSection control={form.control} />
             <PTituloFeesSection control={form.control} selectOptionsByField={selectOptionsByField} />
           </TabsContent>
@@ -80,7 +84,10 @@ export function PTituloDetailsForm({
 
           <TabsContent value="selos" className="space-y-2">
             <p className="text-sm text-muted-foreground">Selos utilizados e valores associados a este título.</p>
-            <PTituloSelosSection tituloId={titulo?.titulo_id} selos={titulo?.vinculos_selos} />
+            <PTituloSelosSection
+              tituloId={titulo?.titulo_id}
+              initialSelos={titulo?.vinculos_selos}
+            />
           </TabsContent>
         </Tabs>
 

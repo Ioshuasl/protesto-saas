@@ -91,9 +91,15 @@ ORIUS_API_FDB_POOL_PRE_PING=true
 ORIUS_API_FDB_POOL_SIZE=5
 ORIUS_API_FDB_POOL_MAX_OVERFLOW=10
 ORIUS_CLIENT_STATE=go
+
+# Postman (opcional — sync da coleção Orius)
+POSTMAN_API_KEY=
+POSTMAN_COLLECTION_UID=
 ```
 
 Essas configurações definem o acesso ao banco, o charset e o gerenciamento de conexões da aplicação.
+
+Para sincronizar a coleção Postman, veja também `postman.sync.env.example` e a [seção 14](#14-sincronização-da-coleção-postman).
 
 ---
 
@@ -251,6 +257,7 @@ gunicorn main:app \
 | Rodar em produção (Windows) | `uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4`                            |
 | Rodar em produção (Linux)   | `gunicorn main:app -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:8000` |
 | Alternativa (Windows)       | `hypercorn main:app --workers 4 --bind 0.0.0.0:8000`                                 |
+| Sync coleção Postman        | `python3 scripts/sync_postman_collection.py` (ver [seção 14](#14-sincronização-da-coleção-postman)) |
 
 ---
 
@@ -280,3 +287,56 @@ Reinicie o serviço do Firebird.
    Na aba Environment do seu serviço no Easypanel, configure sua conexão assim:
 
 ORIUS_API_FDB_HOST=172.17.0.1
+
+---
+
+## 14. Sincronização da coleção Postman
+
+A coleção de testes da API fica em `Orius.postman_collection.json` na raiz de `api/`. O script `scripts/sync_postman_collection.py` envia esse arquivo para a coleção **Orius** na nuvem do Postman via [Postman API](https://www.postman.com/postman/postman-public-workspace/documentation/12959542-c8142d51-e97c-46b8-7705-0e9d27a4b4e2), sem dependências extras (apenas biblioteca padrão do Python).
+
+### Pré-requisitos
+
+1. **API key** — Postman → Settings → API keys → Generate API Key.
+2. **Coleção na conta** — a coleção **Orius** já deve existir no Postman (importe `Orius.postman_collection.json` manualmente na primeira vez, se necessário).
+3. Variáveis no `api/.env` (modelo em `postman.sync.env.example`):
+
+```env
+POSTMAN_API_KEY=sua_api_key
+# Opcional: obrigatório se houver mais de uma coleção com o mesmo nome
+POSTMAN_COLLECTION_UID=
+# Opcional: outro caminho para o JSON
+# POSTMAN_COLLECTION_FILE=Orius.postman_collection.json
+```
+
+O **UID** da coleção aparece em Postman → coleção Orius → `…` → **Info** → **UID** (formato `12345678-uuid-...`). Se existir apenas uma coleção chamada **Orius**, o script descobre o UID automaticamente.
+
+### Comandos
+
+Execute sempre a partir da pasta `api/`:
+
+```bash
+# Validar JSON local (sem chamar a API)
+python3 scripts/sync_postman_collection.py --dry-run
+
+# Listar coleções da conta (para copiar o UID)
+python3 scripts/sync_postman_collection.py --list
+
+# Enviar uma vez
+python3 scripts/sync_postman_collection.py
+
+# Tempo real: reenvia ~1,5 s após cada salvamento do arquivo
+python3 scripts/sync_postman_collection.py --watch
+```
+
+| Flag | Descrição |
+|------|-----------|
+| `--dry-run` | Valida o JSON; não usa `POSTMAN_API_KEY` |
+| `--list` | Lista UID e nome das coleções da API key |
+| `--watch` | Observa o arquivo e sincroniza após cada save (debounce 1,5 s) |
+| `--file CAMINHO` | JSON alternativo (padrão: `Orius.postman_collection.json`) |
+
+### Boas práticas
+
+- Corpos **raw JSON** nas requisições devem incluir `options.raw.language: "json"` (e, quando fizer sentido, header `Content-Type: application/json`), para o Postman não abrir o body como texto.
+- Após alterar endpoints no CRUD, atualize a pasta correspondente na coleção e rode o sync (ou deixe `--watch` ativo durante a implementação).
+- O arquivo exportado (~1,7 MB) não traz `id`/`uid` por item; o `PUT` substitui o conteúdo da coleção na nuvem — adequado quando o repositório Git é a fonte da verdade.

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useGUsuarioReadHook } from "@/packages/administrativo/hooks/GUsuario/useGUsuarioReadHook";
+import { sortPTituloSelosVinculados } from "@/packages/administrativo/data/PTitulo/ptituloSelosUtils";
 import { usePTituloSelosReadHook } from "@/packages/administrativo/hooks/PTitulo/usePTituloSelosReadHook";
 import type { PTituloSeloVinculadoItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloSeloVinculadoItem";
 import { AlertTriangle, Check } from "lucide-react";
@@ -74,18 +74,20 @@ function formatDateTime(value: string | Date | undefined) {
 
 function normalizeRow(row: PTituloSeloVinculadoItem) {
   return {
+    notaFiscal: pickString(row.nota_fiscal),
     seloAgrupador: pickString(row.selo_agrupador),
     sigla: pickString(row.sigla, row.numero_selo),
     numero: pickString(row.numero != null ? row.numero : undefined) || "—",
     tipoAto: pickString(row.codigo_ato, row.tipo_ato),
     descricao: pickString(row.descricao, row.descricao_ato),
     descricaoCompleta: pickString(row.descricao_completa),
-    nomeApi: pickString(row.nome_completo),
+    nomeServentuario: pickString(row.nome_completo),
     dataRaw: row.data_hora_utilizacao ?? row.data,
     emol: pickNumber(row.valor_emolumento),
     tj: pickNumber(row.valor_taxa_judiciaria),
     fund: pickNumber(row.valor_fundesp),
     total: pickNumber(row.valor_total),
+    seloLivroId: row.selo_livro_id,
   };
 }
 
@@ -146,30 +148,23 @@ function getAgrupadorDivergencia(
 
 interface PTituloSelosSectionProps {
   tituloId?: number;
-  selos: PTituloSeloVinculadoItem[] | undefined;
+  /** Selos já vindos do show (exibição imediata antes do refresh da rota /selos). */
+  initialSelos?: PTituloSeloVinculadoItem[];
 }
 
-export function PTituloSelosSection({ tituloId, selos }: PTituloSelosSectionProps) {
-  const { usuarios, fetchUsuarios, isLoading: isLoadingUsuarios } = useGUsuarioReadHook();
+export function PTituloSelosSection({ tituloId, initialSelos }: PTituloSelosSectionProps) {
   const { selos: selosFromHook, fetchSelos, isLoading: isLoadingSelos, setSelos } = usePTituloSelosReadHook();
 
   useEffect(() => {
-    void fetchUsuarios();
-  }, [fetchUsuarios]);
-
-  useEffect(() => {
-    if (typeof tituloId === "number" && tituloId > 0) {
-      void fetchSelos(tituloId);
+    if (typeof tituloId !== "number" || tituloId <= 0) {
+      setSelos([]);
       return;
     }
-    setSelos(selos ?? []);
-  }, [tituloId, fetchSelos, setSelos, selos]);
-
-  const nomeServentuarioByUsuarioId = useMemo(() => {
-    return new Map(
-      usuarios.map((u) => [u.usuario_id, u.nome_completo?.trim() || u.login?.trim() || ""]),
-    );
-  }, [usuarios]);
+    if (Array.isArray(initialSelos) && initialSelos.length > 0) {
+      setSelos(sortPTituloSelosVinculados(initialSelos));
+    }
+    void fetchSelos(tituloId);
+  }, [tituloId, initialSelos, fetchSelos, setSelos]);
 
   const rows = useMemo(() => selosFromHook ?? [], [selosFromHook]);
   const normalizedList = useMemo(() => rows.map((s) => normalizeRow(s)), [rows]);
@@ -233,16 +228,11 @@ export function PTituloSelosSection({ tituloId, selos }: PTituloSelosSectionProp
       <Accordion type="multiple" defaultValue={[]} className="flex flex-col gap-3">
         {rows.map((selo, index) => {
           const n = normalizedList[index]!;
-          const uid = selo.usuario_id;
           const foraAgrupador = agrupadorDivergencia.foraDoPadrao(index);
-          const nomeResolvido = uid != null ? nomeServentuarioByUsuarioId.get(uid) : undefined;
-          const nomeServ = nomeResolvido != null && nomeResolvido !== "" ? nomeResolvido : undefined;
-          const nomeDisplay =
-            isLoadingUsuarios && uid != null && !nomeServ && !n.nomeApi
-              ? "…"
-              : pickString(n.nomeApi, nomeServ) || (uid != null ? `ID ${uid}` : "—");
+          const nomeDisplay = n.nomeServentuario || "—";
 
-          const itemId = `selo-${index}`;
+          const itemId =
+            n.seloLivroId != null ? `selo-${n.seloLivroId}` : `selo-row-${index}`;
           const descricaoResumo = n.descricao || n.descricaoCompleta || `Tipo de ato ${n.tipoAto || "—"}`;
           const dataFmt = formatDateTime(n.dataRaw as string | Date | undefined);
           const totalFmt = moneyFormatter.format(n.total ?? 0);
@@ -359,13 +349,28 @@ export function PTituloSelosSection({ tituloId, selos }: PTituloSelosSectionProp
 
               <AccordionContent className="px-0 pb-0">
                 <div className="bg-muted/20 space-y-4 px-4 py-4 sm:px-5">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {n.notaFiscal ? (
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`${itemId}-nf`} className={labelClass}>
+                          Nota fiscal
+                        </Label>
+                        <Input
+                          id={`${itemId}-nf`}
+                          readOnly
+                          value={n.notaFiscal}
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                    ) : null}
+
                     <div
                       className={cn(
                         "space-y-1.5 rounded-lg border p-3 transition-colors",
                         foraAgrupador
                           ? "border-amber-500/60 bg-amber-500/5 ring-1 ring-amber-500/20"
                           : "border-transparent p-0",
+                        !n.notaFiscal && "sm:col-span-1",
                       )}
                       data-slot="selo-agrupador-bloco"
                     >

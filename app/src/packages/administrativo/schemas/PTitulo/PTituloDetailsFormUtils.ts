@@ -13,6 +13,41 @@ import type {
 } from "./PTituloDetailsFormSchema";
 import { pTituloDetailsScalarKeys } from "./PTituloDetailsFormSchema";
 
+/** Garante opção para o valor atual (Radix Select exige SelectItem correspondente). */
+export function ensureTituloSelectOption(
+  options: PTituloSelectOption[],
+  value?: string,
+  label?: string,
+): PTituloSelectOption[] {
+  const normalized = value?.trim();
+  if (!normalized) return options;
+  if (options.some((option) => option.value === normalized)) return options;
+  const text = label?.trim() || normalized;
+  return [{ value: normalized, label: text }, ...options];
+}
+
+/** Une listas de opções sem duplicar `value` (última label vence). */
+export function mergeTituloSelectOptionLists(
+  ...lists: (PTituloSelectOption[] | undefined)[]
+): PTituloSelectOption[] {
+  const byValue = new Map<string, PTituloSelectOption>();
+  for (const list of lists) {
+    for (const option of list ?? []) {
+      if (option.value) byValue.set(option.value, option);
+    }
+  }
+  return [...byValue.values()];
+}
+
+function normalizeTituloFkFieldValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const numeric = Number(value);
+  if (!Number.isNaN(numeric) && Number.isFinite(numeric)) {
+    return String(Math.trunc(numeric));
+  }
+  return String(value).trim();
+}
+
 /** Opções vindas de hooks/API (`selectOptionsByField`) substituem as estáticas do `db.json` para o mesmo campo. */
 export function mergeTituloSelectOptions(
   name: PTituloDetailsScalarKey,
@@ -74,12 +109,26 @@ function isMoneyScalarKey(key: PTituloDetailsScalarKey): boolean {
 }
 
 function getDefaultScalarValue(key: PTituloDetailsScalarKey, titulo: TituloListItem | null): string {
-  const value = titulo?.[key as keyof TituloListItem];
+  let value: unknown = titulo?.[key as keyof TituloListItem];
+
+  if ((value === null || value === undefined || value === "") && titulo) {
+    if (key === "especie_id") {
+      value = titulo.especie_id ?? titulo.especie?.especie_id;
+    } else if (key === "banco_id") {
+      value = titulo.banco_id ?? titulo.banco?.banco_id;
+    } else if (key === "ocorrencia_id") {
+      value = titulo.ocorrencia_id ?? titulo.ocorrencia?.ocorrencias_id;
+    }
+  }
+
   if (value === null || value === undefined) return "";
   if (isDateScalarKey(key)) return formatDateValue(value as Date | string | undefined);
   if (isMoneyScalarKey(key) && typeof value === "number") return formatMoneyValue(value);
   if (key === "tipo_aceite") return normalizePTituloTipoAceite(value);
   if (key === "tipo_endosso") return normalizePTituloTipoEndosso(value);
+  if (key === "especie_id" || key === "banco_id" || key === "ocorrencia_id") {
+    return normalizeTituloFkFieldValue(value);
+  }
   return String(value);
 }
 

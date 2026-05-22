@@ -10,6 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PTituloInterface } from "@/packages/administrativo/interfaces/PTitulo/PTituloInterface";
+import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatEmptyField } from "@/shared/utils/emptyField";
 
 interface PRetornoCraTableProps {
   data: PTituloInterface[];
@@ -21,7 +23,7 @@ interface PRetornoCraTableProps {
 function getStatusImportacaoLabel(status?: PTituloInterface["status_importacao"]): string {
   if (status === "D") return "Aguardando";
   if (status === "E") return "Exportado";
-  return "-";
+  return EMPTY_FIELD_LABEL;
 }
 
 export function PRetornoCraTable({
@@ -70,14 +72,16 @@ export function PRetornoCraTable({
                   <span>{getStatusImportacaoLabel(titulo.status_importacao)}</span>
                 )}
               </TableCell>
-              <TableCell>{titulo.numero_apontamento ?? "-"}</TableCell>
+              <TableCell>{formatEmptyField(titulo.numero_apontamento)}</TableCell>
               <TableCell>
-                {titulo.banco_id ? bancoLabelById?.get(titulo.banco_id) || String(titulo.banco_id) : "-"}
+                {titulo.banco_id
+                  ? formatEmptyField(bancoLabelById?.get(titulo.banco_id) ?? String(titulo.banco_id))
+                  : EMPTY_FIELD_LABEL}
               </TableCell>
               <TableCell>
                 {titulo.ocorrencia_id
-                  ? ocorrenciaLabelById?.get(titulo.ocorrencia_id) || String(titulo.ocorrencia_id)
-                  : "-"}
+                  ? formatEmptyField(ocorrenciaLabelById?.get(titulo.ocorrencia_id) ?? String(titulo.ocorrencia_id))
+                  : EMPTY_FIELD_LABEL}
               </TableCell>
             </TableRow>
           ))}

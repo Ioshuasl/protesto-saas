@@ -1,15 +1,15 @@
 'use server';
 
-import { PMotivosCancelamentoSaveCreateData } from '@/packages/administrativo/data/PMotivosCancelamento/PMotivosCancelamentoSaveData';
-import type { PMotivosCancelamentoInterface } from '@/packages/administrativo/interfaces/PMotivosCancelamento/PMotivosCancelamentoInterface';
+import {
+  PMotivosCancelamentoSaveCreateData,
+  type PMotivosCancelamentoSavePayload,
+} from '@/packages/administrativo/data/PMotivosCancelamento/PMotivosCancelamentoSaveData';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 
 async function executePMotivosCancelamentoSaveCreateService(
-  data: Omit<PMotivosCancelamentoInterface, 'motivos_cancelamento_id'>,
+  data: PMotivosCancelamentoSavePayload,
 ) {
-  const response = await PMotivosCancelamentoSaveCreateData(data);
-
-  return response;
+  return await PMotivosCancelamentoSaveCreateData(data);
 }
 
 export const PMotivosCancelamentoSaveCreateService = withClientErrorHandler(

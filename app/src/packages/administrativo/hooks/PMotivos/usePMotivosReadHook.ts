@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { PMotivosInterface } from '@/packages/administrativo/interfaces/PMotivos/PMotivosInterface';
+import type { PMotivosIndexQuery } from '@/packages/administrativo/interfaces/PMotivos/PMotivosIndexQuery';
 import { PMotivosIndexService } from '@/packages/administrativo/services/PMotivos/PMotivosIndexService';
 import { useResponse } from '@/shared/components/response/ResponseContext';
 
@@ -9,10 +10,10 @@ export const usePMotivosReadHook = () => {
   const [motivos, setMotivos] = useState<PMotivosInterface[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchMotivos = useCallback(async () => {
+  const fetchMotivos = useCallback(async (query?: PMotivosIndexQuery) => {
     setIsLoading(true);
     try {
-      const response = await PMotivosIndexService();
+      const response = await PMotivosIndexService(query);
       if (Array.isArray(response)) {
         setMotivos(response);
         setResponse({

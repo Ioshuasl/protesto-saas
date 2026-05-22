@@ -7,6 +7,14 @@ from packages.v1.administrativo.endpoints import (
     g_feriado_endpoint,
     p_banco_endpoint,
     p_especie_endpoint,
+    p_motivos_endpoint,
+    p_andamento_endpoint,
+    p_ocorrencia_andamento_endpoint,
+    p_titulo_endpoint,
+    p_ocorrencias_endpoint,
+    p_motivos_cancelamento_endpoint,
+    p_pessoa_endpoint,
+    p_pessoa_vinculo_endpoint,
     p_livro_natureza_endpoint,
     p_livro_andamento_endpoint,
     g_emolumento_endpoint,
@@ -372,6 +380,62 @@ api_router.include_router(
     p_especie_endpoint.router,
     prefix="/administrativo/p_especie",
     tags=["Especies"],
+)
+
+# Inclui as rotas de p_motivos
+api_router.include_router(
+    p_motivos_endpoint.router,
+    prefix="/administrativo/p_motivos",
+    tags=["Motivos"],
+)
+
+# Inclui as rotas de p_andamento
+api_router.include_router(
+    p_andamento_endpoint.router,
+    prefix="/administrativo/p_andamento",
+    tags=["Andamentos de titulo"],
+)
+
+# Inclui as rotas de p_ocorrencia_andamento
+api_router.include_router(
+    p_ocorrencia_andamento_endpoint.router,
+    prefix="/administrativo/p_ocorrencia_andamento",
+    tags=["Ocorrencias de andamento"],
+)
+
+# Inclui as rotas de p_titulo
+api_router.include_router(
+    p_titulo_endpoint.router,
+    prefix="/administrativo/p_titulo",
+    tags=["Titulos"],
+)
+
+# Inclui as rotas de p_ocorrencias
+api_router.include_router(
+    p_ocorrencias_endpoint.router,
+    prefix="/administrativo/p_ocorrencias",
+    tags=["Ocorrencias"],
+)
+
+# Inclui as rotas de p_motivos_cancelamento
+api_router.include_router(
+    p_motivos_cancelamento_endpoint.router,
+    prefix="/administrativo/p_motivos_cancelamento",
+    tags=["Motivos de cancelamento"],
+)
+
+# Inclui as rotas de p_pessoa
+api_router.include_router(
+    p_pessoa_endpoint.router,
+    prefix="/administrativo/p_pessoa",
+    tags=["Pessoas"],
+)
+
+# Inclui as rotas de p_pessoa_vinculo
+api_router.include_router(
+    p_pessoa_vinculo_endpoint.router,
+    prefix="/administrativo/p_pessoa_vinculo",
+    tags=["Vinculos de pessoa"],
 )
 
 # Inclui as rotas de p_livro_natureza

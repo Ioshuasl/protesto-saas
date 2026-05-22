@@ -21,6 +21,8 @@ import type { PPessoaInterface } from "@/packages/administrativo/interfaces/PPes
 import { DataTable } from "@/shared/components/dataTable/DataTable";
 import LoadingButton from "@/shared/components/loadingButton/LoadingButton";
 import { useResponse } from "@/shared/components/response/ResponseContext";
+import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatEmptyField, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 type PPessoaTableFormDialogProps = {
   isOpen: boolean;
@@ -56,7 +58,7 @@ export default function PPessoaTableFormDialog({
   useEffect(() => {
     if (!isOpen) return;
 
-    void fetchPessoas();
+    void fetchPessoas({ page: 1, per_page: 500, sort: 'pessoa_id.desc' });
   }, [isOpen, fetchPessoas]);
 
   const data = useMemo(() => {
@@ -113,13 +115,24 @@ export default function PPessoaTableFormDialog({
         header: "Cidade / UF",
         cell: ({ row }) => {
           const pessoa = row.original;
-          return pessoa.cidade ? `${pessoa.cidade} / ${pessoa.uf || "-"}` : "-";
+          const cidade = formatEmptyFieldTrimmed(pessoa.cidade);
+          const uf = formatEmptyFieldTrimmed(pessoa.uf);
+          if (cidade === EMPTY_FIELD_LABEL && uf === EMPTY_FIELD_LABEL) {
+            return EMPTY_FIELD_LABEL;
+          }
+          if (cidade === EMPTY_FIELD_LABEL) {
+            return uf;
+          }
+          if (uf === EMPTY_FIELD_LABEL) {
+            return cidade;
+          }
+          return `${cidade} / ${uf}`;
         },
       },
       {
         accessorKey: "telefone",
         header: "Telefone",
-        cell: ({ row }) => row.original.telefone || "-",
+        cell: ({ row }) => formatEmptyField(row.original.telefone),
       },
     ],
     [selectedPessoa],
@@ -148,7 +161,7 @@ export default function PPessoaTableFormDialog({
           setSelectedPessoa(response as PPessoaInterface);
         }
 
-        await fetchPessoas();
+        await fetchPessoas({ page: 1, per_page: 500, sort: 'pessoa_id.desc' });
         setIsOpenPPessoaForm(false);
       } catch (error) {
         console.error("Erro ao salvar pessoa:", error);

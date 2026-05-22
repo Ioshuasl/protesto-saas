@@ -6,12 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PPessoaVinculoTipoSelectObject } from "@/packages/administrativo/components/PPessoaVinculo/PPessoaVinculoTipoSelectObject";
 import { PPessoaDialog } from "@/packages/administrativo/components/PPessoa/PPessoaDialog";
 import type { PessoaFormValues } from "@/packages/administrativo/components/PPessoa/PPessoaForm";
 import type { PPessoaInterface } from "@/packages/administrativo/interfaces";
+import {
+  PPessoaVinculoTipoEnum,
+  type PPessoaVinculoTipo,
+} from "@/packages/administrativo/interfaces/PPessoaVinculo/PPessoaVinculoTipoEnum";
 import { PessoaService } from "@/packages/administrativo/services/PPessoa/PPessoaService";
-import { pTituloParteRoleOptions, PTituloParteItem } from "./PTituloParteTypes";
+import {
+  PTITULO_PARTE_DEFAULT_TIPO,
+  buildPTituloParteItem,
+  type PTituloParteItem,
+} from "./PTituloParteTypes";
 
 interface PTituloParteDialogProps {
   open: boolean;
@@ -19,8 +27,13 @@ interface PTituloParteDialogProps {
   onAddBatch: (partes: PTituloParteItem[]) => void;
 }
 
-function getDefaultVinculosByPessoa(selectedIds: number[], currentMap: Record<number, string>) {
-  return Object.fromEntries(selectedIds.map((id) => [id, currentMap[id] || "D"]));
+function getDefaultVinculosByPessoa(
+  selectedIds: number[],
+  currentMap: Record<number, PPessoaVinculoTipo>,
+): Record<number, PPessoaVinculoTipo> {
+  return Object.fromEntries(
+    selectedIds.map((id) => [id, currentMap[id] ?? PTITULO_PARTE_DEFAULT_TIPO]),
+  );
 }
 
 export function PTituloParteDialog({ open, onOpenChange, onAddBatch }: PTituloParteDialogProps) {
@@ -28,7 +41,7 @@ export function PTituloParteDialog({ open, onOpenChange, onAddBatch }: PTituloPa
   const [searchQuery, setSearchQuery] = useState("");
   const [selectionError, setSelectionError] = useState("");
   const [selectedPessoaIds, setSelectedPessoaIds] = useState<number[]>([]);
-  const [vinculosByPessoa, setVinculosByPessoa] = useState<Record<number, string>>({});
+  const [vinculosByPessoa, setVinculosByPessoa] = useState<Record<number, PPessoaVinculoTipo>>({});
   const [pessoas, setPessoas] = useState<PPessoaInterface[]>([]);
   const [isPPessoaDialogOpen, setIsPPessoaDialogOpen] = useState(false);
   const [isSubmittingPessoa, setIsSubmittingPessoa] = useState(false);
@@ -38,7 +51,11 @@ export function PTituloParteDialog({ open, onOpenChange, onAddBatch }: PTituloPa
 
     const fetchPessoas = async () => {
       try {
-        const data = (await PessoaService.getAll()) as unknown as PPessoaInterface[];
+        const data = await PessoaService.getAll({
+          page: 1,
+          per_page: 500,
+          sort: "pessoa_id.desc",
+        });
         setPessoas(data);
       } catch (error) {
         console.error("Erro ao buscar pessoas:", error);
@@ -93,18 +110,14 @@ export function PTituloParteDialog({ open, onOpenChange, onAddBatch }: PTituloPa
     const batch = selectedPessoaIds
       .map((id) => pessoas.find((pessoa) => pessoa.pessoa_id === id))
       .filter(Boolean)
-      .map((pessoa) => {
-        const tipo = vinculosByPessoa[pessoa!.pessoa_id];
-        const descricao = pTituloParteRoleOptions.find((option) => option.value === tipo)?.label ?? "Outros";
-
-        return {
+      .map((pessoa) =>
+        buildPTituloParteItem({
           pessoa_id: pessoa?.pessoa_id,
-          tipo,
-          descricao,
+          tipo: vinculosByPessoa[pessoa!.pessoa_id],
           nome: pessoa?.nome,
           cpfcnpj: pessoa?.cpfcnpj,
-        };
-      });
+        }),
+      );
 
     onAddBatch(batch);
     resetDialogState();
@@ -119,7 +132,11 @@ export function PTituloParteDialog({ open, onOpenChange, onAddBatch }: PTituloPa
         data_nascimento: data.data_nascimento || undefined,
       });
 
-      const updatedPessoas = (await PessoaService.getAll()) as unknown as PPessoaInterface[];
+      const updatedPessoas = await PessoaService.getAll({
+        page: 1,
+        per_page: 500,
+        sort: "pessoa_id.desc",
+      });
       setPessoas(updatedPessoas);
       const created = novaPessoa as unknown as PPessoaInterface;
       setSelectedPessoaIds((prev) => (prev.includes(created.pessoa_id) ? prev : [...prev, created.pessoa_id]));
@@ -220,26 +237,17 @@ export function PTituloParteDialog({ open, onOpenChange, onAddBatch }: PTituloPa
                           <p className="text-xs text-muted-foreground">{pessoa.cpfcnpj ?? "-"}</p>
                         </div>
 
-                        <Select
-                          value={vinculosByPessoa[id] || "D"}
-                          onValueChange={(value) =>
+                        <PPessoaVinculoTipoSelectObject
+                          value={vinculosByPessoa[id] ?? PPessoaVinculoTipoEnum.DEVEDOR}
+                          onValueChange={(tipo) => {
+                            if (!tipo) return;
                             setVinculosByPessoa((prev) => ({
                               ...prev,
-                              [id]: value,
-                            }))
-                          }
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Tipo de vínculo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {pTituloParteRoleOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              [id]: tipo,
+                            }));
+                          }}
+                          clearable={false}
+                        />
                       </div>
                     );
                   })}

@@ -1,3 +1,4 @@
+import type { PTituloIndexNestedBanco, PTituloIndexNestedEspecie } from "./PTituloIndexItem";
 import type { PTituloInterface } from "./PTituloInterface";
 import type { PTituloSeloVinculadoItem } from "./PTituloSeloVinculadoItem";
 
@@ -20,6 +21,9 @@ export function isTituloListItem(value: unknown): value is TituloListItem {
 
 /** Linha enriquecida para listagem/detalhe de título (camada de apresentação). */
 export interface TituloListItem extends PTituloInterface {
+  especie?: PTituloIndexNestedEspecie | null;
+  banco?: PTituloIndexNestedBanco | null;
+  ocorrencia?: { ocorrencias_id?: number; descricao?: string } | null;
   devedor_nome?: string;
   devedor_cpfcnpj?: string;
   especie_sigla?: string;

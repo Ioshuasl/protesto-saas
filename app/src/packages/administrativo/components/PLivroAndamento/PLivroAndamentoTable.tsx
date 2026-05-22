@@ -10,15 +10,18 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, X } from "lucide-react";
 import { PLivroAndamentoInterface, PLivroNaturezaInterface } from "@/packages/administrativo/interfaces";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatEmptyField, formatEmptyFieldDate } from "@/shared/utils/emptyField";
 
 interface PLivroAndamentoTableProps {
   data: PLivroAndamentoInterface[];
   naturezas: PLivroNaturezaInterface[];
   onEdit: (livro: PLivroAndamentoInterface) => void;
+  onFinalize: (livro: PLivroAndamentoInterface) => void;
   onDelete: (id: number) => void;
   isLoading?: boolean;
 }
@@ -26,9 +29,10 @@ interface PLivroAndamentoTableProps {
 export function PLivroAndamentoTable({ 
   data, 
   naturezas,
-  onEdit, 
-  onDelete, 
-  isLoading 
+  onEdit,
+  onFinalize,
+  onDelete,
+  isLoading,
 }: PLivroAndamentoTableProps) {
   if (isLoading) {
     return (
@@ -47,9 +51,9 @@ export function PLivroAndamentoTable({
   }
 
   const getNaturezaDescricao = (id?: number) => {
-    if (!id) return "-";
+    if (!id) return EMPTY_FIELD_LABEL;
     const natureza = naturezas.find((n) => n.livro_natureza_id === id);
-    return natureza ? `${natureza.descricao} (${natureza.sigla})` : id;
+    return natureza ? `${natureza.descricao} (${natureza.sigla})` : String(id);
   };
 
   return (
@@ -57,8 +61,6 @@ export function PLivroAndamentoTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[80px]">ID</TableHead>
-            <TableHead>Sigla</TableHead>
             <TableHead>Nº Livro</TableHead>
             <TableHead>Natureza</TableHead>
             <TableHead>Folha Atual</TableHead>
@@ -74,13 +76,13 @@ export function PLivroAndamentoTable({
               className="cursor-pointer"
               onClick={() => onEdit(livro)}
             >
-              <TableCell className="font-medium">{livro.livro_andamento_id}</TableCell>
-              <TableCell>{livro.sigla}</TableCell>
-              <TableCell>{livro.numero_livro}</TableCell>
+              <TableCell>{formatEmptyField(livro.numero_livro)}</TableCell>
               <TableCell>{getNaturezaDescricao(livro.livro_natureza_id)}</TableCell>
               <TableCell>{livro.folha_atual} / {livro.numero_folhas}</TableCell>
               <TableCell>
-                {livro.data_abertura ? format(new Date(livro.data_abertura), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                {formatEmptyFieldDate(livro.data_abertura, (date) =>
+                  format(date, "dd/MM/yyyy", { locale: ptBR }),
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant={livro.aberto ? "default" : "secondary"}>
@@ -101,6 +103,20 @@ export function PLivroAndamentoTable({
                   >
                     <Pencil className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-[#FF6B00]" />
                   </Button>
+                  {livro.aberto ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onFinalize(livro);
+                      }}
+                      title="Finalizar"
+                      className="group"
+                    >
+                      <X className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-[#FF6B00]" />
+                    </Button>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="icon"

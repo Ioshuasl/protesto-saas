@@ -12,6 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PCertidaoInterface } from "@/packages/certidao/interface/PCertidao/PCertidaoInterface";
+import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatEmptyField, formatEmptyFieldDate, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 interface PCertidaoTableProps {
   data: PCertidaoInterface[];
@@ -21,51 +23,26 @@ interface PCertidaoTableProps {
   usuarioLabelById?: Map<number, string>;
 }
 
-function formatDateTime(dateValue?: Date, timeValue?: string): string {
-  if (!dateValue && !timeValue) return "-";
-
-  const date = dateValue ? new Date(dateValue) : null;
-  const formattedDate =
-    date && !Number.isNaN(date.getTime())
-      ? new Intl.DateTimeFormat("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }).format(date)
-      : "-";
-
-  if (!timeValue) return formattedDate;
-  if (formattedDate === "-") return timeValue;
-  return `${formattedDate} ${timeValue}`;
-}
-
 function formatDateOnly(dateValue?: Date): string {
-  if (!dateValue) return "-";
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  return formatEmptyFieldDate(dateValue, (date) =>
+    new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date),
+  );
 }
 
 function getInitials(name?: string): string {
-  if (!name) return "--";
-  const parts = name
+  const trimmed = name?.trim();
+  if (!trimmed) return "NI";
+  const parts = trimmed
     .split(" ")
     .map((part) => part.trim())
     .filter(Boolean);
-  if (parts.length === 0) return "--";
+  if (parts.length === 0) return "NI";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
-}
-
-function formatApresentante(value?: string, cpfcnpj?: string): string {
-  if (value && cpfcnpj) return `${value} - ${cpfcnpj}`;
-  if (value) return value;
-  if (cpfcnpj) return cpfcnpj;
-  return "-";
 }
 
 function normalizeCode(value?: string): string {
@@ -91,14 +68,14 @@ function getStatusLabel(status?: PCertidaoInterface["status"] | string): string 
   if (normalized === "C" || normalized === "CANCELADA" || normalized === "INATIVA") {
     return "Cancelada";
   }
-  return "-";
+  return EMPTY_FIELD_LABEL;
 }
 
 function getTipoCertidaoLabel(tipo?: PCertidaoInterface["tipo_certidao"] | string): string {
   const normalized = normalizeCode(tipo);
   if (normalized === "P" || normalized.startsWith("POSITIVA")) return "Positiva";
   if (normalized === "N" || normalized.startsWith("NEGATIVA")) return "Negativa";
-  return "-";
+  return EMPTY_FIELD_LABEL;
 }
 
 export function PCertidaoTable({
@@ -156,7 +133,7 @@ export function PCertidaoTable({
                 <div className="inline-flex items-center gap-2 text-sm">
                   <CalendarDays className="h-4 w-4 text-muted-foreground" />
                   <span>{formatDateOnly(certidao.data_certidao)}</span>
-                  <span className="text-muted-foreground">{certidao.hora_certidao ?? "--:--"}</span>
+                  <span className="text-muted-foreground">{formatEmptyFieldTrimmed(certidao.hora_certidao)}</span>
                 </div>
               </TableCell>
               <TableCell>
@@ -165,8 +142,8 @@ export function PCertidaoTable({
                     {getInitials(certidao.apresentante)}
                   </div>
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate font-medium">{certidao.apresentante ?? "-"}</span>
-                    <span className="truncate text-xs text-muted-foreground">{certidao.cpfcnpj ?? "-"}</span>
+                    <span className="truncate font-medium">{formatEmptyField(certidao.apresentante)}</span>
+                    <span className="truncate text-xs text-muted-foreground">{formatEmptyField(certidao.cpfcnpj)}</span>
                   </div>
                 </div>
               </TableCell>
@@ -174,7 +151,9 @@ export function PCertidaoTable({
                 <div className="inline-flex items-center gap-2">
                   <UserRound className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {certidao.usuario_id ? usuarioLabelById?.get(certidao.usuario_id) || String(certidao.usuario_id) : "-"}
+                    {certidao.usuario_id
+                      ? formatEmptyField(usuarioLabelById?.get(certidao.usuario_id) ?? String(certidao.usuario_id))
+                      : EMPTY_FIELD_LABEL}
                   </span>
                 </div>
               </TableCell>

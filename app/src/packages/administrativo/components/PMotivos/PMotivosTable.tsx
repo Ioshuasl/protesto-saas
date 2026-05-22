@@ -10,7 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
+import { normalizeSituacaoKey } from "@/packages/administrativo/components/PLivroNatureza/plivroNaturezaSituacaoUtils";
 import { PMotivosInterface } from "@/packages/administrativo/interfaces";
+import { SituacoesBadge } from "@/shared/components/situacoes/SituacoesBadge";
+import { formatEmptyField, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
 
 interface PMotivosTableProps {
   data: PMotivosInterface[];
@@ -41,10 +44,10 @@ export function PMotivosTable({ data, onEdit, onDelete, isLoading }: PMotivosTab
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[80px]">ID</TableHead>
             <TableHead>Código</TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Situação</TableHead>
+            <TableHead className="text-right w-[120px]">Qtd. Titulos</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -55,10 +58,14 @@ export function PMotivosTable({ data, onEdit, onDelete, isLoading }: PMotivosTab
               className="cursor-pointer"
               onClick={() => onEdit(motivo)}
             >
-              <TableCell className="font-medium">{motivo.motivos_id}</TableCell>
-              <TableCell>{motivo.codigo}</TableCell>
-              <TableCell>{motivo.descricao}</TableCell>
-              <TableCell>{motivo.situacao}</TableCell>
+              <TableCell className="font-medium">{formatEmptyField(motivo.codigo)}</TableCell>
+              <TableCell>{formatEmptyFieldTrimmed(motivo.descricao)}</TableCell>
+              <TableCell>
+                <SituacoesBadge situacao={normalizeSituacaoKey(motivo.situacao)} />
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {Number(motivo.total_titulos ?? 0).toLocaleString("pt-BR")}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" size="icon" onClick={(event) => { event.stopPropagation(); onEdit(motivo); }} title="Editar" className="group">

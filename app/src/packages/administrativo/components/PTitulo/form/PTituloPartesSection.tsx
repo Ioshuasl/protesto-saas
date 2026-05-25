@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { HelpCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,11 @@ import { PPessoaVinculoTable } from "@/packages/administrativo/components/PPesso
 import { PPessoaDialog } from "@/packages/administrativo/components/PPessoa/PPessoaDialog";
 import type { PessoaFormValues } from "@/packages/administrativo/components/PPessoa/PPessoaForm";
 import type { PPessoaInterface } from "@/packages/administrativo/interfaces";
-import type { PPessoaVinculoTipo } from "@/packages/administrativo/interfaces/PPessoaVinculo/PPessoaVinculoTipoEnum";
+import {
+  PPessoaVinculoTipoEnum,
+  normalizePPessoaVinculoTipo,
+  type PPessoaVinculoTipo,
+} from "@/packages/administrativo/interfaces/PPessoaVinculo/PPessoaVinculoTipoEnum";
 import { PessoaService } from "@/packages/administrativo/services/PPessoa/PPessoaService";
 import type { PTituloDetailsFormValues } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
 import InfoDialog from "@/shared/components/InfoDialog/InfoDialog";
@@ -23,6 +27,11 @@ const TIPO_VINCULO_INFO_MARKDOWN = `### 📄 Apresentante
 * Ele tem o dever de indicar a perfeita identificação do devedor e o seu endereço correto.
 * Quando o envio do título é feito eletronicamente, o apresentante é quem declara que a dívida existe e guarda consigo o documento original (ou cópia autenticada) para provar a cobrança caso seja questionado na Justiça.
 * É também o apresentante quem pode pedir a desistência do protesto e retirar o documento antes que o ato seja concluído (desde que pague as taxas).
+
+### ✍️ Cedente / Sacador
+
+* **Sacador:** Segundo o documento, o sacador é quem lança ou emite a cobrança originada de um negócio, como no caso de ser o responsável pela emissão de uma duplicata.
+* **Cedente:** Para ser totalmente transparente e honesto com você sobre minha natureza como inteligência artificial que está seguindo estritamente a fonte fornecida, **o termo "Cedente" não é mencionado ou definido nas regras do documento enviado**. Na prática comercial do dia a dia (fora deste documento), o cedente costuma ser quem "cede" ou transfere o direito de receber essa dívida para um banco, mas essa definição não consta no Código de Normas que analisamos.
 
 ### 💰 Credor
 
@@ -39,12 +48,19 @@ const TIPO_VINCULO_INFO_MARKDOWN = `### 📄 Apresentante
 * O cartório tem o papel de intimar o devedor para que ele pague, devolva, aceite a cobrança ou justifique o não pagamento, sob pena de ter seu nome "sujo" (protestado).
 * O Código define o devedor de forma ampla: pode ser quem emitiu uma nota promissória ou um cheque, quem é o "sacado" (cobrado) em uma letra de câmbio ou duplicata, ou simplesmente qualquer pessoa que o credor/apresentante tenha apontado como responsável por aquela obrigação.
 * É obrigatório que o nome do devedor conste no documento oficial de registro do protesto.
-
-### ✍️ Cedente / Sacador
-
-* **Sacador:** Segundo o documento, o sacador é quem lança ou emite a cobrança originada de um negócio, como no caso de ser o responsável pela emissão de uma duplicata.
-* **Cedente:** Para ser totalmente transparente e honesto com você sobre minha natureza como inteligência artificial que está seguindo estritamente a fonte fornecida, **o termo "Cedente" não é mencionado ou definido nas regras do documento enviado**. Na prática comercial do dia a dia (fora deste documento), o cedente costuma ser quem "cede" ou transfere o direito de receber essa dívida para um banco, mas essa definição não consta no Código de Normas que analisamos.
 `;
+
+const TIPO_VINCULO_ORDER: Record<PPessoaVinculoTipo, number> = {
+  [PPessoaVinculoTipoEnum.APRESENTANTE]: 0,
+  [PPessoaVinculoTipoEnum.CEDENTE]: 1,
+  [PPessoaVinculoTipoEnum.CREDOR]: 2,
+  [PPessoaVinculoTipoEnum.DEVEDOR]: 3,
+};
+
+function getTipoVinculoOrder(tipo?: string | null): number {
+  const normalizedTipo = normalizePPessoaVinculoTipo(tipo) ?? PPessoaVinculoTipoEnum.DEVEDOR;
+  return TIPO_VINCULO_ORDER[normalizedTipo];
+}
 
 export function PTituloPartesSection() {
   const { control, getValues } = useFormContext<PTituloDetailsFormValues>();
@@ -56,6 +72,26 @@ export function PTituloPartesSection() {
   const [selectedParteIndex, setSelectedParteIndex] = useState<number | null>(null);
   const [selectedPessoa, setSelectedPessoa] = useState<PPessoaInterface | null>(null);
   const [isSubmittingPessoa, setIsSubmittingPessoa] = useState(false);
+
+  const orderedParteRows = useMemo(
+    () =>
+      fields
+        .map((field, fieldIndex) => ({
+          id: field.id,
+          tipo: field.tipo,
+          nome: field.nome,
+          cpfcnpj: field.cpfcnpj,
+          devedor_microempresa: field.devedor_microempresa,
+          micro_empresa: field.micro_empresa,
+          fieldIndex,
+        }))
+        .sort(
+          (left, right) =>
+            getTipoVinculoOrder(left.tipo) - getTipoVinculoOrder(right.tipo) ||
+            left.fieldIndex - right.fieldIndex,
+        ),
+    [fields],
+  );
 
   const handleAddPartesBatch = (novasPartes: PTituloParteItem[]) => {
     novasPartes.forEach((item) => append(buildPTituloParteItem(item)));
@@ -144,17 +180,12 @@ export function PTituloPartesSection() {
       </div>
 
       <PPessoaVinculoTable
-        rows={fields.map((field) => ({
-          id: field.id,
-          tipo: field.tipo,
-          nome: field.nome,
-          cpfcnpj: field.cpfcnpj,
-          devedor_microempresa: field.devedor_microempresa,
-          micro_empresa: field.micro_empresa,
-        }))}
-        onTipoChange={handleUpdateTipoVinculo}
-        onEdit={(index) => void handleEditParte(index)}
-        onRemove={remove}
+        rows={orderedParteRows}
+        onTipoChange={(index, tipo) =>
+          handleUpdateTipoVinculo(orderedParteRows[index]?.fieldIndex ?? index, tipo)
+        }
+        onEdit={(index) => void handleEditParte(orderedParteRows[index]?.fieldIndex ?? index)}
+        onRemove={(index) => remove(orderedParteRows[index]?.fieldIndex ?? index)}
         emptyMessage="Nenhuma parte vinculada encontrada."
         tipoHeaderAction={
           <Button

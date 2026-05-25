@@ -2,13 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from orm_py import Op
-
 from abstracts.repository import BaseRepository
 from actions.data.query_params_parser import QueryParams, QueryParamsParser
-from database.orm_firebird import firebird_orm_supports_string_where, normalize_row_keys
-from database.orm_firebird_settings import use_orm_firebird
-from packages.v1.administrativo.model.p_pessoa import get_p_pessoa_model
+from database.orm_firebird import normalize_row_keys
 from packages.v1.administrativo.repositories.p_pessoa.p_pessoa_count_titulos_by_pessoa_ids_repository import (
     CountTitulosByPessoaIdsRepository,
 )
@@ -80,11 +76,23 @@ def _varchar15_like_prefix(value: str) -> str:
 _CPFCNPJ_STRIP_CHARS = ".-/ \\(),"
 
 
-def _cpfcnpj_digits_length_sql() -> str:
-    expr = "TRIM(COALESCE(CPFCNPJ, ''))"
+def _select_columns_sql(alias: str | None = None) -> str:
+    columns = [line.strip().rstrip(",") for line in _SELECT_COLUMNS.strip().splitlines()]
+    if alias is None:
+        return _SELECT_COLUMNS.strip()
+    return ",\n            ".join(f"{alias}.{column} AS {column}" for column in columns)
+
+
+def _normalized_cpfcnpj_sql(alias: str | None = None) -> str:
+    prefix = f"{alias}." if alias else ""
+    expr = f"TRIM(COALESCE({prefix}CPFCNPJ, ''))"
     for char in _CPFCNPJ_STRIP_CHARS:
         expr = f"REPLACE({expr}, '{char}', '')"
-    return f"CHAR_LENGTH({expr})"
+    return expr
+
+
+def _cpfcnpj_digits_length_sql(alias: str | None = None) -> str:
+    return f"CHAR_LENGTH({_normalized_cpfcnpj_sql(alias)})"
 
 
 def _tipo_pessoa_digit_length(tipo_pessoa: str) -> int:
@@ -118,19 +126,6 @@ class IndexRepository(BaseRepository):
                 sort_direction,
             )
 
-        # Filtro por quantidade de dígitos do documento só existe no SQL.
-        if pessoa_index_schema.tipo_pessoa is not None:
-            return self._execute_sql(
-                pessoa_index_schema, page, per_page, sort_field, sort_direction
-            )
-
-        if use_orm_firebird() and (
-            firebird_orm_supports_string_where()
-            or not self._has_location_filters(pessoa_index_schema)
-        ):
-            return self._execute_orm(
-                pessoa_index_schema, page, per_page, sort_field, sort_direction
-            )
         return self._execute_sql(
             pessoa_index_schema, page, per_page, sort_field, sort_direction
         )
@@ -161,6 +156,7 @@ class IndexRepository(BaseRepository):
                 merged.append(row)
 
         merged = self._filter_rows_by_tipo_pessoa(merged, pessoa_index_schema)
+        merged = self._group_rows_by_cpfcnpj(merged)
         merged = self._sort_rows(merged, sort_field, sort_direction)
         total = len(merged)
         offset = (page - 1) * per_page
@@ -238,27 +234,28 @@ class IndexRepository(BaseRepository):
         where.append(f"PESSOA_ID NOT IN ({', '.join(placeholders)})")
 
     def _build_location_sql_filters(
-        self, schema: PPessoaIndexSchema
+        self, schema: PPessoaIndexSchema, alias: str | None = None
     ) -> tuple[list[str], dict[str, Any]]:
         where: list[str] = []
         params: dict[str, Any] = {}
+        prefix = f"{alias}." if alias else ""
         if schema.cidade is not None:
-            where.append("UPPER(TRIM(CIDADE)) = UPPER(TRIM(:cidade))")
+            where.append(f"UPPER(TRIM({prefix}CIDADE)) = UPPER(TRIM(:cidade))")
             params["cidade"] = schema.cidade
         if schema.uf is not None:
-            where.append("UPPER(TRIM(UF)) = UPPER(TRIM(:uf))")
+            where.append(f"UPPER(TRIM({prefix}UF)) = UPPER(TRIM(:uf))")
             params["uf"] = schema.uf
-        self._append_tipo_pessoa_sql_filter(where, schema)
+        self._append_tipo_pessoa_sql_filter(where, schema, alias)
         return where, params
 
     @staticmethod
     def _append_tipo_pessoa_sql_filter(
-        where: list[str], schema: PPessoaIndexSchema
+        where: list[str], schema: PPessoaIndexSchema, alias: str | None = None
     ) -> None:
         if schema.tipo_pessoa is None:
             return
         expected = _tipo_pessoa_digit_length(schema.tipo_pessoa)
-        where.append(f"{_cpfcnpj_digits_length_sql()} = {expected}")
+        where.append(f"{_cpfcnpj_digits_length_sql(alias)} = {expected}")
 
     @staticmethod
     def _filter_rows_by_tipo_pessoa(
@@ -272,6 +269,31 @@ class IndexRepository(BaseRepository):
             if infer_tipo_pessoa_from_cpfcnpj(row.get("cpfcnpj"))
             == schema.tipo_pessoa
         ]
+
+    @staticmethod
+    def _cpfcnpj_group_key(row: dict[str, Any]) -> str | None:
+        digits = _digits_only(str(row.get("cpfcnpj") or ""))
+        return digits or None
+
+    @classmethod
+    def _group_rows_by_cpfcnpj(
+        cls, rows: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        grouped: dict[str, dict[str, Any]] = {}
+        ungrouped: list[dict[str, Any]] = []
+
+        for row in rows:
+            pessoa_id = row.get("pessoa_id")
+            key = cls._cpfcnpj_group_key(row)
+            if key is None or pessoa_id is None:
+                ungrouped.append(row)
+                continue
+
+            current = grouped.get(key)
+            if current is None or int(pessoa_id) > int(current.get("pessoa_id") or 0):
+                grouped[key] = row
+
+        return [*ungrouped, *grouped.values()]
 
     @staticmethod
     def _sort_rows(
@@ -289,35 +311,6 @@ class IndexRepository(BaseRepository):
 
         return sorted(rows, key=sort_key, reverse=reverse)
 
-    def _execute_orm(
-        self,
-        pessoa_index_schema: PPessoaIndexSchema,
-        page: int,
-        per_page: int,
-        sort_field: str,
-        sort_direction: str,
-    ) -> dict[str, Any]:
-        where = self._build_orm_where(pessoa_index_schema)
-        offset = (page - 1) * per_page
-
-        options: dict[str, Any] = {
-            "order": [(sort_field, sort_direction.upper())],
-            "limit": per_page,
-            "offset": offset,
-        }
-        if where:
-            options["where"] = where
-
-        result = get_p_pessoa_model().findAndCountAll(options)
-        total = int(result.get("count") or 0)
-        rows = result.get("rows") or []
-
-        mapped_rows = [map_pessoa_row(row) or {} for row in rows]
-        return {
-            "rows": self._enrich_rows_with_total_titulos(mapped_rows),
-            "pagination": self._build_pagination_meta(page, per_page, total),
-        }
-
     def _execute_sql(
         self,
         pessoa_index_schema: PPessoaIndexSchema,
@@ -326,20 +319,19 @@ class IndexRepository(BaseRepository):
         sort_field: str,
         sort_direction: str,
     ) -> dict[str, Any]:
-        where_clauses, params = self._build_sql_filters(pessoa_index_schema)
-        where_sql = self._where_sql(where_clauses)
+        grouped_ids_sql, params = self._grouped_pessoa_ids_sql(pessoa_index_schema)
         offset = (page - 1) * per_page
 
-        count_sql = f"SELECT COUNT(*) AS TOTAL FROM P_PESSOA{where_sql}"
+        count_sql = f"SELECT COUNT(*) AS TOTAL FROM ({grouped_ids_sql}) grouped"
         count_row = self.fetch_one(count_sql, params) or {}
         total = int(count_row.get("TOTAL") or count_row.get("total") or 0)
 
         sql = f"""
         SELECT FIRST {per_page} SKIP {offset}
-            {_SELECT_COLUMNS.strip()}
-        FROM P_PESSOA
-        {where_sql}
-        ORDER BY {sort_field} {sort_direction.upper()}
+            {_select_columns_sql("p")}
+        FROM P_PESSOA p
+        INNER JOIN ({grouped_ids_sql}) grouped ON grouped.PESSOA_ID = p.PESSOA_ID
+        ORDER BY p.{sort_field} {sort_direction.upper()}
         """
         rows = self.fetch_all(sql, params)
         mapped_rows = [
@@ -351,49 +343,95 @@ class IndexRepository(BaseRepository):
             "pagination": self._build_pagination_meta(page, per_page, total),
         }
 
+    def _grouped_pessoa_ids_sql(
+        self, schema: PPessoaIndexSchema
+    ) -> tuple[str, dict[str, Any]]:
+        non_empty_filters, params = self._build_sql_filters(schema, "pg")
+        empty_filters, _ = self._build_sql_filters(schema, "pe")
+        non_empty_doc = _normalized_cpfcnpj_sql("pg")
+        empty_doc = _normalized_cpfcnpj_sql("pe")
+
+        non_empty_where = self._where_sql([*non_empty_filters, f"{non_empty_doc} <> ''"])
+        empty_where = self._where_sql([*empty_filters, f"{empty_doc} = ''"])
+        sql = f"""
+            SELECT MAX(pg.PESSOA_ID) AS PESSOA_ID
+            FROM P_PESSOA pg
+            {non_empty_where}
+            GROUP BY {non_empty_doc}
+            UNION ALL
+            SELECT pe.PESSOA_ID AS PESSOA_ID
+            FROM P_PESSOA pe
+            {empty_where}
+        """
+        return sql, params
+
     def _enrich_rows_with_total_titulos(
         self, rows: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
+        pessoa_ids_by_doc = self._fetch_pessoa_ids_by_cpfcnpj_digits(
+            sorted(
+                {
+                    self._cpfcnpj_group_key(row)
+                    for row in rows
+                    if self._cpfcnpj_group_key(row) is not None
+                }
+            )
+        )
+
         pessoa_ids = [
             int(row["pessoa_id"])
             for row in rows
             if row.get("pessoa_id") is not None
         ]
+        for grouped_ids in pessoa_ids_by_doc.values():
+            pessoa_ids.extend(grouped_ids)
+
         counts = CountTitulosByPessoaIdsRepository().execute(pessoa_ids)
         for row in rows:
             pessoa_id = row.get("pessoa_id")
-            row["total_titulos"] = (
-                counts.get(int(pessoa_id), 0) if pessoa_id is not None else 0
-            )
+            cpfcnpj_key = self._cpfcnpj_group_key(row)
+            if cpfcnpj_key is not None:
+                row["total_titulos"] = sum(
+                    counts.get(pessoa_group_id, 0)
+                    for pessoa_group_id in pessoa_ids_by_doc.get(cpfcnpj_key, [])
+                )
+            else:
+                row["total_titulos"] = (
+                    counts.get(int(pessoa_id), 0) if pessoa_id is not None else 0
+                )
         return rows
 
-    @staticmethod
-    def _has_location_filters(pessoa_index_schema: PPessoaIndexSchema) -> bool:
-        return (
-            pessoa_index_schema.cidade is not None
-            or pessoa_index_schema.uf is not None
-            or pessoa_index_schema.tipo_pessoa is not None
-        )
-
-    @staticmethod
-    def _build_orm_where(pessoa_index_schema: PPessoaIndexSchema) -> dict[str, Any]:
-        clauses: list[dict[str, Any]] = []
-
-        if pessoa_index_schema.cidade is not None:
-            clauses.append({"CIDADE": pessoa_index_schema.cidade})
-        if pessoa_index_schema.uf is not None:
-            clauses.append({"UF": pessoa_index_schema.uf})
-
-        if not clauses:
+    def _fetch_pessoa_ids_by_cpfcnpj_digits(
+        self, cpfcnpj_digits: list[str | None]
+    ) -> dict[str, list[int]]:
+        docs = [doc for doc in cpfcnpj_digits if doc]
+        if not docs:
             return {}
-        if len(clauses) == 1:
-            return clauses[0]
-        return {Op.and_: clauses}
+
+        placeholders = ", ".join(f":doc_{index}" for index in range(len(docs)))
+        params = {f"doc_{index}": doc for index, doc in enumerate(docs)}
+        doc_expr = _normalized_cpfcnpj_sql()
+        sql = f"""
+        SELECT
+            PESSOA_ID,
+            {doc_expr} AS CPFCNPJ_DIGITS
+        FROM P_PESSOA
+        WHERE {doc_expr} IN ({placeholders})
+        """
+        rows = self.fetch_all(sql, params)
+        grouped: dict[str, list[int]] = {doc: [] for doc in docs}
+        for row in rows or []:
+            pessoa_id = row.get("PESSOA_ID") or row.get("pessoa_id")
+            doc = row.get("CPFCNPJ_DIGITS") or row.get("cpfcnpj_digits")
+            if pessoa_id is None or not doc:
+                continue
+            grouped.setdefault(str(doc), []).append(int(pessoa_id))
+        return grouped
 
     def _build_sql_filters(
-        self, pessoa_index_schema: PPessoaIndexSchema
+        self, pessoa_index_schema: PPessoaIndexSchema, alias: str | None = None
     ) -> tuple[list[str], dict[str, Any]]:
-        return self._build_location_sql_filters(pessoa_index_schema)
+        return self._build_location_sql_filters(pessoa_index_schema, alias)
 
     @staticmethod
     def _where_sql(where: list[str]) -> str:

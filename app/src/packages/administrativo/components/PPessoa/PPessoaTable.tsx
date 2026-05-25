@@ -50,7 +50,7 @@ function isMicroempresaFlag(value: unknown): boolean {
 function MicroempresaBadge() {
   return (
     <Badge variant="outline" className="border-amber-500/60 text-amber-700" title="Microempresa">
-      ME
+      MEI
     </Badge>
   );
 }

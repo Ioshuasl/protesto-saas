@@ -39,9 +39,11 @@ export interface TituloListItem extends PTituloInterface {
     tipo: string;
     descricao: string;
     devedor_tipo_aceite?: string;
+    devedor_microempresa?: unknown;
     devedor_data_aceite?: Date;
     nome?: string;
     cpfcnpj?: string;
+    micro_empresa?: unknown;
   }>;
   vinculos_selos?: PTituloSeloVinculadoItem[];
 }

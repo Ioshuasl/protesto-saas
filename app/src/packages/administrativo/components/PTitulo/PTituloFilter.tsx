@@ -4,18 +4,24 @@ import { format, parseISO } from "date-fns";
 import { Search } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PBancoSelectObject } from "@/packages/administrativo/components/PBanco/PBancoSelectObject";
+import { PEspecieSelectObject } from "@/packages/administrativo/components/PEspecie/PEspecieSelectObject";
+import { POcorrenciasSelectObject } from "@/packages/administrativo/components/POcorrencias/POcorrenciasSelectObject";
 import { DateRangePicker } from "@/shared/components/dateRangePicker/DateRangePicker";
 
 interface PTituloFilterProps {
   searchQuery: string;
-  status: string;
   startDate: string;
   endDate: string;
+  bancoId: string;
+  especieId: string;
+  ocorrenciaId: string;
   onSearchChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
+  onBancoChange: (value: string) => void;
+  onEspecieChange: (value: string) => void;
+  onOcorrenciaChange: (value: string) => void;
 }
 
 function toDateRange(startDate: string, endDate: string): DateRange | undefined {
@@ -28,13 +34,17 @@ function toDateRange(startDate: string, endDate: string): DateRange | undefined 
 
 export function PTituloFilter({
   searchQuery,
-  status,
   startDate,
   endDate,
+  bancoId,
+  especieId,
+  ocorrenciaId,
   onSearchChange,
-  onStatusChange,
   onStartDateChange,
   onEndDateChange,
+  onBancoChange,
+  onEspecieChange,
+  onOcorrenciaChange,
 }: PTituloFilterProps) {
   const handleDateRangeChange = (range: DateRange | undefined) => {
     if (!range) {
@@ -47,33 +57,41 @@ export function PTituloFilter({
   };
 
   return (
-    <div className="grid w-full gap-3 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid w-full gap-3 md:grid-cols-2 xl:grid-cols-[minmax(18rem,1.35fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_minmax(14rem,1fr)]">
       <div className="relative w-full">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
         <Input
           type="search"
-          placeholder="Nome/CPF das partes (devedor, apresentante...)"
+          placeholder="Pessoa, CPF/CNPJ, protocolo, nosso número ou título"
           className="pl-8"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
 
-      <Select value={status} onValueChange={onStatusChange}>
-        <SelectTrigger>
-          <SelectValue placeholder="Filtrar por status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os status</SelectItem>
-          <SelectItem value="Apontado">Apontado</SelectItem>
-          <SelectItem value="Em Tríduo">Em Tríduo</SelectItem>
-          <SelectItem value="Liquidado">Liquidado</SelectItem>
-          <SelectItem value="Pago">Pago</SelectItem>
-          <SelectItem value="Protestado">Protestado</SelectItem>
-          <SelectItem value="Desistido">Desistido</SelectItem>
-          <SelectItem value="Cancelado">Cancelado</SelectItem>
-        </SelectContent>
-      </Select>
+      <PBancoSelectObject
+        value={bancoId}
+        onValueChange={onBancoChange}
+        placeholder="Todos os bancos"
+        searchPlaceholder="Buscar banco..."
+        emptyMessage="Nenhum banco disponível"
+      />
+
+      <PEspecieSelectObject
+        value={especieId}
+        onValueChange={onEspecieChange}
+        placeholder="Todas as espécies"
+        searchPlaceholder="Buscar espécie..."
+        emptyMessage="Nenhuma espécie disponível"
+      />
+
+      <POcorrenciasSelectObject
+        value={ocorrenciaId}
+        onValueChange={onOcorrenciaChange}
+        placeholder="Todas as ocorrências"
+        searchPlaceholder="Buscar ocorrência..."
+        emptyMessage="Nenhuma ocorrência disponível"
+      />
 
       <DateRangePicker
         value={toDateRange(startDate, endDate)}

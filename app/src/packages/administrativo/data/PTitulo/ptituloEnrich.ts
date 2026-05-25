@@ -48,9 +48,11 @@ export function enrichTitulo(titulo: PTituloInterface): TituloListItem {
       descricao: tipoDescricaoMap[tipo] ?? "Outro Vínculo",
       pessoa_vinculo_id: v.pessoa_vinculo_id,
       devedor_tipo_aceite: v.devedor_tipo_aceite,
+      devedor_microempresa: v.devedor_microempresa,
       devedor_data_aceite: v.devedor_data_aceite,
       nome: v.nome ?? pessoa?.nome,
       cpfcnpj: v.cpfcnpj ?? pessoa?.cpfcnpj,
+      micro_empresa: pessoa?.micro_empresa,
     };
   });
 

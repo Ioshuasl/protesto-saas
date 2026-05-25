@@ -28,7 +28,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, CircleHelp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type FocusEvent, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import InfoDialog from "@/shared/components/InfoDialog/InfoDialog";
 
@@ -72,6 +72,10 @@ const formatTelefone = (value: string) => {
       .replace(/(\d{5})(\d)/, "$1-$2")
       .slice(0, 15);
   }
+};
+
+const isMovingFocusToSubmitButton = (event: FocusEvent<HTMLInputElement>) => {
+  return event.relatedTarget instanceof HTMLButtonElement && event.relatedTarget.type === "submit";
 };
 
 export type { PessoaFormValues };
@@ -119,9 +123,10 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
   const ufSelecionada = form.watch("uf");
   const isPessoaJuridica = tipoPessoa === "J";
   const documentoPlaceholder = isPessoaJuridica ? "00.000.000/0000-00" : "000.000.000-00";
-  const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
-  const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [, setIsFetchingCnpj] = useState(false);
+  const [, setIsFetchingCep] = useState(false);
   const [meiInfoOpen, setMeiInfoOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("basicos");
 
   useEffect(() => {
     if (defaultValues) {
@@ -157,6 +162,10 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
     onSubmit(data);
   };
 
+  const handleInvalidSubmit = () => {
+    setActiveTab("basicos");
+  };
+
   const parseBrDate = (value?: string): Date | undefined => {
     if (!value) return undefined;
     const [day, month, year] = value.split("/");
@@ -165,7 +174,8 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
     return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   };
 
-  const handleConsultarCnpj = async () => {
+  const handleConsultarCnpj = async (event?: FocusEvent<HTMLInputElement>) => {
+    if (event && isMovingFocusToSubmitButton(event)) return;
     if (tipoPessoa !== "J") return;
 
     const cnpjAtual = form.getValues("cpfcnpj") ?? "";
@@ -210,7 +220,9 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
     }
   };
 
-  const handleConsultarCep = async () => {
+  const handleConsultarCep = async (event?: FocusEvent<HTMLInputElement>) => {
+    if (event && isMovingFocusToSubmitButton(event)) return;
+
     const cepAtual = form.getValues("cep") ?? "";
     const cepLimpo = cepAtual.replace(/\D/g, "");
     if (cepLimpo.length !== 8) return;
@@ -232,8 +244,8 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
   return (
     <>
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <Tabs defaultValue="basicos" className="w-full">
+      <form onSubmit={form.handleSubmit(handleSubmit, handleInvalidSubmit)} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="basicos">Dados Básicos</TabsTrigger>
             <TabsTrigger value="bancarios">Dados Bancários</TabsTrigger>
@@ -694,10 +706,10 @@ export function PPessoaForm({ defaultValues, onSubmit, isLoading }: PPessoaFormP
         <div className="flex justify-end pt-4">
           <Button
             type="submit"
-            disabled={isLoading || isFetchingCnpj || isFetchingCep}
+            disabled={isLoading}
             className="bg-[#FF6B00] hover:bg-[#E56000] text-white"
           >
-            {isLoading ? "Salvando..." : isFetchingCnpj ? "Consultando CNPJ..." : isFetchingCep ? "Consultando CEP..." : "Salvar"}
+            {isLoading ? "Salvando..." : "Salvar"}
           </Button>
         </div>
       </form>

@@ -1,6 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PPessoaVinculoTipoSelectObject } from "@/packages/administrativo/components/PPessoaVinculo/PPessoaVinculoTipoSelectObject";
@@ -26,11 +28,33 @@ function CpfcnpjCell({ cpfcnpj }: { cpfcnpj?: string | null }) {
   );
 }
 
+function isMicroempresaFlag(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  if (typeof value !== "string") return false;
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "true" || normalized === "1" || normalized === "s";
+}
+
+function isMicroempresaRow(row: PPessoaVinculoTableRow): boolean {
+  return isMicroempresaFlag(row.devedor_microempresa) || isMicroempresaFlag(row.micro_empresa);
+}
+
+function MicroempresaBadge() {
+  return (
+    <Badge variant="outline" className="border-amber-500/60 text-amber-700" title="Microempresa">
+      ME
+    </Badge>
+  );
+}
+
 export type PPessoaVinculoTableRow = {
   id: string;
   tipo?: string;
   nome?: string;
   cpfcnpj?: string;
+  devedor_microempresa?: unknown;
+  micro_empresa?: unknown;
 };
 
 export interface PPessoaVinculoTableProps {
@@ -40,6 +64,7 @@ export interface PPessoaVinculoTableProps {
   onRemove: (index: number) => void;
   emptyMessage?: string;
   tipoPlaceholder?: string;
+  tipoHeaderAction?: ReactNode;
 }
 
 export function PPessoaVinculoTable({
@@ -49,6 +74,7 @@ export function PPessoaVinculoTable({
   onRemove,
   emptyMessage = "Nenhuma parte vinculada encontrada.",
   tipoPlaceholder = "Tipo de vínculo",
+  tipoHeaderAction,
 }: PPessoaVinculoTableProps) {
   if (rows.length === 0) {
     return (
@@ -61,7 +87,12 @@ export function PPessoaVinculoTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Tipo de vínculo</TableHead>
+            <TableHead>
+              <div className="flex items-center gap-1.5">
+                <span>Tipo de vínculo</span>
+                {tipoHeaderAction}
+              </div>
+            </TableHead>
             <TableHead>Nome</TableHead>
             <TableHead>CPF/CNPJ</TableHead>
             <TableHead className="w-[100px] text-right">Ações</TableHead>
@@ -86,7 +117,10 @@ export function PPessoaVinculoTable({
                   />
                 </TableCell>
                 <TableCell title={row.nome}>
-                  {formatEmptyField(row.nome)}
+                  <div className="flex items-center gap-2">
+                    <span>{formatEmptyField(row.nome)}</span>
+                    {isMicroempresaRow(row) ? <MicroempresaBadge /> : null}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <CpfcnpjCell cpfcnpj={row.cpfcnpj} />

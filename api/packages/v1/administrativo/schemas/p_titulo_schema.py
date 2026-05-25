@@ -309,6 +309,7 @@ class PPessoaNestedSchema(BaseModel):
     pessoa_id: Optional[int] = None
     nome: Optional[str] = None
     cpfcnpj: Optional[str] = None
+    micro_empresa: Optional[Any] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -320,6 +321,7 @@ class PPessoaVinculoNestedSchema(BaseModel):
     nome: Optional[str] = None
     cpfcnpj: Optional[str] = None
     tipo_vinculo: Optional[str] = None
+    devedor_microempresa: Optional[Any] = None
     pessoa: Optional[PPessoaNestedSchema] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -454,6 +456,7 @@ class PTituloIndexSchema(BaseModel):
     Demais filtros: campos diretos de P_TITULO.
     """
 
+    busca: Optional[str] = None
     busca_pessoa: Optional[str] = None
     numero_apontamento: Optional[float] = None
     nosso_numero: Optional[str] = None
@@ -467,6 +470,7 @@ class PTituloIndexSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     @field_validator(
+        "busca",
         "busca_pessoa",
         "nosso_numero",
         "numero_titulo",
@@ -819,6 +823,14 @@ def map_titulo_index_row(row: Optional[Mapping[str, Any]]) -> Optional[dict[str,
     if isinstance(valor_titulo, Decimal):
         valor_titulo = float(valor_titulo)
 
+    livro_id_protesto = mapped.get("livro_id_protesto")
+    if isinstance(livro_id_protesto, Decimal):
+        livro_id_protesto = float(livro_id_protesto)
+
+    folha_protesto = mapped.get("folha_protesto")
+    if isinstance(folha_protesto, Decimal):
+        folha_protesto = float(folha_protesto)
+
     qtd = mapped.get("quantidade_pessoas_vinculadas") or mapped.get("qtd_pessoas_vinculadas")
     if isinstance(qtd, Decimal):
         qtd = int(qtd)
@@ -841,6 +853,17 @@ def map_titulo_index_row(row: Optional[Mapping[str, Any]]) -> Optional[dict[str,
 
     result: dict[str, Any] = {
         "titulo_id": titulo_id,
+        "data_intimacao": mapped.get("data_intimacao"),
+        "data_protesto": mapped.get("data_protesto"),
+        "data_aceite": mapped.get("data_aceite"),
+        "data_apontamento": mapped.get("data_apontamento"),
+        "data_cancelamento": mapped.get("data_cancelamento"),
+        "data_emissao_titulo": mapped.get("data_emissao_titulo"),
+        "data_cadastro": mapped.get("data_cadastro"),
+        "data_sustado": mapped.get("data_sustado"),
+        "data_pago": mapped.get("data_pago"),
+        "livro_id_protesto": livro_id_protesto,
+        "folha_protesto": folha_protesto,
         "numero_titulo": _normalize_string_field(mapped.get("numero_titulo")),
         "nosso_numero": _normalize_string_field(mapped.get("nosso_numero")),
         "numero_apontamento": numero_apontamento,
@@ -881,6 +904,12 @@ def map_titulo_index_row(row: Optional[Mapping[str, Any]]) -> Optional[dict[str,
         }
     else:
         result["banco"] = None
+
+    pessoa_vinculos = mapped.get("pessoa_vinculos")
+    if isinstance(pessoa_vinculos, list):
+        result["pessoa_vinculos"] = [
+            _map_pessoa_vinculo_item(item) for item in pessoa_vinculos if item is not None
+        ]
 
     return result
 

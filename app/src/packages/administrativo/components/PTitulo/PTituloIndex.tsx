@@ -14,7 +14,6 @@ import { usePTituloSaveHook } from "@/packages/administrativo/hooks/PTitulo/useP
 import type { TituloListItem } from "@/packages/administrativo/interfaces/PTitulo/PTituloListItem";
 import { DEFAULT_PAGINATION_META, Pagination } from "@/shared/components/pagination";
 import { PTituloFilter } from "./PTituloFilter";
-import { toInputDate } from "./titulo-list-utils";
 import { PTituloTable } from "./PTituloTable";
 
 export interface PTituloWorkflowState {
@@ -54,7 +53,14 @@ export default function PTituloIndex() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedFilters.search, debouncedFilters.status, debouncedFilters.startDate, debouncedFilters.endDate]);
+  }, [
+    debouncedFilters.search,
+    debouncedFilters.startDate,
+    debouncedFilters.endDate,
+    debouncedFilters.bancoId,
+    debouncedFilters.especieId,
+    debouncedFilters.ocorrenciaId,
+  ]);
 
   const indexQuery = useMemo(
     () => ({
@@ -70,18 +76,8 @@ export default function PTituloIndex() {
   }, [fetchTitulos, indexQuery]);
 
   const filteredTitulos = useMemo(() => {
-    return titulos.filter((titulo) => {
-      const status = titulo.status_descricao ?? titulo.situacao_aceite ?? "";
-      const apontamento = toInputDate(titulo.data_apontamento as unknown as string);
-
-      const matchesStatus =
-        filters.status === "all" || status.toLowerCase() === filters.status.toLowerCase();
-      const matchesStartDate = !filters.startDate || (apontamento && apontamento >= filters.startDate);
-      const matchesEndDate = !filters.endDate || (apontamento && apontamento <= filters.endDate);
-
-      return Boolean(matchesStatus && matchesStartDate && matchesEndDate);
-    });
-  }, [titulos, filters.status, filters.startDate, filters.endDate]);
+    return titulos;
+  }, [titulos]);
 
   const tableData = useMemo(
     () => filteredTitulos.map((titulo) => ({ ...titulo, ...getPTituloWorkflowState(titulo) })),
@@ -116,18 +112,23 @@ export default function PTituloIndex() {
       <div className="flex flex-col gap-4">
         <PTituloFilter
           searchQuery={filters.search}
-          status={filters.status}
           startDate={filters.startDate}
           endDate={filters.endDate}
+          bancoId={filters.bancoId}
+          especieId={filters.especieId}
+          ocorrenciaId={filters.ocorrenciaId}
           onSearchChange={(search) => setFilters((prev) => ({ ...prev, search }))}
-          onStatusChange={(status) => setFilters((prev) => ({ ...prev, status }))}
           onStartDateChange={(startDate) => setFilters((prev) => ({ ...prev, startDate }))}
           onEndDateChange={(endDate) => setFilters((prev) => ({ ...prev, endDate }))}
+          onBancoChange={(bancoId) => setFilters((prev) => ({ ...prev, bancoId }))}
+          onEspecieChange={(especieId) => setFilters((prev) => ({ ...prev, especieId }))}
+          onOcorrenciaChange={(ocorrenciaId) => setFilters((prev) => ({ ...prev, ocorrenciaId }))}
         />
 
         <PTituloTable
           data={tableData}
           isLoading={isLoading}
+          searchQuery={debouncedFilters.search}
           onViewDetails={handleViewDetails}
           onUpdateStatus={handleUpdateStatus}
         />

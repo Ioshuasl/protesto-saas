@@ -1,4 +1,6 @@
 export type PTituloIndexQuery = {
+  /** Busca unificada por pessoa, CPF/CNPJ, protocolo, nosso número e número do título. */
+  busca?: string;
   /** Busca em P_PESSOA_VINCULO (nome/cpfcnpj) e P_PESSOA vinculada. */
   busca_pessoa?: string;
   numero_apontamento?: number;

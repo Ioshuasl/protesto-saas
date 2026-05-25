@@ -18,6 +18,7 @@ p_titulo_controller = PTituloController()
 
 _PTITULO_INDEX_FILTER_KEYS = frozenset(
     {
+        "busca",
         "busca_pessoa",
         "numero_apontamento",
         "nosso_numero",
@@ -41,9 +42,16 @@ async def index(
     current_user: dict = Depends(get_current_user),
     url_params=Depends(get_url_params),
     query_params=Depends(QueryParamsParser.parse),
+    busca: Optional[str] = Query(
+        None,
+        description=(
+            "Busca unificada por pessoa vinculada, CPF/CNPJ, número de apontamento, "
+            "nosso número, número do título e número do título no banco"
+        ),
+    ),
     busca_pessoa: Optional[str] = Query(
         None,
-        description="Busca em P_PESSOA_VINCULO (nome/cpfcnpj) e P_PESSOA vinculada",
+        description="Compatibilidade: busca em P_PESSOA_VINCULO e P_PESSOA vinculada",
     ),
     numero_apontamento: Optional[float] = Query(
         None, description="Número de apontamento (igualdade)"

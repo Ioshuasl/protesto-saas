@@ -13,6 +13,8 @@ export interface PTituloParteItem {
   descricao: string;
   nome?: string;
   cpfcnpj?: string;
+  devedor_microempresa?: unknown;
+  micro_empresa?: unknown;
 }
 
 export const PTITULO_PARTE_DEFAULT_TIPO = PPessoaVinculoTipoEnum.DEVEDOR;

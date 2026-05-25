@@ -2,16 +2,20 @@ import type { PTituloIndexQuery } from '@/packages/administrativo/interfaces/PTi
 
 export type PTituloFilterState = {
   search: string;
-  status: string;
   startDate: string;
   endDate: string;
+  bancoId: string;
+  especieId: string;
+  ocorrenciaId: string;
 };
 
 export const defaultPTituloFilterState: PTituloFilterState = {
   search: '',
-  status: 'all',
   startDate: '',
   endDate: '',
+  bancoId: '',
+  especieId: '',
+  ocorrenciaId: '',
 };
 
 export function buildPTituloIndexQuery(
@@ -24,7 +28,16 @@ export function buildPTituloIndexQuery(
   };
 
   const search = state.search.trim();
-  if (search) query.busca_pessoa = search;
+  if (search) query.busca = search;
+
+  const bancoId = Number(state.bancoId);
+  if (Number.isFinite(bancoId) && bancoId > 0) query.banco_id = bancoId;
+
+  const especieId = Number(state.especieId);
+  if (Number.isFinite(especieId) && especieId > 0) query.especie_id = especieId;
+
+  const ocorrenciaId = Number(state.ocorrenciaId);
+  if (Number.isFinite(ocorrenciaId) && ocorrenciaId > 0) query.ocorrencia_id = ocorrenciaId;
 
   return query;
 }

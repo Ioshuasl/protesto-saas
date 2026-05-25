@@ -28,7 +28,10 @@ export function ocorrenciaLabel(o: {
   tipo?: string;
   codigo?: string;
 }) {
-  return o.descricao?.trim() || o.tipo?.trim() || o.codigo?.trim() || `Ocorrência ${o.ocorrencias_id}`;
+  const codigo = o.codigo?.trim();
+  const descricao = o.descricao?.trim();
+  if (codigo && descricao) return `${codigo} - ${descricao}`;
+  return descricao || o.tipo?.trim() || codigo || `Ocorrência ${o.ocorrencias_id}`;
 }
 
 function ocorrenciaSearchValue(o: {

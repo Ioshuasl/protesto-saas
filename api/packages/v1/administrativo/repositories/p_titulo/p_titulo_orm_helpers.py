@@ -13,7 +13,7 @@ _PESSOA_VINCULO_INCLUDE: list[dict[str, Any]] = [
     {
         "association": "pessoa",
         "required": False,
-        "attributes": ["PESSOA_ID", "NOME", "CPFCNPJ"],
+        "attributes": ["PESSOA_ID", "NOME", "CPFCNPJ", "MICRO_EMPRESA"],
     },
 ]
 

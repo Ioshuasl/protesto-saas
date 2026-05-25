@@ -133,6 +133,8 @@ const pTituloParteItemSchema = z.object({
   descricao: z.string(),
   nome: z.string().optional(),
   cpfcnpj: z.string().optional(),
+  devedor_microempresa: z.unknown().optional(),
+  micro_empresa: z.unknown().optional(),
 });
 
 export const pTituloDetailsFormSchema = z.object({

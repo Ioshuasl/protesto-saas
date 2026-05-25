@@ -15,9 +15,10 @@ type PessoaVinculoApi = {
   nome?: string;
   cpfcnpj?: string;
   tipo_vinculo?: string;
+  devedor_microempresa?: unknown;
   devedor_tipo_aceite?: string;
   devedor_data_aceite?: Date | string;
-  pessoa?: { pessoa_id?: number; nome?: string; cpfcnpj?: string };
+  pessoa?: { pessoa_id?: number; nome?: string; cpfcnpj?: string; micro_empresa?: unknown };
 };
 
 function resolveTipoVinculo(tipo?: string): string {
@@ -32,13 +33,45 @@ function resolveStatusDescricao(titulo: {
   return titulo.ocorrencia?.descricao?.trim() || undefined;
 }
 
+function mapPessoaVinculosToPartes(vinculos: PessoaVinculoApi[]) {
+  return vinculos.map((v) => {
+    const tipo = resolveTipoVinculo(v.tipo_vinculo);
+    const pessoa = v.pessoa;
+    return {
+      tipo,
+      descricao: formatPPessoaVinculoTipoLabel(tipo),
+      pessoa_vinculo_id: v.pessoa_vinculo_id,
+      devedor_tipo_aceite: v.devedor_tipo_aceite,
+      devedor_microempresa: v.devedor_microempresa,
+      devedor_data_aceite: v.devedor_data_aceite
+        ? new Date(v.devedor_data_aceite as string | Date)
+        : undefined,
+      nome: v.nome ?? pessoa?.nome,
+      cpfcnpj: v.cpfcnpj ?? pessoa?.cpfcnpj,
+      micro_empresa: pessoa?.micro_empresa,
+    };
+  });
+}
+
 export function mapIndexItemToTituloListItem(row: PTituloIndexItem): TituloListItem {
   const statusDescricao = resolveStatusDescricao({
     ocorrencia: row.ocorrencia ?? undefined,
   });
+  const vinculosPartes = mapPessoaVinculosToPartes(row.pessoa_vinculos ?? []);
 
   return {
     titulo_id: row.titulo_id,
+    data_intimacao: row.data_intimacao ? new Date(row.data_intimacao) : undefined,
+    data_protesto: row.data_protesto ? new Date(row.data_protesto) : undefined,
+    data_aceite: row.data_aceite ? new Date(row.data_aceite) : undefined,
+    data_apontamento: row.data_apontamento ? new Date(row.data_apontamento) : undefined,
+    data_cancelamento: row.data_cancelamento ? new Date(row.data_cancelamento) : undefined,
+    data_emissao_titulo: row.data_emissao_titulo ? new Date(row.data_emissao_titulo) : undefined,
+    data_cadastro: row.data_cadastro ? new Date(row.data_cadastro) : undefined,
+    data_sustado: row.data_sustado ? new Date(row.data_sustado) : undefined,
+    data_pago: row.data_pago ? new Date(row.data_pago) : undefined,
+    livro_id_protesto: row.livro_id_protesto,
+    folha_protesto: row.folha_protesto,
     numero_titulo: row.numero_titulo,
     nosso_numero: row.nosso_numero,
     numero_apontamento: row.numero_apontamento,
@@ -51,7 +84,7 @@ export function mapIndexItemToTituloListItem(row: PTituloIndexItem): TituloListI
     especie: row.especie ?? null,
     especie_sigla: row.especie?.especie,
     status_descricao: statusDescricao,
-    vinculos_partes: [],
+    vinculos_partes: vinculosPartes,
     partes_label: row.apresentante_nome ? `Apresentante: ${row.apresentante_nome}` : '',
     partes_documentos: row.apresentante_cpfcnpj ?? '',
   };
@@ -68,21 +101,7 @@ export function enrichTituloFromApi(
 ): TituloListItem {
   const vinculos = titulo.pessoa_vinculos ?? [];
 
-  const vinculosPartes = vinculos.map((v) => {
-    const tipo = resolveTipoVinculo(v.tipo_vinculo);
-    const pessoa = v.pessoa;
-    return {
-      tipo,
-      descricao: formatPPessoaVinculoTipoLabel(tipo),
-      pessoa_vinculo_id: v.pessoa_vinculo_id,
-      devedor_tipo_aceite: v.devedor_tipo_aceite,
-      devedor_data_aceite: v.devedor_data_aceite
-        ? new Date(v.devedor_data_aceite as string | Date)
-        : undefined,
-      nome: v.nome ?? pessoa?.nome,
-      cpfcnpj: v.cpfcnpj ?? pessoa?.cpfcnpj,
-    };
-  });
+  const vinculosPartes = mapPessoaVinculosToPartes(vinculos);
 
   const findByTipo = (tipo: string) => vinculosPartes.find((v) => v.tipo === tipo);
 

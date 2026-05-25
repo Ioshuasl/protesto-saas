@@ -3,7 +3,7 @@ import * as z from "zod";
 export const pessoaFormSchema = z
   .object({
     tipo_pessoa: z.enum(["F", "J"], { message: "Selecione o tipo de pessoa" }),
-    cpfcnpj: z.string().min(14, "Documento inválido"),
+    cpfcnpj: z.string().min(1, "Documento é obrigatório"),
     nome: z.string().min(1, "Nome/Razão Social é obrigatório"),
     rg: z.string().optional(),
     nacionalidade: z.string().optional(),
@@ -48,7 +48,6 @@ export const pessoaFormSchema = z
       }
       if (!data.nome_fantasia)
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome Fantasia é obrigatório para CNPJ", path: ["nome_fantasia"] });
-      if (!data.cod_cra) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CRA é obrigatório para CNPJ", path: ["cod_cra"] });
     }
   });
 

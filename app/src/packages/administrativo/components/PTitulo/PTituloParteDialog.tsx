@@ -116,6 +116,7 @@ export function PTituloParteDialog({ open, onOpenChange, onAddBatch }: PTituloPa
           tipo: vinculosByPessoa[pessoa!.pessoa_id],
           nome: pessoa?.nome,
           cpfcnpj: pessoa?.cpfcnpj,
+          micro_empresa: pessoa?.micro_empresa,
         }),
       );
 

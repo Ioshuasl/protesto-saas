@@ -24,6 +24,7 @@ function buildPTituloIndexEndpoint(query?: PTituloIndexQuery): string {
   params.set('per_page', String(perPage));
   params.set('sort', query?.sort ?? 'titulo_id.desc');
 
+  if (query?.busca) params.set('busca', query.busca);
   if (query?.busca_pessoa) params.set('busca_pessoa', query.busca_pessoa);
   if (query?.numero_apontamento != null) params.set('numero_apontamento', String(query.numero_apontamento));
   if (query?.nosso_numero) params.set('nosso_numero', query.nosso_numero);

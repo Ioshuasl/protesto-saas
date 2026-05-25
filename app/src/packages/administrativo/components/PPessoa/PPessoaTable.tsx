@@ -8,10 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Pencil, Trash2 } from "lucide-react";
 import { PPessoaInterface } from "@/packages/administrativo/interfaces";
 import { EMPTY_FIELD_LABEL } from "@/shared/const";
+import { formatCpfCnpj } from "@/shared/utils/document";
 import { formatEmptyField, isEmptyFieldValue } from "@/shared/utils/emptyField";
 
 interface PPessoaTableProps {
@@ -37,9 +39,25 @@ function formatCidadeUf(cidade?: string | null, uf?: string | null): string {
   return `${cidadeFmt} / ${ufFmt}`;
 }
 
+function isMicroempresaFlag(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  if (typeof value !== "string") return false;
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "true" || normalized === "1" || normalized === "s";
+}
+
+function MicroempresaBadge() {
+  return (
+    <Badge variant="outline" className="border-amber-500/60 text-amber-700" title="Microempresa">
+      ME
+    </Badge>
+  );
+}
+
 function CpfcnpjCell({ cpfcnpj }: { cpfcnpj?: string | null }) {
   if (!isEmptyFieldValue(cpfcnpj)) {
-    return <>{formatEmptyField(cpfcnpj)}</>;
+    return <>{formatCpfCnpj(cpfcnpj)}</>;
   }
 
   return (
@@ -87,7 +105,12 @@ export function PPessoaTable({ data, onEdit, onDelete, isLoading }: PPessoaTable
               className="cursor-pointer"
               onClick={() => onEdit(pessoa)}
             >
-              <TableCell className="font-medium">{formatEmptyField(pessoa.nome)}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <span>{formatEmptyField(pessoa.nome)}</span>
+                  {isMicroempresaFlag(pessoa.micro_empresa) ? <MicroempresaBadge /> : null}
+                </div>
+              </TableCell>
               <TableCell>
                 <CpfcnpjCell cpfcnpj={pessoa.cpfcnpj} />
               </TableCell>

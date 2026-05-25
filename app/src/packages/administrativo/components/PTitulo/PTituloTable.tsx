@@ -17,10 +17,31 @@ import {
 } from "@/components/ui/table";
 import { usePOcorrenciasReadHook } from "@/packages/administrativo/hooks/POcorrencias/usePOcorrenciasReadHook";
 import { TituloListItem } from "@/packages/administrativo/services/PTitulo/PTituloService";
-import { Cog, EllipsisVertical, Eye } from "lucide-react";
+import { matchesSearchText } from "@/shared/actions/text/comboboxSearchFilter";
+import {
+  CircleDollarSign,
+  EllipsisVertical,
+  FileSearch,
+  FileX2,
+  Gavel,
+  RotateCcw,
+  ScrollText,
+  Send,
+} from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { getTriduoMessage, moneyFormatter } from "./titulo-list-utils";
+import { formatCpfCnpj } from "@/shared/utils/document";
 import { formatEmptyField } from "@/shared/utils/emptyField";
+
+const COLUMN_CLASSES = {
+  numero: "w-[18%]",
+  protocolo: "w-[10%]",
+  apresentante: "w-[27%]",
+  especie: "hidden w-[10%] lg:table-cell",
+  valor: "w-[11%]",
+  ocorrencia: "w-[16%]",
+  acoes: "w-[8%]",
+} as const;
 
 type PTituloTableWorkflowItem = TituloListItem & {
   hasApontamentoBase?: boolean;
@@ -31,11 +52,53 @@ type PTituloTableWorkflowItem = TituloListItem & {
 interface PTituloTableProps {
   data: PTituloTableWorkflowItem[];
   isLoading?: boolean;
+  searchQuery?: string;
   onViewDetails: (titulo: TituloListItem) => void;
   onUpdateStatus: (tituloId: number, status: "Em Tríduo" | "Pago" | "Protestado") => void;
 }
 
-export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }: PTituloTableProps) {
+function TruncatedText({
+  value,
+  className,
+  prefix,
+}: {
+  value: string | number | null | undefined;
+  className?: string;
+  prefix?: string;
+}) {
+  const text = `${prefix ?? ""}${formatEmptyField(value)}`;
+  return (
+    <span className={className ? `block truncate ${className}` : "block truncate"} title={text}>
+      {text}
+    </span>
+  );
+}
+
+function findMatchedPessoaVinculo(titulo: TituloListItem, searchQuery?: string) {
+  const search = searchQuery?.trim();
+  if (!search) return null;
+
+  return (
+    titulo.vinculos_partes.find((vinculo) =>
+      matchesSearchText([vinculo.nome, vinculo.cpfcnpj].filter(Boolean).join(" "), search),
+    ) ?? null
+  );
+}
+
+function PessoaMatchIndicator({ label, title }: { label: string; title: string }) {
+  return (
+    <span
+      className="inline-flex h-4 max-w-[7.5rem] shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 text-[10px] font-medium leading-none text-amber-800"
+      title={title}
+      aria-label={title}
+    >
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden />
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
+export function PTituloTable({ data, isLoading, searchQuery, onViewDetails, onUpdateStatus }: PTituloTableProps) {
   const { ocorrencias, fetchOcorrencias } = usePOcorrenciasReadHook();
 
   useEffect(() => {
@@ -66,17 +129,17 @@ export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }:
   }
 
   return (
-    <div className="rounded-md border overflow-x-auto">
-      <Table>
+    <div className="w-full min-w-0 rounded-md border overflow-x-auto">
+      <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead>Número/Nosso Número</TableHead>
-            <TableHead>Protocolo</TableHead>
-            <TableHead>Apresentante (Nome/CPF-CNPJ)</TableHead>
-            <TableHead className="hidden lg:table-cell">Espécie</TableHead>
-            <TableHead>Valor Total</TableHead>
-            <TableHead>Ocorrência</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead className={COLUMN_CLASSES.numero}>Número/Nosso Número</TableHead>
+            <TableHead className={COLUMN_CLASSES.protocolo}>Protocolo</TableHead>
+            <TableHead className={COLUMN_CLASSES.apresentante}>Apresentante (Nome/CPF-CNPJ)</TableHead>
+            <TableHead className={COLUMN_CLASSES.especie}>Espécie</TableHead>
+            <TableHead className={COLUMN_CLASSES.valor}>Valor Total</TableHead>
+            <TableHead className={COLUMN_CLASSES.ocorrencia}>Ocorrência</TableHead>
+            <TableHead className={`${COLUMN_CLASSES.acoes} text-right`}>Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -99,6 +162,11 @@ export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }:
                 hasValue(titulo.data_protesto) &&
                 hasValue(titulo.livro_id_protesto) &&
                 hasValue(titulo.folha_protesto));
+            const matchedPessoaVinculo = findMatchedPessoaVinculo(titulo, searchQuery);
+            const matchedPessoaVinculoText = matchedPessoaVinculo
+              ? `Pessoa encontrada nesse título como ${matchedPessoaVinculo.descricao}`
+              : "";
+            const matchedPessoaVinculoLabel = matchedPessoaVinculo?.descricao ?? "";
 
             return (
               <TableRow
@@ -106,32 +174,49 @@ export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }:
                 className="cursor-pointer"
                 onClick={() => onViewDetails(titulo)}
               >
-                <TableCell>
-                  <div className="flex max-w-[140px] flex-col">
-                    <span className="truncate">{formatEmptyField(titulo.numero_titulo)}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      Nosso n. {formatEmptyField(titulo.nosso_numero)}
+                <TableCell className={`${COLUMN_CLASSES.numero} min-w-0 overflow-hidden`}>
+                  <div className="flex min-w-0 flex-col">
+                    <TruncatedText value={titulo.numero_titulo} />
+                    <TruncatedText
+                      value={titulo.nosso_numero}
+                      prefix="Nosso n. "
+                      className="text-xs text-muted-foreground"
+                    />
+                  </div>
+                </TableCell>
+                <TableCell className={`${COLUMN_CLASSES.protocolo} min-w-0 overflow-hidden`}>
+                  <TruncatedText value={titulo.numero_apontamento} />
+                </TableCell>
+                <TableCell className={`${COLUMN_CLASSES.apresentante} min-w-0 overflow-hidden`}>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <TruncatedText value={titulo.apresentante_nome} />
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <TruncatedText
+                        value={formatCpfCnpj(titulo.apresentante_cpfcnpj)}
+                        className="min-w-0 flex-1 text-xs text-muted-foreground"
+                      />
+                      {matchedPessoaVinculo ? (
+                        <PessoaMatchIndicator
+                          label={matchedPessoaVinculoLabel}
+                          title={matchedPessoaVinculoText}
+                        />
+                      ) : null}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="whitespace-nowrap">{formatEmptyField(titulo.numero_apontamento)}</TableCell>
-                <TableCell>
-                  <div className="flex max-w-[220px] flex-col">
-                    <span className="truncate">{formatEmptyField(titulo.apresentante_nome)}</span>
-                    <span className="truncate text-xs text-muted-foreground">{formatEmptyField(titulo.apresentante_cpfcnpj)}</span>
+                <TableCell className={`${COLUMN_CLASSES.especie} min-w-0 overflow-hidden`}>
+                  <TruncatedText value={titulo.especie?.especie ?? titulo.especie_sigla} />
+                </TableCell>
+                <TableCell className={`${COLUMN_CLASSES.valor} min-w-0 overflow-hidden`}>
+                  <TruncatedText value={moneyFormatter.format(valorTotal)} />
+                </TableCell>
+                <TableCell className={`${COLUMN_CLASSES.ocorrencia} min-w-0 overflow-hidden`}>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <TruncatedText value={ocorrenciaLabel} />
+                    {triduo ? <TruncatedText value={triduo} className="text-xs text-muted-foreground" /> : null}
                   </div>
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  {formatEmptyField(titulo.especie?.especie ?? titulo.especie_sigla)}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">{moneyFormatter.format(valorTotal)}</TableCell>
-                <TableCell>
-                  <div className="flex min-w-[120px] flex-col gap-1">
-                    <span>{ocorrenciaLabel}</span>
-                    {triduo && <span className="text-xs text-muted-foreground">{triduo}</span>}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
+                <TableCell className={`${COLUMN_CLASSES.acoes} text-right`}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -140,48 +225,48 @@ export function PTituloTable({ data, isLoading, onViewDetails, onUpdateStatus }:
                         className="text-foreground hover:text-[#FF6B00]"
                         onClick={(event) => event.stopPropagation()}
                       >
-                        <Cog className="h-4 w-4" strokeWidth={1.5} />
+                        <EllipsisVertical className="h-4 w-4" strokeWidth={1.5} />
                         <span className="sr-only">Ações</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={(event) => { event.stopPropagation(); onViewDetails(titulo); }}>
-                        <Eye className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        <FileSearch className="mr-2 h-4 w-4" strokeWidth={1.5} />
                         Ver Detalhes
                       </DropdownMenuItem>
                       {hasProtestoCompleto ? (
                         <>
                           <DropdownMenuItem onClick={(event) => { event.stopPropagation(); console.info('Ação "Voltar para Intimação" ainda não implementada'); }}>
-                            <EllipsisVertical className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                            <RotateCcw className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Voltar para Intimação
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={(event) => { event.stopPropagation(); console.info('Ação "Cancelar Título" ainda não implementada'); }}>
-                            <EllipsisVertical className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                            <FileX2 className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Cancelar Título
                           </DropdownMenuItem>
                         </>
                       ) : hasIntimacao ? (
                         <>
                           <DropdownMenuItem onClick={(event) => { event.stopPropagation(); console.info('Ação "Voltar para Apontamento" ainda não implementada'); }}>
-                            <EllipsisVertical className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                            <RotateCcw className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Voltar para Apontamento
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={(event) => { event.stopPropagation(); console.info('Ação "Aceite/Edital" ainda não implementada'); }}>
-                            <EllipsisVertical className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                            <ScrollText className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Aceite/Edital
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={(event) => { event.stopPropagation(); onUpdateStatus(titulo.titulo_id, "Pago"); }}>
-                            <EllipsisVertical className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                            <CircleDollarSign className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Desistir/Liquidar Título
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={(event) => { event.stopPropagation(); onUpdateStatus(titulo.titulo_id, "Protestado"); }}>
-                            <EllipsisVertical className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                            <Gavel className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             Protestar Título
                           </DropdownMenuItem>
                         </>
                       ) : hasApontamentoBase ? (
                         <DropdownMenuItem onClick={(event) => { event.stopPropagation(); onUpdateStatus(titulo.titulo_id, "Em Tríduo"); }}>
-                          <EllipsisVertical className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          <Send className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           Intimar Título
                         </DropdownMenuItem>
                       ) : null}

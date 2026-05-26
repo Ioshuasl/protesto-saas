@@ -7,6 +7,7 @@ import {
 import { buildSearchComboboxOptions } from "@/packages/administrativo/components/shared/buildSearchComboboxOptions";
 import { usePBancoReadHook } from "@/packages/administrativo/hooks/PBanco/usePBancoReadHook";
 import type { PTituloSelectOption } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
+import { cn } from "@/lib/utils";
 
 export interface PBancoSelectObjectProps {
   /** Valor controlado: `banco_id` como string. */
@@ -98,8 +99,8 @@ export function PBancoSelectObject({
       placeholder={placeholder}
       searchPlaceholder={searchPlaceholder}
       disabled={disabled}
-      className={className}
-      triggerClassName={triggerClassName}
+      className={cn("min-w-0", className)}
+      triggerClassName={cn("min-w-0", triggerClassName)}
       emptyMessage={emptyMessage}
       loadingMessage="Carregando bancos..."
       clearAriaLabel="Limpar banco"

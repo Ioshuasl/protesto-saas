@@ -33,6 +33,7 @@ export interface SearchComboboxSelectProps {
   disabled?: boolean;
   className?: string;
   triggerClassName?: string;
+  contentClassName?: string;
   emptyMessage?: string;
   loadingMessage?: string;
   clearable?: boolean;
@@ -49,6 +50,7 @@ export function SearchComboboxSelect({
   disabled = false,
   className,
   triggerClassName,
+  contentClassName,
   emptyMessage = "Nenhum registro disponível",
   loadingMessage = "Carregando...",
   clearable = true,
@@ -122,7 +124,10 @@ export function SearchComboboxSelect({
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] max-w-[min(100vw-2rem,32rem)] p-0"
+          className={cn(
+            "w-[var(--radix-popover-trigger-width)] max-w-[min(100vw-2rem,32rem)] p-0",
+            contentClassName,
+          )}
           align="start"
         >
           <Command shouldFilter filter={comboboxSearchFilter}>

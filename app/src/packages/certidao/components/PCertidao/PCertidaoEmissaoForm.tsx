@@ -1,14 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { format, parseISO, startOfDay, subYears } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format, startOfDay, subYears } from "date-fns";
 import {
   AlertCircle,
-  CalendarIcon,
   CheckCircle2,
   ChevronRight,
-  CircleQuestionMark,
   Info,
   Loader2,
   Search,
@@ -24,51 +21,23 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { GUsuarioSelectObject } from "@/packages/administrativo/components/GUsuario/GUsuarioSelectObject";
 import PPessoaTableFormDialog from "@/packages/administrativo/components/PPessoa/PPessoaTableFormDialog";
 import type { PPessoaInterface } from "@/packages/administrativo/interfaces/PPessoa/PPessoaInterface";
-import type { GUsuarioInterface } from "@/packages/administrativo/interfaces/GUsuario/GUsuarioInterface";
 import type { PCertidaoFormValues } from "@/packages/certidao/components/PCertidao/PCertidaoFormValues";
 import { usePCertidaoConsultaApresentanteHook } from "@/packages/certidao/hooks/PCertidao/usePCertidaoConsultaApresentanteHook";
 import { isPCertidaoConsultaApresentanteResult } from "@/packages/certidao/interface/PCertidao/PCertidaoConsultaApresentanteInterface";
 import { DateRangePicker } from "@/shared/components/dateRangePicker/DateRangePicker";
 
-export function PCertidaoEmissaoDialogTitleRow({ onOpenTipoInfo }: { onOpenTipoInfo: () => void }) {
-  return (
-    <>
-      <DialogTitle className="flex items-center gap-1.5 pr-10 text-left">
-        <span>Emitir Nova Certidão</span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0"
-          onClick={onOpenTipoInfo}
-          aria-label="Informações sobre tipos de certidão"
-        >
-          <CircleQuestionMark className="h-4 w-4" />
-        </Button>
-      </DialogTitle>
-      <DialogDescription className="text-balance text-xs leading-snug sm:text-sm">
-        Consulte registros ativos no período, revise o tipo derivado e a homonímia quando aplicável.
-      </DialogDescription>
-    </>
-  );
-}
-
 export interface PCertidaoEmissaoFormProps {
   open: boolean;
-  usuarios: GUsuarioInterface[];
   isLoadingUsuarios: boolean;
   onEmit: (values: PCertidaoFormValues) => Promise<void>;
   onCancel: () => void;
@@ -112,7 +81,6 @@ function formatDataPt(value?: Date | string): string {
 
 export function PCertidaoEmissaoForm({
   open,
-  usuarios,
   isLoadingUsuarios,
   onEmit,
   onCancel,
@@ -128,9 +96,6 @@ export function PCertidaoEmissaoForm({
   const [homonimiaConfirmada, setHomonimiaConfirmada] = useState(false);
   const [isPPessoaDialogOpen, setIsPPessoaDialogOpen] = useState(false);
 
-  const nowFields = getNowDateAndTime();
-  const [dataCertidao, setDataCertidao] = useState(nowFields.date);
-  const [horaCertidao, setHoraCertidao] = useState(nowFields.time);
   const [usuarioId, setUsuarioId] = useState("");
   const [observacao, setObservacao] = useState("");
 
@@ -148,12 +113,9 @@ export function PCertidaoEmissaoForm({
     setConsultationDone(false);
     setHomonimiaConfirmada(false);
     resetConsulta();
-    const fresh = getNowDateAndTime();
-    setDataCertidao(fresh.date);
-    setHoraCertidao(fresh.time);
     setUsuarioId("");
     setObservacao("");
-  }, [open]);
+  }, [open, resetConsulta]);
 
   const tipoDerivado: "P" | "N" | null = useMemo(() => {
     if (!analise) return null;
@@ -201,13 +163,15 @@ export function PCertidaoEmissaoForm({
         .join("\n\n");
     }
 
+    const emissaoTimestamp = getNowDateAndTime();
+
     await onEmit({
       apresentante: apresentante.trim(),
       cpfcnpj: cpfcnpj.trim(),
       tipo_certidao,
       status: "A",
-      data_certidao: dataCertidao ? new Date(`${dataCertidao}T00:00:00`) : undefined,
-      hora_certidao: horaCertidao,
+      data_certidao: new Date(`${emissaoTimestamp.date}T00:00:00`),
+      hora_certidao: emissaoTimestamp.time,
       usuario_id: usuarioId ? Number(usuarioId) : undefined,
       observacao: obs,
       qtd_protestos: tipo_certidao === "P" ? analise.titulosPorDocumento.length : 0,
@@ -348,7 +312,7 @@ export function PCertidaoEmissaoForm({
         </div>
 
         <p className="text-[11px] leading-snug text-muted-foreground">
-          Considera apenas protestos ativos; pagos, liquidados ou cancelados ficam de fora da consulta comum.
+          Considera todos os títulos com protesto registrado no período, incluindo pagos e cancelados.
         </p>
 
         {consultationDone && analise ? (
@@ -377,7 +341,7 @@ export function PCertidaoEmissaoForm({
                   <CheckCircle2 className="h-4 w-4 text-green-700" />
                   <AlertTitle className="text-sm">Relação para a certidão</AlertTitle>
                   <AlertDescription className="text-xs">
-                    Lista dos protestos ativos vinculados ao documento informado.
+                    Lista dos protestos vinculados ao documento informado, incluindo pagos e cancelados.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -472,68 +436,19 @@ export function PCertidaoEmissaoForm({
 
         <div className="grid gap-2 sm:grid-cols-2">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:col-span-2">
-            Emissão
+            Responsável e observação
           </p>
-          <div className="space-y-1">
-            <Label htmlFor="emissao-data" className="text-xs">
-              Data
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="emissao-data"
-                  type="button"
-                  variant="outline"
-                  className={cn(
-                    "h-9 w-full justify-between px-3 text-left text-sm font-normal",
-                    !dataCertidao && "text-muted-foreground",
-                  )}
-                >
-                  {dataCertidao
-                    ? format(parseISO(dataCertidao), "dd/MM/yyyy", { locale: ptBR })
-                    : "Selecionar data"}
-                  <CalendarIcon className="h-4 w-4 shrink-0 opacity-50" strokeWidth={1.5} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dataCertidao ? parseISO(dataCertidao) : undefined}
-                  onSelect={(date) => setDataCertidao(date ? format(date, "yyyy-MM-dd") : "")}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="emissao-hora" className="text-xs">
-              Hora
-            </Label>
-            <Input
-              id="emissao-hora"
-              type="time"
-              value={horaCertidao}
-              onChange={(e) => setHoraCertidao(e.target.value)}
-              className="h-9 text-sm"
-            />
-          </div>
           <div className="space-y-1 sm:col-span-2">
             <Label htmlFor="emissao-usuario" className="text-xs">
               Usuário responsável
             </Label>
-            <Select value={usuarioId || "none"} onValueChange={(v) => setUsuarioId(v === "none" ? "" : v)}>
-              <SelectTrigger id="emissao-usuario" disabled={isLoadingUsuarios} className="h-9 text-sm">
-                <SelectValue placeholder={isLoadingUsuarios ? "Carregando…" : "Opcional"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sem usuário</SelectItem>
-                {usuarios.map((u) => (
-                  <SelectItem key={u.usuario_id} value={String(u.usuario_id)}>
-                    {u.nome_completo || u.login || `Usuário ${u.usuario_id}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <GUsuarioSelectObject
+              value={usuarioId}
+              onValueChange={setUsuarioId}
+              placeholder="Opcional"
+              disabled={isLoadingUsuarios}
+              triggerClassName="h-9 text-sm"
+            />
           </div>
           <div className="space-y-1 sm:col-span-2">
             <Label htmlFor="emissao-obs" className="text-xs">

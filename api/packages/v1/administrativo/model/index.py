@@ -46,6 +46,7 @@ def register_administrativo_associations() -> None:
     from packages.v1.administrativo.model.p_pessoa_vinculo import (
         get_p_pessoa_vinculo_model,
     )
+    from packages.v1.administrativo.model.p_certidao import get_p_certidao_model
     from packages.v1.administrativo.model.p_titulo import get_p_titulo_model
 
     P_BANCO = get_p_banco_model()
@@ -60,6 +61,7 @@ def register_administrativo_associations() -> None:
     P_OCORRENCIAS = get_p_ocorrencias_model()
     P_PESSOA = get_p_pessoa_model()
     P_PESSOA_VINCULO = get_p_pessoa_vinculo_model()
+    P_CERTIDAO = get_p_certidao_model()
     P_TITULO = get_p_titulo_model()
     G_TB_ESTADOCIVIL = get_g_tb_estadocivil_model()
     G_TB_PROFISSAO = get_g_tb_profissao_model()
@@ -453,6 +455,24 @@ def register_administrativo_associations() -> None:
         {
             "as": "usuario_assina_apont",
             "foreignKey": "USER_ASSINA_APONT",
+            "targetKey": "USUARIO_ID",
+        },
+    )
+
+    # --- G_USUARIO / P_CERTIDAO ---
+    G_USUARIO.hasMany(
+        P_CERTIDAO,
+        {
+            "as": "certidoes",
+            "foreignKey": "USUARIO_ID",
+            "sourceKey": "USUARIO_ID",
+        },
+    )
+    P_CERTIDAO.belongsTo(
+        G_USUARIO,
+        {
+            "as": "usuario",
+            "foreignKey": "USUARIO_ID",
             "targetKey": "USUARIO_ID",
         },
     )

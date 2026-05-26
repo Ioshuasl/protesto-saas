@@ -23,6 +23,15 @@ interface PPessoaTableProps {
   isLoading?: boolean;
 }
 
+const COLUMN_CLASSES = {
+  nome: "w-[30%] min-w-0",
+  cpfcnpj: "w-[15%]",
+  cidadeUf: "w-[23%]",
+  totalTitulos: "w-[10%]",
+  telefone: "w-[14%]",
+  acoes: "w-[8%]",
+};
+
 function formatCidadeUf(cidade?: string | null, uf?: string | null): string {
   const cidadeFmt = formatEmptyField(cidade);
   const ufFmt = formatEmptyField(uf);
@@ -86,16 +95,18 @@ export function PPessoaTable({ data, onEdit, onDelete, isLoading }: PPessoaTable
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
+    <div className="w-full min-w-0 rounded-md border">
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead>Nome / Razão Social</TableHead>
-            <TableHead>CPF / CNPJ</TableHead>
-            <TableHead>Cidade / UF</TableHead>
-            <TableHead className="text-center">Qtd. Títulos</TableHead>
-            <TableHead>Telefone</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead className={COLUMN_CLASSES.nome}>Nome / Razão Social</TableHead>
+            <TableHead className={COLUMN_CLASSES.cpfcnpj}>CPF / CNPJ</TableHead>
+            <TableHead className={COLUMN_CLASSES.cidadeUf}>Cidade / UF</TableHead>
+            <TableHead className={`${COLUMN_CLASSES.totalTitulos} text-center`}>
+              Qtd. Títulos
+            </TableHead>
+            <TableHead className={COLUMN_CLASSES.telefone}>Telefone</TableHead>
+            <TableHead className={`${COLUMN_CLASSES.acoes} text-right`}>Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -105,21 +116,33 @@ export function PPessoaTable({ data, onEdit, onDelete, isLoading }: PPessoaTable
               className="cursor-pointer"
               onClick={() => onEdit(pessoa)}
             >
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  <span>{formatEmptyField(pessoa.nome)}</span>
+              <TableCell className={`${COLUMN_CLASSES.nome} max-w-0 overflow-hidden font-medium`}>
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="block min-w-0 flex-1 truncate" title={formatEmptyField(pessoa.nome)}>
+                    {formatEmptyField(pessoa.nome)}
+                  </span>
                   {isMicroempresaFlag(pessoa.micro_empresa) ? <MicroempresaBadge /> : null}
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className={`${COLUMN_CLASSES.cpfcnpj} overflow-hidden truncate`}>
                 <CpfcnpjCell cpfcnpj={pessoa.cpfcnpj} />
               </TableCell>
-              <TableCell>{formatCidadeUf(pessoa.cidade, pessoa.uf)}</TableCell>
-              <TableCell className="text-center tabular-nums">
+              <TableCell
+                className={`${COLUMN_CLASSES.cidadeUf} overflow-hidden truncate`}
+                title={formatCidadeUf(pessoa.cidade, pessoa.uf)}
+              >
+                {formatCidadeUf(pessoa.cidade, pessoa.uf)}
+              </TableCell>
+              <TableCell className={`${COLUMN_CLASSES.totalTitulos} text-center tabular-nums`}>
                 {pessoa.total_titulos ?? 0}
               </TableCell>
-              <TableCell>{formatEmptyField(pessoa.telefone)}</TableCell>
-              <TableCell className="text-right">
+              <TableCell
+                className={`${COLUMN_CLASSES.telefone} overflow-hidden truncate`}
+                title={formatEmptyField(pessoa.telefone)}
+              >
+                {formatEmptyField(pessoa.telefone)}
+              </TableCell>
+              <TableCell className={`${COLUMN_CLASSES.acoes} text-right`}>
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="ghost"

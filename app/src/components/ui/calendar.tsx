@@ -8,6 +8,7 @@ import {
   DayPicker,
   getDefaultClassNames,
   type DayButton,
+  type DropdownOption,
   type Locale,
   type Matcher,
   type Modifiers,
@@ -15,11 +16,25 @@ import {
 } from 'react-day-picker';
 
 import { Button, buttonVariants } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export type CalendarSize = 'default' | 'compact';
 
-type CalendarProps = React.ComponentProps<typeof DayPicker> & {
+type DayPickerProps = React.ComponentProps<typeof DayPicker>;
+type DayPickerOnSelect = DayPickerProps extends infer Props
+  ? Props extends { onSelect?: infer Handler }
+    ? Handler
+    : never
+  : never;
+
+type CalendarProps = DayPickerProps & {
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
   /** Densidade visual: `compact` para dialogs e telas baixas. */
   size?: CalendarSize;
@@ -32,7 +47,7 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  captionLayout = 'label',
+  captionLayout = 'dropdown',
   buttonVariant = 'ghost',
   size = 'default',
   locale,
@@ -40,28 +55,28 @@ function Calendar({
   components,
   showTodayButton,
   todayLabel = 'Hoje',
-  mode,
-  onSelect,
-  disabled,
   ...props
 }: CalendarProps) {
   const defaultClassNames = getDefaultClassNames();
   const isCompact = size === 'compact';
   const { Footer: userFooter, ...restComponents } = components ?? {};
-  const shouldShowTodayButton =
-    showTodayButton !== false && mode === 'single' && typeof onSelect === 'function';
+  const pickerProps = props as DayPickerProps & { onSelect?: DayPickerOnSelect };
+  const singleOnSelect =
+    pickerProps.mode === 'single' && typeof pickerProps.onSelect === 'function'
+      ? (pickerProps.onSelect as OnSelectHandler<Date | undefined>)
+      : undefined;
+  const shouldShowTodayButton = showTodayButton !== false && Boolean(singleOnSelect);
 
   return (
     <DayPicker
-      mode={mode}
-      onSelect={onSelect}
-      disabled={disabled}
+      {...(props as DayPickerProps)}
+      animate={props.animate ?? true}
       showOutsideDays={showOutsideDays}
       className={cn(
-        'group/calendar bg-background [--cell-radius:var(--radius-md)] [--rdp-selected-border:0px_solid_transparent] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
+        'group/calendar w-fit rounded-xl border border-border bg-popover text-popover-foreground shadow-xl shadow-black/10 dark:border-white/10 dark:bg-[#171717] dark:text-[#f4f4f5] dark:shadow-black/25 [--calendar-accent:#2f9ce5] [--calendar-accent-foreground:#ffffff] [--calendar-accent-muted:rgba(47,156,229,0.18)] [--calendar-fg:var(--foreground)] [--calendar-hover:var(--accent)] [--calendar-muted:var(--muted-foreground)] [--calendar-weekday:var(--muted-foreground)] [--cell-radius:9999px] [--rdp-accent-color:var(--calendar-accent)] [--rdp-accent-background-color:var(--calendar-accent-muted)] [--rdp-animation_duration:650ms] [--rdp-animation_timing:cubic-bezier(0.22,1,0.36,1)] [--rdp-selected-border:0px_solid_transparent] [--rdp-today-color:var(--calendar-accent)] motion-reduce:[--rdp-animation_duration:0ms] dark:[--calendar-fg:#f4f4f5] dark:[--calendar-hover:rgba(255,255,255,0.1)] dark:[--calendar-muted:#71717a] dark:[--calendar-weekday:#d4d4d8]',
         isCompact
-          ? 'p-1 [--cell-size:1.75rem]'
-          : 'p-2 [--cell-size:--spacing(7)]',
+          ? 'p-1.5 [--cell-size:1.75rem]'
+          : 'p-2 [--cell-size:2.125rem]',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className,
@@ -70,90 +85,107 @@ function Calendar({
       locale={locale}
       formatters={{
         formatMonthDropdown: (date) => date.toLocaleString(locale?.code, { month: 'short' }),
+        formatWeekdayName: (date) =>
+          date
+            .toLocaleDateString(locale?.code, { weekday: 'short' })
+            .slice(0, 2)
+            .toUpperCase(),
         ...formatters,
       }}
       classNames={{
         root: cn('w-fit', defaultClassNames.root),
         months: cn(
           'relative flex flex-col md:flex-row',
-          isCompact ? 'gap-2' : 'gap-4',
+          isCompact ? 'gap-1.5' : 'gap-3',
           defaultClassNames.months,
         ),
         month: cn(
-          'flex w-full flex-col',
-          isCompact ? 'gap-2' : 'gap-4',
+          'flex w-full flex-col overflow-hidden',
+          isCompact ? 'gap-1.5' : 'gap-2',
           defaultClassNames.month,
         ),
         nav: cn(
-          'absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1',
+          'pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-1',
           defaultClassNames.nav,
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          'size-(--cell-size) p-0 select-none aria-disabled:opacity-50',
+          'pointer-events-auto rounded-md p-0 text-[var(--calendar-weekday)] select-none hover:bg-[var(--calendar-hover)] hover:text-[var(--calendar-fg)] aria-disabled:opacity-50',
+          isCompact ? 'size-6' : 'size-7',
           defaultClassNames.button_previous,
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          'size-(--cell-size) p-0 select-none aria-disabled:opacity-50',
+          'pointer-events-auto rounded-md p-0 text-[var(--calendar-weekday)] select-none hover:bg-[var(--calendar-hover)] hover:text-[var(--calendar-fg)] aria-disabled:opacity-50',
+          isCompact ? 'size-6' : 'size-7',
           defaultClassNames.button_next,
         ),
         month_caption: cn(
-          'flex h-(--cell-size) w-full items-center justify-center px-(--cell-size)',
+          'relative flex w-full items-center justify-center px-9',
+          isCompact ? 'h-6' : 'h-7',
           defaultClassNames.month_caption,
         ),
         dropdowns: cn(
-          'flex h-(--cell-size) w-full items-center justify-center gap-1.5 text-sm font-medium',
+          'relative flex w-full items-center justify-center gap-1 font-semibold text-[var(--calendar-fg)]',
+          isCompact ? 'h-6 text-xs' : 'h-7 text-sm',
           defaultClassNames.dropdowns,
         ),
-        dropdown_root: cn('relative rounded-(--cell-radius)', defaultClassNames.dropdown_root),
-        dropdown: cn('absolute inset-0 bg-popover opacity-0', defaultClassNames.dropdown),
+        dropdown_root: cn(
+          'relative rounded-md px-1 transition-colors hover:bg-[var(--calendar-hover)]',
+          defaultClassNames.dropdown_root,
+        ),
+        dropdown: cn('absolute inset-0 cursor-pointer bg-transparent opacity-0', defaultClassNames.dropdown),
         caption_label: cn(
-          'font-medium select-none',
+          'font-semibold text-[var(--calendar-fg)] select-none',
           captionLayout === 'label'
             ? isCompact
-              ? 'text-xs'
-              : 'text-sm'
+              ? 'text-sm'
+              : 'text-base'
             : cn(
-                'flex items-center gap-1 rounded-(--cell-radius) [&>svg]:text-muted-foreground',
-                isCompact ? 'text-xs [&>svg]:size-3' : 'text-sm [&>svg]:size-3.5',
+                'flex items-center gap-1 rounded-md py-1 [&>svg]:text-[var(--calendar-weekday)]',
+                isCompact ? 'text-sm [&>svg]:size-3' : 'text-base [&>svg]:size-3.5',
               ),
           defaultClassNames.caption_label,
         ),
         table: 'w-full border-collapse',
         weekdays: cn('flex', defaultClassNames.weekdays),
         weekday: cn(
-          'flex-1 rounded-(--cell-radius) font-normal text-muted-foreground select-none',
-          isCompact ? 'text-[0.65rem]' : 'text-[0.8rem]',
+          'flex h-6 flex-1 items-center justify-center rounded-(--cell-radius) font-semibold tracking-wide text-[var(--calendar-weekday)] uppercase select-none',
+          isCompact ? 'text-[0.58rem]' : 'text-[0.65rem]',
           defaultClassNames.weekday,
         ),
-        week: cn('flex w-full', isCompact ? 'mt-0.5' : 'mt-2', defaultClassNames.week),
-        week_number_header: cn('w-(--cell-size) select-none', defaultClassNames.week_number_header),
-        week_number: cn('text-[0.8rem] text-muted-foreground select-none', defaultClassNames.week_number),
+        week: cn('flex w-full', isCompact ? 'mt-0' : 'mt-0.5', defaultClassNames.week),
+        week_number_header: cn(
+          'w-(--cell-size) text-[var(--calendar-muted)] select-none',
+          defaultClassNames.week_number_header,
+        ),
+        week_number: cn('text-[0.8rem] text-[var(--calendar-muted)] select-none', defaultClassNames.week_number),
         day: cn(
-          'group/day relative aspect-square h-full w-full rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)',
+          'group/day relative flex aspect-square h-full w-full items-center justify-center rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)',
           props.showWeekNumber
             ? '[&:nth-child(2)[data-selected=true]_button]:rounded-l-(--cell-radius)'
             : '[&:first-child[data-selected=true]_button]:rounded-l-(--cell-radius)',
           defaultClassNames.day,
         ),
         range_start: cn(
-          'relative isolate z-0 rounded-l-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-muted',
+          'relative isolate z-0 rounded-l-(--cell-radius) bg-[var(--calendar-accent-muted)] after:absolute after:inset-y-0 after:right-0 after:w-1/2 after:bg-[var(--calendar-accent-muted)]',
           defaultClassNames.range_start,
         ),
-        range_middle: cn('rounded-none', defaultClassNames.range_middle),
+        range_middle: cn(
+          'rounded-none bg-[var(--calendar-accent-muted)]',
+          defaultClassNames.range_middle,
+        ),
         range_end: cn(
-          'relative isolate z-0 rounded-r-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-muted',
+          'relative isolate z-0 rounded-r-(--cell-radius) bg-[var(--calendar-accent-muted)] after:absolute after:inset-y-0 after:left-0 after:w-1/2 after:bg-[var(--calendar-accent-muted)]',
           defaultClassNames.range_end,
         ),
         today: cn(
-          /* Let --rdp-today-color / --primary show through (avoid text-foreground overriding library today color). */
-          'rounded-(--cell-radius) bg-muted font-medium data-[selected=true]:rounded-none',
+          'rounded-(--cell-radius) font-semibold text-[var(--calendar-accent)] data-[selected=true]:text-[var(--calendar-accent-foreground)]',
           defaultClassNames.today,
         ),
         selected: cn('border-transparent ring-0 outline-none', defaultClassNames.selected),
-        outside: cn('text-muted-foreground aria-selected:text-muted-foreground', defaultClassNames.outside),
-        disabled: cn('text-muted-foreground opacity-50', defaultClassNames.disabled),
+        outside: cn('text-[var(--calendar-muted)] aria-selected:text-[var(--calendar-muted)]', defaultClassNames.outside),
+        disabled: cn('text-[var(--calendar-muted)] opacity-45', defaultClassNames.disabled),
         hidden: cn('invisible', defaultClassNames.hidden),
         ...classNames,
       }}
@@ -163,15 +195,33 @@ function Calendar({
           return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...rootProps} />;
         },
         Chevron: ({ className, orientation, ...chevronProps }) => {
-          const iconSize = isCompact ? 'size-3.5' : 'size-4';
+          const iconClassName = cn(
+            isCompact ? 'size-3.5' : 'size-4',
+            'fill-none stroke-current text-[var(--calendar-weekday)] [&_*]:fill-none',
+            className,
+          );
           if (orientation === 'left') {
-            return <ChevronLeftIcon className={cn(iconSize, className)} {...chevronProps} />;
+            return <ChevronLeftIcon {...chevronProps} className={iconClassName} style={{ fill: 'none' }} />;
           }
           if (orientation === 'right') {
-            return <ChevronRightIcon className={cn(iconSize, className)} {...chevronProps} />;
+            return <ChevronRightIcon {...chevronProps} className={iconClassName} style={{ fill: 'none' }} />;
           }
-          return <ChevronDownIcon className={cn(iconSize, className)} {...chevronProps} />;
+          return <ChevronDownIcon {...chevronProps} className={iconClassName} style={{ fill: 'none' }} />;
         },
+        DropdownNav: ({ className, children, ...dropdownNavProps }) => (
+          <div
+            className={cn(
+              'relative flex w-full min-w-0 items-center justify-center',
+              className,
+            )}
+            {...dropdownNavProps}
+          >
+            <div className="flex min-w-0 items-center justify-center gap-1.5">{children}</div>
+          </div>
+        ),
+        Dropdown: (dropdownProps) => (
+          <CalendarDropdown calendarSize={size} {...dropdownProps} />
+        ),
         DayButton: ({ ...dayProps }) => (
           <CalendarDayButton locale={locale} size={size} {...dayProps} />
         ),
@@ -188,16 +238,72 @@ function Calendar({
                 {typeof userFooter === 'function' ? userFooter(footerProps) : userFooter}
                 <CalendarTodayButton
                   label={todayLabel}
-                  disabled={disabled}
+                  disabled={props.disabled}
                   size={size}
-                  onSelect={onSelect as OnSelectHandler<Date | undefined>}
+                  onSelect={singleOnSelect!}
                 />
               </div>
             )
           : userFooter,
       }}
-      {...props}
     />
+  );
+}
+
+function CalendarDropdown({
+  options,
+  value,
+  disabled,
+  'aria-label': ariaLabel,
+  onChange,
+  calendarSize = 'default',
+}: {
+  options?: DropdownOption[];
+  value?: React.SelectHTMLAttributes<HTMLSelectElement>['value'];
+  disabled?: boolean;
+  'aria-label'?: string;
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
+  calendarSize?: CalendarSize;
+}) {
+  const selectedValue = Array.isArray(value) ? value[0] : value == null ? undefined : String(value);
+  const selectedOption = options?.find((option) => String(option.value) === selectedValue);
+
+  return (
+    <Select
+      value={selectedValue}
+      disabled={disabled}
+      onValueChange={(nextValue) => {
+        onChange?.({
+          target: { value: nextValue },
+          currentTarget: { value: nextValue },
+        } as React.ChangeEvent<HTMLSelectElement>);
+      }}
+    >
+      <SelectTrigger
+        aria-label={ariaLabel}
+        size="sm"
+        className={cn(
+          'h-auto w-auto min-w-fit gap-1 rounded-md border-0 bg-transparent px-1 py-1 font-semibold text-[var(--calendar-fg)] shadow-none hover:bg-[var(--calendar-hover)] focus:ring-0 focus-visible:ring-0 dark:bg-transparent dark:hover:bg-[var(--calendar-hover)] *:data-[slot=select-value]:overflow-visible *:data-[slot=select-value]:whitespace-nowrap [&>svg]:text-[var(--calendar-weekday)] [&>svg]:opacity-100',
+          calendarSize === 'compact' ? 'text-xs' : 'text-sm',
+        )}
+      >
+        <SelectValue placeholder={selectedOption?.label} />
+      </SelectTrigger>
+      <SelectContent
+        align="start"
+        className="z-[110] max-h-64 min-w-[6rem]"
+      >
+        {options?.map((option) => (
+          <SelectItem
+            key={option.value}
+            value={String(option.value)}
+            disabled={option.disabled}
+          >
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -223,11 +329,14 @@ function CalendarTodayButton({
   const isCompact = size === 'compact';
 
   return (
-    <div className={cn('border-t', isCompact ? 'px-1 pt-1' : 'px-2 pt-2')}>
+    <div className={cn('border-t border-border/60 dark:border-white/10', isCompact ? 'px-1 pt-1' : 'px-2 pt-2')}>
       <Button
         type="button"
         variant="outline"
-        className={cn('w-full', isCompact && 'h-8 text-xs')}
+        className={cn(
+          'w-full dark:border-white/15 dark:bg-white/5 dark:text-[#f4f4f5] dark:hover:bg-white/10 dark:hover:text-white',
+          isCompact && 'h-8 text-xs',
+        )}
         disabled={isDisabled}
         onClick={(event) => {
           onSelect(today, today, {} as Modifiers, event);
@@ -261,6 +370,8 @@ function CalendarDayButton({
       variant="ghost"
       size={isCompact ? 'icon-sm' : 'icon'}
       data-day={day.date.toLocaleDateString(locale?.code)}
+      data-today={modifiers.today}
+      data-outside={modifiers.outside}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
@@ -271,8 +382,8 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        'relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none aria-selected:border-transparent aria-selected:ring-0 aria-selected:outline-none data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-foreground [&>span]:text-xs [&>span]:opacity-70',
-        defaultClassNames.day,
+        'relative isolate z-10 flex size-(--cell-size) min-w-(--cell-size) flex-col items-center justify-center gap-1 rounded-(--cell-radius) border-0 bg-transparent p-0 text-sm leading-none font-medium text-[var(--calendar-fg)] transition-colors hover:bg-[var(--calendar-hover)] hover:text-[var(--calendar-fg)] focus-visible:ring-2 focus-visible:ring-[#2f9ce5]/40 focus-visible:ring-offset-0 focus-visible:outline-none aria-selected:border-transparent aria-selected:ring-0 aria-selected:outline-none data-[outside=true]:text-[var(--calendar-muted)] data-[outside=true]:hover:text-[var(--calendar-weekday)] data-[today=true]:text-[var(--calendar-accent)] data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-[var(--calendar-accent)] data-[range-end=true]:text-[var(--calendar-accent-foreground)] data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-transparent data-[range-middle=true]:text-[var(--calendar-fg)] data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-[var(--calendar-accent)] data-[range-start=true]:text-[var(--calendar-accent-foreground)] data-[selected-single=true]:bg-[var(--calendar-accent)] data-[selected-single=true]:text-[var(--calendar-accent-foreground)] data-[today=true]:after:absolute data-[today=true]:after:-bottom-1 data-[today=true]:after:size-1.5 data-[today=true]:after:rounded-full data-[today=true]:after:bg-[var(--calendar-accent)] disabled:pointer-events-none disabled:opacity-40 [&>span]:text-xs [&>span]:opacity-70',
+        defaultClassNames.day_button,
         className,
       )}
       {...props}

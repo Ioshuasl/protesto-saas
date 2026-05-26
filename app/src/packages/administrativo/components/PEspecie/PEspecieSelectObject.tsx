@@ -7,6 +7,7 @@ import {
 import { buildSearchComboboxOptions } from "@/packages/administrativo/components/shared/buildSearchComboboxOptions";
 import { usePEspecieReadHook } from "@/packages/administrativo/hooks/PEspecie/usePEspecieReadHook";
 import type { PTituloSelectOption } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
+import { cn } from "@/lib/utils";
 
 export interface PEspecieSelectObjectProps {
   /** Valor controlado: `especie_id` como string. */
@@ -93,8 +94,8 @@ export function PEspecieSelectObject({
       placeholder={placeholder}
       searchPlaceholder={searchPlaceholder}
       disabled={disabled}
-      className={className}
-      triggerClassName={triggerClassName}
+      className={cn("min-w-0", className)}
+      triggerClassName={cn("min-w-0", triggerClassName)}
       emptyMessage={emptyMessage}
       loadingMessage="Carregando espécies..."
       clearAriaLabel="Limpar espécie"

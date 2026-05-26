@@ -57,7 +57,7 @@ export function PTituloFilter({
   };
 
   return (
-    <div className="grid w-full gap-3 md:grid-cols-2 xl:grid-cols-[minmax(18rem,1.35fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_minmax(14rem,1fr)]">
+    <div className="grid w-full min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-[minmax(18rem,1.35fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_minmax(14rem,1fr)]">
       <div className="relative w-full">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
         <Input

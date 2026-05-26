@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { format, type Locale as DateFnsLocale } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import * as React from 'react';
@@ -79,7 +79,7 @@ export function DatePicker({
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
-  const handleSelect: React.ComponentProps<typeof Calendar>['onSelect'] = (date) => {
+  const handleSelect = (date: Date | undefined) => {
     onChange?.(date);
     if (closeOnSelect && date) {
       setOpen(false);
@@ -92,9 +92,10 @@ export function DatePicker({
     disabled: calendarDisabled,
     locale,
     todayLabel,
-    showTodayButton,
+    showTodayButton: showTodayButton ?? false,
     size: calendarSize,
     showOutsideDays,
+    hideWeekdays: true,
   };
 
   if (variant === 'hybrid') {
@@ -110,7 +111,7 @@ export function DatePicker({
         className={className}
         inputClassName={inputClassName}
         todayLabel={todayLabel}
-        showTodayButton={showTodayButton}
+        showTodayButton={showTodayButton ?? false}
         align={align}
         side={side}
         sideOffset={sideOffset}
@@ -130,8 +131,8 @@ export function DatePicker({
     return (
       <div
         className={cn(
-          'flex w-full justify-center rounded-md border bg-background',
-          calendarSize === 'compact' ? 'p-1' : 'p-2',
+          'flex w-full justify-center rounded-xl bg-transparent',
+          calendarSize === 'compact' ? 'p-0.5' : 'p-1',
           className,
         )}
       >
@@ -154,12 +155,12 @@ export function DatePicker({
             className,
           )}
         >
-          {value ? format(value, dateFormat, { locale }) : <span>{placeholder}</span>}
+          {value ? format(value, dateFormat, { locale: locale as DateFnsLocale }) : <span>{placeholder}</span>}
           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="z-[100] w-auto p-0"
+        className="z-[100] w-auto border-0 bg-transparent p-0 shadow-none"
         align={align}
         side={side}
         sideOffset={sideOffset}

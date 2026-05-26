@@ -23,6 +23,12 @@ import {
   type PTituloSelectOptionsByField,
 } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
 import { mergeTituloSelectOptions, parsePTituloIsoDate, sanitizePTituloPositiveNumber } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormUtils";
+import {
+  ptituloCheckboxRowClassName,
+  ptituloDateButtonClassName,
+  ptituloInputClassName,
+  ptituloSelectTriggerClassName,
+} from "./form/PTituloFormLayout";
 
 type TituloControl = Control<PTituloDetailsFormValues>;
 
@@ -47,6 +53,7 @@ export function PTituloDetailFieldsApontamento({ control, selectOptionsByField }
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -98,6 +105,7 @@ export function PTituloDetailFieldsApontamento({ control, selectOptionsByField }
               <Input
                 type="text"
                 inputMode="numeric"
+                className={ptituloInputClassName}
                 {...field}
                 value={field.value ?? ""}
                 onChange={(event) =>
@@ -145,6 +153,7 @@ export function PTituloDetailFieldsApontamento({ control, selectOptionsByField }
               <Input
                 type="text"
                 inputMode="numeric"
+                className={ptituloInputClassName}
                 {...field}
                 value={field.value ?? ""}
                 onChange={(event) =>
@@ -166,6 +175,7 @@ export function PTituloDetailFieldsApontamento({ control, selectOptionsByField }
               <Input
                 type="text"
                 inputMode="numeric"
+                className={ptituloInputClassName}
                 {...field}
                 value={field.value ?? ""}
                 onChange={(event) =>
@@ -197,6 +207,7 @@ export function PTituloDetailFieldsIntimacaoAceite({ control, selectOptionsByFie
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -233,6 +244,7 @@ export function PTituloDetailFieldsIntimacaoAceite({ control, selectOptionsByFie
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -269,6 +281,7 @@ export function PTituloDetailFieldsIntimacaoAceite({ control, selectOptionsByFie
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -301,9 +314,9 @@ export function PTituloDetailFieldsIntimacaoAceite({ control, selectOptionsByFie
             <FormItem>
               <FormLabel>Pessoa aceitou</FormLabel>
               <FormControl>
-                <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+                <div className={ptituloCheckboxRowClassName}>
                   <Checkbox checked={checked} onCheckedChange={(value) => field.onChange(value ? "S" : "N")} />
-                  <span className="text-sm text-muted-foreground">{checked ? "Sim" : "Não"}</span>
+                  <span className="text-sm text-foreground">{checked ? "Sim" : "Não"}</span>
                 </div>
               </FormControl>
               <FormMessage />
@@ -322,7 +335,7 @@ export function PTituloDetailFieldsIntimacaoAceite({ control, selectOptionsByFie
               <FormLabel>Motivo de isenção</FormLabel>
               <Select value={field.value || ""} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className={cn("w-full", ptituloSelectTriggerClassName)}>
                     <SelectValue placeholder="Selecione">{selected?.label}</SelectValue>
                   </SelectTrigger>
                 </FormControl>
@@ -350,7 +363,7 @@ export function PTituloDetailFieldsIntimacaoAceite({ control, selectOptionsByFie
               <FormLabel>Tipo de aceite</FormLabel>
               <Select value={field.value || ""} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className={cn("w-full", ptituloSelectTriggerClassName)}>
                     <SelectValue placeholder="Selecione o tipo de aceite">{selected?.label}</SelectValue>
                   </SelectTrigger>
                 </FormControl>
@@ -374,7 +387,7 @@ export function PTituloDetailFieldsIntimacaoAceite({ control, selectOptionsByFie
           <FormItem>
             <FormLabel>Agência código cedente</FormLabel>
             <FormControl>
-              <Input type="text" {...field} value={field.value ?? ""} />
+              <Input type="text" className={ptituloInputClassName} {...field} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -400,6 +413,7 @@ export function PTituloDetailFieldsProtesto({ control }: Pick<BlockProps, "contr
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -459,6 +473,7 @@ export function PTituloDetailFieldsProtesto({ control }: Pick<BlockProps, "contr
               <Input
                 type="text"
                 inputMode="numeric"
+                className={ptituloInputClassName}
                 {...field}
                 value={field.value ?? ""}
                 onChange={(event) =>
@@ -480,6 +495,7 @@ export function PTituloDetailFieldsProtesto({ control }: Pick<BlockProps, "contr
               <Input
                 type="text"
                 inputMode="numeric"
+                className={ptituloInputClassName}
                 {...field}
                 value={field.value ?? ""}
                 onChange={(event) =>
@@ -500,9 +516,9 @@ export function PTituloDetailFieldsProtesto({ control }: Pick<BlockProps, "contr
             <FormItem>
               <FormLabel>Cobrar juros</FormLabel>
               <FormControl>
-                <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+                <div className={ptituloCheckboxRowClassName}>
                   <Checkbox checked={checked} onCheckedChange={(value) => field.onChange(value ? "S" : "N")} />
-                  <span className="text-sm text-muted-foreground">{checked ? "Sim" : "Não"}</span>
+                  <span className="text-sm text-foreground">{checked ? "Sim" : "Não"}</span>
                 </div>
               </FormControl>
               <FormMessage />
@@ -517,7 +533,7 @@ export function PTituloDetailFieldsProtesto({ control }: Pick<BlockProps, "contr
           <FormItem>
             <FormLabel>Letra folha</FormLabel>
             <FormControl>
-              <Input type="text" {...field} value={field.value ?? ""} />
+              <Input type="text" className={ptituloInputClassName} {...field} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -543,6 +559,7 @@ export function PTituloDetailFieldsCancelamentoPagamento({ control, selectOption
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -597,6 +614,7 @@ export function PTituloDetailFieldsCancelamentoPagamento({ control, selectOption
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -633,6 +651,7 @@ export function PTituloDetailFieldsCancelamentoPagamento({ control, selectOption
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -669,6 +688,7 @@ export function PTituloDetailFieldsCancelamentoPagamento({ control, selectOption
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -702,6 +722,7 @@ export function PTituloDetailFieldsCancelamentoPagamento({ control, selectOption
               <Input
                 type="text"
                 inputMode="numeric"
+                className={ptituloInputClassName}
                 {...field}
                 value={field.value ?? ""}
                 onChange={(event) =>
@@ -726,7 +747,7 @@ export function PTituloDetailFieldsCra({ control }: BlockProps) {
         <FormItem>
           <FormLabel>Chave de importação</FormLabel>
           <FormControl>
-            <Input type="text" {...field} value={field.value ?? ""} />
+            <Input type="text" className={ptituloInputClassName} {...field} value={field.value ?? ""} />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -751,6 +772,7 @@ export function PTituloDetailFieldsCenprot({ control }: BlockProps) {
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -783,9 +805,9 @@ export function PTituloDetailFieldsCenprot({ control }: BlockProps) {
             <FormItem>
               <FormLabel>Apresentante permitido</FormLabel>
               <FormControl>
-                <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+                <div className={ptituloCheckboxRowClassName}>
                   <Checkbox checked={checked} onCheckedChange={(value) => field.onChange(value ? "S" : "N")} />
-                  <span className="text-sm text-muted-foreground">{checked ? "Sim" : "Não"}</span>
+                  <span className="text-sm text-foreground">{checked ? "Sim" : "Não"}</span>
                 </div>
               </FormControl>
               <FormMessage />
@@ -802,9 +824,9 @@ export function PTituloDetailFieldsCenprot({ control }: BlockProps) {
             <FormItem>
               <FormLabel>Cedente permitido</FormLabel>
               <FormControl>
-                <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+                <div className={ptituloCheckboxRowClassName}>
                   <Checkbox checked={checked} onCheckedChange={(value) => field.onChange(value ? "S" : "N")} />
-                  <span className="text-sm text-muted-foreground">{checked ? "Sim" : "Não"}</span>
+                  <span className="text-sm text-foreground">{checked ? "Sim" : "Não"}</span>
                 </div>
               </FormControl>
               <FormMessage />
@@ -821,9 +843,9 @@ export function PTituloDetailFieldsCenprot({ control }: BlockProps) {
             <FormItem>
               <FormLabel>Credor permitido</FormLabel>
               <FormControl>
-                <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+                <div className={ptituloCheckboxRowClassName}>
                   <Checkbox checked={checked} onCheckedChange={(value) => field.onChange(value ? "S" : "N")} />
-                  <span className="text-sm text-muted-foreground">{checked ? "Sim" : "Não"}</span>
+                  <span className="text-sm text-foreground">{checked ? "Sim" : "Não"}</span>
                 </div>
               </FormControl>
               <FormMessage />
@@ -840,9 +862,9 @@ export function PTituloDetailFieldsCenprot({ control }: BlockProps) {
             <FormItem>
               <FormLabel>Anuência</FormLabel>
               <FormControl>
-                <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+                <div className={ptituloCheckboxRowClassName}>
                   <Checkbox checked={checked} onCheckedChange={(value) => field.onChange(value ? "S" : "N")} />
-                  <span className="text-sm text-muted-foreground">{checked ? "Sim" : "Não"}</span>
+                  <span className="text-sm text-foreground">{checked ? "Sim" : "Não"}</span>
                 </div>
               </FormControl>
               <FormMessage />
@@ -857,7 +879,7 @@ export function PTituloDetailFieldsCenprot({ control }: BlockProps) {
           <FormItem>
             <FormLabel>Chave única CENPROT</FormLabel>
             <FormControl>
-              <Input type="text" {...field} value={field.value ?? ""} />
+              <Input type="text" className={ptituloInputClassName} {...field} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -872,9 +894,9 @@ export function PTituloDetailFieldsCenprot({ control }: BlockProps) {
             <FormItem>
               <FormLabel>Protesto artigo 9</FormLabel>
               <FormControl>
-                <div className="flex h-10 items-center gap-2 rounded-md border px-3">
+                <div className={ptituloCheckboxRowClassName}>
                   <Checkbox checked={checked} onCheckedChange={(value) => field.onChange(value ? "S" : "N")} />
-                  <span className="text-sm text-muted-foreground">{checked ? "Sim" : "Não"}</span>
+                  <span className="text-sm text-foreground">{checked ? "Sim" : "Não"}</span>
                 </div>
               </FormControl>
               <FormMessage />
@@ -902,6 +924,7 @@ export function PTituloDetailFieldsSerasa({ control }: BlockProps) {
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -938,6 +961,7 @@ export function PTituloDetailFieldsSerasa({ control }: BlockProps) {
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}
@@ -974,6 +998,7 @@ export function PTituloDetailFieldsSerasa({ control }: BlockProps) {
                     type="button"
                     variant="outline"
                     className={cn(
+                      ptituloDateButtonClassName,
                       "w-full justify-between text-left font-normal",
                       !field.value && "text-muted-foreground",
                     )}

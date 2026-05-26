@@ -17,6 +17,11 @@ p_pessoa_controller = PPessoaController()
 
 
 @router.get(
+    "",
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+@router.get(
     "/",
     status_code=status.HTTP_200_OK,
     summary="Lista pessoas cadastradas",
@@ -67,6 +72,11 @@ async def show(
     return p_pessoa_controller.show(PPessoaIdSchema(pessoa_id=pessoa_id))
 
 
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+)
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,

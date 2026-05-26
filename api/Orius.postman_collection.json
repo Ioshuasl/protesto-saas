@@ -4278,6 +4278,500 @@
           ]
         },
         {
+          "name": "Certidão",
+          "description": "CRUD P_CERTIDAO — prefix /administrativo/p_certidao. Siglas: tipo_certidao P=positiva, N=negativa, R=Serasa; tipo_remessa P=protesto Serasa, C=cancelamento Serasa; status A=ativo, C=cancelado. Index paginado com filtros tipo_certidao, data_certidao, status e busca em CPFCNPJ/NOME. Variável {{certidaoId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_certidao?p=1&per_page=20&sort=certidao_id.desc&tipo_certidao=P&status=A&busca=teste",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_certidao"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "certidao_id.desc",
+                      "description": "Opcional. Campos: certidao_id, data_certidao, tipo_certidao, status, cpfcnpj, nome"
+                    },
+                    {
+                      "key": "tipo_certidao",
+                      "value": "P",
+                      "description": "P = positiva; N = negativa"
+                    },
+                    {
+                      "key": "status",
+                      "value": "A",
+                      "description": "A = ativo; C = cancelado"
+                    },
+                    {
+                      "key": "busca",
+                      "value": "teste",
+                      "description": "Busca LIKE em CPFCNPJ ou NOME"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                      "pm.test(\"Resposta contém dados paginados\", function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.have.property(\"data\"); pm.expect(jsonData.data).to.be.an(\"array\"); pm.expect(jsonData).to.have.property(\"pagination\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_certidao",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_certidao"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"usuario_id\": 8,\r\n  \"data_certidao\": \"2026-05-26\",\r\n  \"hora_certidao\": \"14:00:00\",\r\n  \"tipo_certidao\": \"P\",\r\n  \"cpfcnpj\": \"00000000000\",\r\n  \"nome\": \"CERTIDAO TESTE API\",\r\n  \"status\": \"A\",\r\n  \"apresentante\": \"CERTIDAO TESTE API\",\r\n  \"valor_emolumento\": 0,\r\n  \"valor_taxa_judiciaria\": 0,\r\n  \"valor_fundesp\": 0,\r\n  \"valor_taxa_extra\": 0,\r\n  \"valor_taxa_iss\": 0\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response && response.data && response.data.certidao_id !== undefined) { pm.collectionVariables.set(\"certidaoId\", response.data.certidao_id); }",
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_certidao/{{certidaoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_certidao",
+                    "{{certidaoId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_certidao/{{certidaoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_certidao",
+                    "{{certidaoId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"nome\": \"CERTIDAO TESTE API ATUALIZADA\",\r\n  \"status\": \"A\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_certidao/{{certidaoId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_certidao",
+                    "{{certidaoId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Template",
+          "description": "CRUD P_TEMPLATE — prefix /administrativo/p_template. Contrato inicial não manipula o BLOB TEXTO: index/show/create/update usam apenas template_id e descricao. Variável {{templateId}} no Create.",
+          "item": [
+            {
+              "name": "All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_template?p=1&per_page=20&sort=template_id.desc&descricao=certidao",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_template"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1",
+                      "description": "Página (padrão: 1)"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "description": "Itens por página (padrão: 20)"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "template_id.desc",
+                      "description": "Opcional. Campos: template_id, descricao. Sem sort: template_id desc"
+                    },
+                    {
+                      "key": "descricao",
+                      "value": "certidao",
+                      "description": "Busca por descrição"
+                    },
+                    {
+                      "key": "template_id",
+                      "value": "",
+                      "disabled": true,
+                      "description": "Filtro exato por TEMPLATE_ID"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                      "pm.test(\"Resposta contém dados paginados\", function () { const jsonData = pm.response.json(); pm.expect(jsonData).to.have.property(\"data\"); pm.expect(jsonData.data).to.be.an(\"array\"); pm.expect(jsonData).to.have.property(\"pagination\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_template",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_template"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Template API Teste\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response && response.data && response.data.template_id !== undefined) { pm.collectionVariables.set(\"templateId\", response.data.template_id); }",
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                      "pm.test(\"Mensagem indica sucesso\", function () { const jsonData = pm.response.json(); pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_template/{{templateId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_template",
+                    "{{templateId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                      "pm.test(\"Mensagem indica sucesso\", function () { const jsonData = pm.response.json(); pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_template/{{templateId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_template",
+                    "{{templateId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"descricao\": \"Template API Teste Atualizado\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                      "pm.test(\"Mensagem indica sucesso\", function () { const jsonData = pm.response.json(); pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_template/{{templateId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_template",
+                    "{{templateId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                      "pm.test(\"Mensagem indica sucesso\", function () { const jsonData = pm.response.json(); pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "Motivos Cancelamento",
           "description": "CRUD P_MOTIVOS_CANCELAMENTO — prefix /administrativo/p_motivos_cancelamento. Situação A (ativo) / I (inativo). Busca index só por descricao. Variável {{motivosCancelamentoId}} no Create.",
           "item": [
@@ -29007,6 +29501,10 @@
       "value": ""
     },
     {
+      "key": "certidaoId",
+      "value": ""
+    },
+    {
       "key": "pessoaId",
       "value": "",
       "type": "string"
@@ -29026,6 +29524,11 @@
     {
       "key": "pessoaVinculoId",
       "value": ""
+    },
+    {
+      "key": "templateId",
+      "value": "",
+      "type": "string"
     }
   ]
 }

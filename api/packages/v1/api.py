@@ -10,6 +10,8 @@ from packages.v1.administrativo.endpoints import (
     p_motivos_endpoint,
     p_andamento_endpoint,
     p_ocorrencia_andamento_endpoint,
+    p_certidao_endpoint,
+    p_template_endpoint,
     p_titulo_endpoint,
     p_ocorrencias_endpoint,
     p_motivos_cancelamento_endpoint,
@@ -401,6 +403,20 @@ api_router.include_router(
     p_ocorrencia_andamento_endpoint.router,
     prefix="/administrativo/p_ocorrencia_andamento",
     tags=["Ocorrencias de andamento"],
+)
+
+# Inclui as rotas de p_certidao
+api_router.include_router(
+    p_certidao_endpoint.router,
+    prefix="/administrativo/p_certidao",
+    tags=["Certidões"],
+)
+
+# Inclui as rotas de p_template
+api_router.include_router(
+    p_template_endpoint.router,
+    prefix="/administrativo/p_template",
+    tags=["Templates"],
 )
 
 # Inclui as rotas de p_titulo

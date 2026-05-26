@@ -126,7 +126,7 @@ export function DatePickerHybrid({
     commitDate(parsed);
   };
 
-  const handleCalendarSelect: React.ComponentProps<typeof Calendar>['onSelect'] = (date) => {
+  const handleCalendarSelect = (date: Date | undefined) => {
     commitDate(date);
     if (closeOnSelect && date) {
       setOpen(false);
@@ -139,9 +139,10 @@ export function DatePickerHybrid({
     disabled: calendarDisabled,
     locale,
     todayLabel,
-    showTodayButton,
+    showTodayButton: showTodayButton ?? false,
     size: calendarSize,
     showOutsideDays,
+    hideWeekdays: true,
   };
 
   return (
@@ -183,7 +184,7 @@ export function DatePickerHybrid({
         </div>
       </PopoverAnchor>
       <PopoverContent
-        className="z-[100] w-auto p-0"
+        className="z-[100] w-auto border-0 bg-transparent p-0 shadow-none"
         align={align}
         side={side}
         sideOffset={sideOffset}

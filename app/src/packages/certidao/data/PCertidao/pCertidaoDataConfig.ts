@@ -1,11 +1,10 @@
-export const PCERTIDAO_FAKE_ENDPOINTS = {
-  index: "certidao/p_certidao/",
-  show: (id: number) => `certidao/p_certidao/${id}/`,
-  create: "certidao/p_certidao/",
-  update: (id: number) => `certidao/p_certidao/${id}/`,
-  consultaApresentante: "certidao/p_certidao/consulta_apresentante/",
+/** Rotas em api/packages/v1/administrativo/endpoints/p_certidao_endpoint.py */
+export const PCERTIDAO_ENDPOINTS = {
+  index: "administrativo/p_certidao/",
+  show: (id: number) => `administrativo/p_certidao/${id}`,
+  create: "administrativo/p_certidao/",
+  update: (id: number) => `administrativo/p_certidao/${id}`,
+  delete: (id: number) => `administrativo/p_certidao/${id}`,
+  cancelar: (id: number) => `administrativo/p_certidao/${id}/cancelar`,
+  consultaApresentante: "administrativo/p_certidao/consulta_apresentante/",
 };
-
-export function usePCertidaoMockData() {
-  return process.env.NEXT_PUBLIC_USE_MOCK_P_CERTIDAO !== "false";
-}

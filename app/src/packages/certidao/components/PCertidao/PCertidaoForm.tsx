@@ -19,9 +19,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { CircleQuestionMark, Loader2, Search } from "lucide-react";
+import { GUsuarioSelectObject } from "@/packages/administrativo/components/GUsuario/GUsuarioSelectObject";
 import PPessoaTableFormDialog from "@/packages/administrativo/components/PPessoa/PPessoaTableFormDialog";
 import type { PPessoaInterface } from "@/packages/administrativo/interfaces/PPessoa/PPessoaInterface";
-import { useGUsuarioReadHook } from "@/packages/administrativo/hooks/GUsuario/useGUsuarioReadHook";
 import { usePCertidaoSaveHook } from "@/packages/certidao/hooks/PCertidao/usePCertidaoSaveHook";
 import { usePCertidaoShowHook } from "@/packages/certidao/hooks/PCertidao/usePCertidaoShowHook";
 import type { PCertidaoInterface } from "@/packages/certidao/interface/PCertidao/PCertidaoInterface";
@@ -83,11 +83,12 @@ function formatDateInput(date?: Date | string): string {
 
 function mapCertidaoToFormState(certidao: PCertidaoInterface): PCertidaoFormState {
   const nowDefaults = getNowDateAndTime();
+  const tipoCertidao = certidao.tipo_certidao === "N" ? "N" : "P";
 
   return {
     apresentante: certidao.apresentante ?? "",
     cpfcnpj: certidao.cpfcnpj ?? "",
-    tipo_certidao: certidao.tipo_certidao ?? "P",
+    tipo_certidao: tipoCertidao,
     status: certidao.status ?? "A",
     data_certidao: formatDateInput(certidao.data_certidao) || nowDefaults.date,
     hora_certidao: certidao.hora_certidao ?? nowDefaults.time,
@@ -97,14 +98,13 @@ function mapCertidaoToFormState(certidao: PCertidaoInterface): PCertidaoFormStat
 }
 
 export function PCertidaoForm({ open, onOpenChange, certidao, onSaved }: PCertidaoFormProps) {
-  const { usuarios, isLoading: isLoadingUsuarios, fetchUsuarios } = useGUsuarioReadHook();
   const { certidao: certidaoLoaded, isLoading: isLoadingShow, fetchCertidao } = usePCertidaoShowHook();
   const { isSaving, saveCertidao } = usePCertidaoSaveHook();
   const [formState, setFormState] = useState<PCertidaoFormState>(() => mapCertidaoToFormState(certidao));
   const [isBootstrappingHooks, setIsBootstrappingHooks] = useState(false);
   const [isPPessoaDialogOpen, setIsPPessoaDialogOpen] = useState(false);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
-  const isHooksLoading = isBootstrappingHooks || isLoadingUsuarios || isLoadingShow;
+  const isHooksLoading = isBootstrappingHooks || isLoadingShow;
   const isFormLoading = isHooksLoading || isSaving;
 
   useEffect(() => {
@@ -114,7 +114,6 @@ export function PCertidaoForm({ open, onOpenChange, certidao, onSaved }: PCertid
     const loadHooksData = async () => {
       setIsBootstrappingHooks(true);
       try {
-        await fetchUsuarios();
         await fetchCertidao(certidao.certidao_id);
       } finally {
         if (active) setIsBootstrappingHooks(false);
@@ -126,7 +125,7 @@ export function PCertidaoForm({ open, onOpenChange, certidao, onSaved }: PCertid
     return () => {
       active = false;
     };
-  }, [open, certidao.certidao_id]);
+  }, [open, certidao.certidao_id, fetchCertidao]);
 
   useEffect(() => {
     if (!open) return;
@@ -316,22 +315,12 @@ export function PCertidaoForm({ open, onOpenChange, certidao, onSaved }: PCertid
                     </Button>
                   </div>
                   <Label htmlFor="usuario_id">Usuário responsável</Label>
-                  <Select
-                    value={formState.usuario_id || "none"}
-                    onValueChange={(value) => setFormState((prev) => ({ ...prev, usuario_id: value === "none" ? "" : value }))}
-                  >
-                    <SelectTrigger id="usuario_id">
-                      <SelectValue placeholder="Selecione o usuário" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem usuário</SelectItem>
-                      {usuarios.map((usuario) => (
-                        <SelectItem key={usuario.usuario_id} value={String(usuario.usuario_id)}>
-                          {usuario.nome_completo || usuario.login || `Usuário ${usuario.usuario_id}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <GUsuarioSelectObject
+                    value={formState.usuario_id}
+                    onValueChange={(value) => setFormState((prev) => ({ ...prev, usuario_id: value }))}
+                    placeholder="Selecione o usuário"
+                    disabled={isFormLoading}
+                  />
                 </div>
               </div>
 

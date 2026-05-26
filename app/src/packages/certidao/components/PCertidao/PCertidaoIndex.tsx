@@ -1,97 +1,82 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRangePicker } from "@/shared/components/dateRangePicker/DateRangePicker";
-import InfoDialog from "@/shared/components/InfoDialog/InfoDialog";
 import { useGUsuarioReadHook } from "@/packages/administrativo/hooks/GUsuario/useGUsuarioReadHook";
+import { PCertidaoFilter } from "@/packages/certidao/components/PCertidao/PCertidaoFilter";
+import {
+  buildPCertidaoIndexQuery,
+  defaultPCertidaoFilterState,
+  type PCertidaoFilterState,
+} from "@/packages/certidao/components/PCertidao/pCertidaoFilterUtils";
+import { usePCertidaoCancelarHook } from "@/packages/certidao/hooks/PCertidao/usePCertidaoCancelarHook";
 import { usePCertidaoReadHook } from "@/packages/certidao/hooks/PCertidao/usePCertidaoReadHook";
-import { usePCertidaoSaveHook } from "@/packages/certidao/hooks/PCertidao/usePCertidaoSaveHook";
 import type { PCertidaoInterface } from "@/packages/certidao/interface/PCertidao/PCertidaoInterface";
 import { isPCertidaoSaveResult } from "@/packages/certidao/interface/PCertidao/PCertidaoSaveInterface";
-import { Loader2, Plus, Search } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { DateRange } from "react-day-picker";
-import { toast } from "sonner";
-import { PCertidaoEmissaoDialogTitleRow, PCertidaoEmissaoForm } from "./PCertidaoEmissaoForm";
-import { PCERTIDAO_TIPO_INFO_MARKDOWN, PCertidaoForm } from "./PCertidaoForm";
-import type { PCertidaoFormValues } from "./PCertidaoFormValues";
+import { DEFAULT_PAGINATION_META, Pagination } from "@/shared/components/pagination";
+import ConfirmDialog from "@/shared/components/confirmDialog/ConfirmDialog";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { PCertidaoForm } from "./PCertidaoForm";
 import { PCertidaoTable } from "./PCertidaoTable";
 
-function getStatusLabel(status?: PCertidaoInterface["status"] | string): string {
-  const normalized = (status ?? "").trim().toUpperCase();
-  if (normalized === "A" || normalized === "ATIVA" || normalized === "ATIVO" || normalized === "EMITIDA") {
-    return "Ativa/Emitida";
-  }
-  if (normalized === "C" || normalized === "CANCELADA" || normalized === "INATIVA") {
-    return "Cancelada";
-  }
-  return "-";
+const PCERTIDAO_PER_PAGE = DEFAULT_PAGINATION_META.per_page;
+
+function getTipoCertidaoConfirmLabel(tipo?: PCertidaoInterface["tipo_certidao"] | string): string {
+  const normalized = (tipo ?? "").trim().toUpperCase();
+  if (normalized === "P") return "positiva";
+  if (normalized === "N") return "negativa";
+  if (normalized === "R") return "Serasa";
+  return "selecionada";
 }
 
-function normalizeCode(value?: string): string {
-  return (value ?? "").trim().toUpperCase();
-}
+function buildCancelamentoMessage(certidao: PCertidaoInterface): string {
+  const tipo = getTipoCertidaoConfirmLabel(certidao.tipo_certidao);
+  const nome = certidao.nome?.trim() || certidao.apresentante?.trim() || "Não informado";
+  const cpfcnpj = certidao.cpfcnpj?.trim() || "Não informado";
 
-function getDateOnly(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return `Você tem certeza que deseja cancelar a certidão ${tipo} de ${nome} - ${cpfcnpj}? Lembrando que esta ação é irreversível e o selo é cancelado automaticamente.`;
 }
 
 export default function PCertidaoIndex() {
-  const { certidoes, isLoading, fetchCertidoes } = usePCertidaoReadHook();
+  const router = useRouter();
+  const { certidoes, pagination, isLoading, fetchCertidoes } = usePCertidaoReadHook();
   const { usuarios, isLoading: isLoadingUsuarios, fetchUsuarios } = useGUsuarioReadHook();
-  const { isSaving: isSavingEmissao, saveCertidao: saveCertidaoEmissao } = usePCertidaoSaveHook();
-  const initialFetchDoneRef = useRef(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | "A" | "C">("");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const { isCanceling, cancelarCertidao } = usePCertidaoCancelarHook();
+  const [filters, setFilters] = useState<PCertidaoFilterState>(defaultPCertidaoFilterState);
+  const [page, setPage] = useState(1);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [emissaoDialogOpen, setEmissaoDialogOpen] = useState(false);
   const [editingCertidao, setEditingCertidao] = useState<PCertidaoInterface | null>(null);
-  const [emissaoInfoOpen, setEmissaoInfoOpen] = useState(false);
+  const [cancelingCertidao, setCancelingCertidao] = useState<PCertidaoInterface | null>(null);
+
+  const apiFilters = useMemo(() => buildPCertidaoIndexQuery(filters), [filters]);
+  const indexQuery = useMemo(
+    () => ({
+      ...(apiFilters ?? {}),
+      page,
+      per_page: PCERTIDAO_PER_PAGE,
+    }),
+    [apiFilters, page],
+  );
 
   useEffect(() => {
-    if (initialFetchDoneRef.current) return;
-    initialFetchDoneRef.current = true;
-    void Promise.all([fetchCertidoes(), fetchUsuarios()]);
-  }, [fetchCertidoes, fetchUsuarios]);
+    void fetchUsuarios();
+  }, [fetchUsuarios]);
+
+  useEffect(() => {
+    void fetchCertidoes(indexQuery);
+  }, [fetchCertidoes, indexQuery]);
 
   const usuarioLabelById = new Map<number, string>(
     usuarios.map((usuario) => [usuario.usuario_id, usuario.nome_completo || usuario.login || String(usuario.usuario_id)]),
   );
 
-  const isPageLoading = isLoading || isLoadingUsuarios;
-  const filteredCertidoes = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    const from = dateRange?.from ? getDateOnly(dateRange.from) : undefined;
-    const to = dateRange?.to ? getDateOnly(dateRange.to) : undefined;
+  const isPageLoading = isLoading || isLoadingUsuarios || isCanceling;
 
-    return certidoes.filter((certidao) => {
-      if (normalizedQuery) {
-        const apresentante = (certidao.apresentante ?? "").toLowerCase();
-        const cpfcnpj = (certidao.cpfcnpj ?? "").toLowerCase();
-        if (!apresentante.includes(normalizedQuery) && !cpfcnpj.includes(normalizedQuery)) {
-          return false;
-        }
-      }
-
-      if (statusFilter) {
-        const normalizedStatus = normalizeCode(certidao.status);
-        if (normalizedStatus !== statusFilter) return false;
-      }
-
-      if (from || to) {
-        if (!certidao.data_certidao) return false;
-        const current = getDateOnly(new Date(certidao.data_certidao));
-        if (from && current < from) return false;
-        if (to && current > to) return false;
-      }
-
-      return true;
-    });
-  }, [certidoes, dateRange?.from, dateRange?.to, searchQuery, statusFilter]);
+  const handleFiltersChange = useCallback((next: PCertidaoFilterState) => {
+    setFilters(next);
+    setPage(1);
+  }, []);
 
   const handleEditarCertidao = (certidao: PCertidaoInterface) => {
     setEditingCertidao(certidao);
@@ -99,53 +84,53 @@ export default function PCertidaoIndex() {
   };
 
   const handleCancelarCertidao = (certidao: PCertidaoInterface) => {
-    toast.info("Funcionalidade em construção", {
-      description: `Cancelamento da certidão #${certidao.certidao_id} (${getStatusLabel(certidao.status)}) ainda não implementado.`,
-    });
+    setCancelingCertidao(certidao);
   };
 
-  const handleClearFilters = () => {
-    setSearchQuery("");
-    setStatusFilter("");
-    setDateRange(undefined);
+  const closeCancelDialog = () => {
+    if (isCanceling) return;
+    setCancelingCertidao(null);
   };
 
-  const handleOpenEmissaoDialog = () => {
-    setEmissaoDialogOpen(true);
-  };
+  const handleConfirmCancelamento = async () => {
+    if (!cancelingCertidao || isCanceling) return;
 
-  const handleEditSaved = async (_saved: PCertidaoInterface) => {
-    setEditDialogOpen(false);
-    setEditingCertidao(null);
-    await fetchCertidoes();
-  };
-
-  const handleEmitNovaCertidao = async (payload: PCertidaoFormValues) => {
-    const response = await saveCertidaoEmissao(payload);
+    const response = await cancelarCertidao(cancelingCertidao.certidao_id);
     if (isPCertidaoSaveResult(response)) {
-      setEmissaoDialogOpen(false);
-      await fetchCertidoes();
+      setCancelingCertidao(null);
+      await fetchCertidoes(indexQuery);
     }
   };
 
+  const handleOpenEmissaoPage = () => {
+    router.push("/certidao/new");
+  };
+
+  const handleEditSaved = async () => {
+    setEditDialogOpen(false);
+    setEditingCertidao(null);
+    await fetchCertidoes(indexQuery);
+  };
+
   return (
-    <div className="flex w-full flex-col gap-5">
-      <section className="rounded-xl border bg-card p-4 shadow-xs md:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight">Certidão</h1>
-            <p className="text-sm text-muted-foreground">
+    <div className="flex w-full min-w-0 flex-col gap-4">
+      <section className="rounded-xl border bg-card p-4 shadow-xs">
+        <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0 space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Certidão</h1>
+            <p className="max-w-3xl text-sm text-muted-foreground">
               Consulte as certidões e acompanhe o status (A: ativa/emitida, C: cancelada), apresentante e horário.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="rounded-md border bg-muted/30 px-3 py-1.5 text-sm">
-              Registros: <span className="font-semibold">{filteredCertidoes.length}</span>
+          <div className="flex shrink-0 flex-wrap items-center gap-2 xl:justify-end">
+            <div className="rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs md:text-sm">
+              Registros: <span className="font-semibold">{pagination.total}</span>
             </div>
             <Button
               type="button"
-              className="bg-[#FF6B00] text-white transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#E56000]"
-              onClick={handleOpenEmissaoDialog}
+              size="sm"
+              className="whitespace-nowrap bg-[#FF6B00] text-white transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#E56000] md:h-9"
+              onClick={handleOpenEmissaoPage}
             >
               <Plus className="mr-1 h-4 w-4" />
               Emitir nova certidão
@@ -154,86 +139,22 @@ export default function PCertidaoIndex() {
         </div>
       </section>
 
-      <section className="rounded-xl border bg-card p-4 shadow-xs md:p-5">
-        <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Busca por apresentante / CPF-CNPJ
-              </label>
-              <Input
-                placeholder="Ex.: João da Silva ou 111.111.111-11"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</label>
-              <Select
-                value={statusFilter || "all"}
-                onValueChange={(value) => setStatusFilter(value === "A" || value === "C" ? value : "")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="A">Ativa/Emitida</SelectItem>
-                  <SelectItem value="C">Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Intervalo de data</label>
-              <DateRangePicker value={dateRange} onChange={setDateRange} placeholder="Selecione o intervalo" />
-            </div>
-          </div>
-
-          <div className="flex items-end gap-2 xl:justify-end">
-            <Button type="button" className="bg-[#FF6B00] text-white hover:bg-[#E56000]">
-              <Search className="mr-1 h-4 w-4" />
-              Pesquisar
-            </Button>
-            <Button type="button" variant="outline" onClick={handleClearFilters}>
-              Limpar
-            </Button>
-          </div>
-        </div>
-      </section>
+      <PCertidaoFilter
+        value={filters}
+        onChange={handleFiltersChange}
+        onSearch={() => void fetchCertidoes(indexQuery)}
+        disabled={isPageLoading}
+      />
 
       <PCertidaoTable
-        data={filteredCertidoes}
+        data={certidoes}
         isLoading={isPageLoading}
         onEditarCertidao={handleEditarCertidao}
         onCancelarCertidao={handleCancelarCertidao}
         usuarioLabelById={usuarioLabelById}
       />
 
-      <Dialog open={emissaoDialogOpen} onOpenChange={setEmissaoDialogOpen}>
-        <DialogContent className="max-h-[88vh] gap-3 overflow-y-auto p-5 sm:max-w-3xl sm:p-6">
-          <DialogHeader>
-            <PCertidaoEmissaoDialogTitleRow onOpenTipoInfo={() => setEmissaoInfoOpen(true)} />
-          </DialogHeader>
-
-          {isLoadingUsuarios && emissaoDialogOpen ? (
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <p className="text-sm">Carregando…</p>
-            </div>
-          ) : (
-            <PCertidaoEmissaoForm
-              open={emissaoDialogOpen}
-              usuarios={usuarios}
-              isLoadingUsuarios={isLoadingUsuarios}
-              onEmit={handleEmitNovaCertidao}
-              onCancel={() => setEmissaoDialogOpen(false)}
-              isSaving={isSavingEmissao}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <Pagination pagination={pagination} onPageChange={setPage} disabled={isPageLoading} />
 
       {editingCertidao ? (
         <PCertidaoForm
@@ -244,18 +165,23 @@ export default function PCertidaoIndex() {
             if (!open) setEditingCertidao(null);
           }}
           certidao={editingCertidao}
-          onSaved={(saved) => {
-            void handleEditSaved(saved);
+          onSaved={() => {
+            void handleEditSaved();
           }}
         />
       ) : null}
 
-      <InfoDialog
-        isOpen={emissaoInfoOpen}
-        onOpenChange={setEmissaoInfoOpen}
-        title="Tipos de certidão"
-        description="Diferença entre certidão negativa e positiva"
-        content={PCERTIDAO_TIPO_INFO_MARKDOWN}
+      <ConfirmDialog
+        isOpen={Boolean(cancelingCertidao)}
+        title="Certidão"
+        description="Confirmar cancelamento"
+        message={cancelingCertidao ? buildCancelamentoMessage(cancelingCertidao) : ""}
+        confirmText={isCanceling ? "Cancelando..." : "Cancelar certidão"}
+        cancelText="Voltar"
+        onConfirm={() => {
+          void handleConfirmCancelamento();
+        }}
+        onCancel={closeCancelDialog}
       />
     </div>
   );

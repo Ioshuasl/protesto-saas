@@ -26,11 +26,15 @@ export function DateRangePicker({
   placeholder = "Selecione o intervalo",
   clearAriaLabel = "Limpar intervalo de datas",
   numberOfMonths = 1,
-  showOutsideDays = false,
+  showOutsideDays = true,
   disabled,
   className,
   triggerClassName,
 }: DateRangePickerProps) {
+  const handleSelect = (range: DateRange | undefined) => {
+    onChange(range);
+  };
+
   return (
     <Popover>
       <div className={cn("relative", className)}>
@@ -77,16 +81,16 @@ export function DateRangePicker({
       </div>
       <PopoverContent
         data-date-range-picker
-        className="w-auto border-border/60 p-1.5 shadow-sm"
+        className="w-auto border-0 bg-transparent p-0 shadow-none"
         align="start"
       >
         <Calendar
           mode="range"
           selected={value}
-          onSelect={(range) => onChange(range)}
+          onSelect={handleSelect}
           numberOfMonths={numberOfMonths}
           showOutsideDays={showOutsideDays}
-          className="gap-2 p-1.5 shadow-none"
+          hideWeekdays
         />
       </PopoverContent>
     </Popover>

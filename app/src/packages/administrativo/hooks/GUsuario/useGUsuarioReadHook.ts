@@ -1,8 +1,20 @@
 import { useCallback, useState } from 'react';
 
-import { GUsuarioInterface } from '@/packages/administrativo/interfaces/GUsuario/GUsuarioInterface';
+import GUsuarioInterface from '@/packages/administrativo/interfaces/GUsuario/GUsuarioInterface';
 import { GUsuarioIndexService } from '@/packages/administrativo/services/GUsuario/GUsuarioIndexService';
 import { useResponse } from '@/shared/components/response/ResponseContext';
+
+function resolveUsuariosResponse(response: unknown): GUsuarioInterface[] | null {
+  if (Array.isArray(response)) {
+    return response as GUsuarioInterface[];
+  }
+
+  if (response && typeof response === 'object' && Array.isArray((response as { data?: unknown }).data)) {
+    return (response as { data: GUsuarioInterface[] }).data;
+  }
+
+  return null;
+}
 
 export const useGUsuarioReadHook = () => {
   const { setResponse } = useResponse();
@@ -13,8 +25,10 @@ export const useGUsuarioReadHook = () => {
     setIsLoading(true);
     try {
       const response = await GUsuarioIndexService();
-      if (Array.isArray(response)) {
-        setUsuarios(response);
+      const rows = resolveUsuariosResponse(response);
+
+      if (rows) {
+        setUsuarios(rows);
         setResponse({
           status: 200,
           message: 'Usuários listados com sucesso',

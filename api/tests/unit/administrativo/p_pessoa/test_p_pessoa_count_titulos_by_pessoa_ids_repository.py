@@ -30,6 +30,23 @@ def test_count_titulos_maps_rows_and_defaults_zero():
 
 
 @pytest.mark.unit
+def test_count_titulos_splits_ids_into_firebird_safe_chunks():
+    repo = CountTitulosByPessoaIdsRepository()
+    ids = list(range(1, 1502))
+
+    with patch.object(repo, "fetch_all", return_value=[]) as fetch_all:
+        result = repo.execute(ids)
+
+    assert fetch_all.call_count == 2
+    assert result[1] == 0
+    assert result[1501] == 0
+    first_params = fetch_all.call_args_list[0].args[1]
+    second_params = fetch_all.call_args_list[1].args[1]
+    assert len(first_params) == 1000
+    assert len(second_params) == 501
+
+
+@pytest.mark.unit
 def test_index_enrich_rows_with_total_titulos():
     from packages.v1.administrativo.repositories.p_pessoa.p_pessoa_index_repository import (
         IndexRepository,

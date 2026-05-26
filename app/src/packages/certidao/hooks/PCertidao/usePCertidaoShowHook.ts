@@ -15,7 +15,7 @@ export const usePCertidaoShowHook = () => {
         const response = await PCertidaoShowService(certidaoId);
 
         if (response && typeof response === "object" && "certidao_id" in response) {
-          setCertidao(response as PCertidaoInterface);
+          setCertidao(response as unknown as PCertidaoInterface);
           setResponse({
             status: 200,
             message: "Certidão carregada com sucesso",

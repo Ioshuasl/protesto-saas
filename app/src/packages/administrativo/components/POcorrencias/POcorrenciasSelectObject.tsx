@@ -7,6 +7,7 @@ import {
 import { buildSearchComboboxOptions } from "@/packages/administrativo/components/shared/buildSearchComboboxOptions";
 import { usePOcorrenciasReadHook } from "@/packages/administrativo/hooks/POcorrencias/usePOcorrenciasReadHook";
 import type { PTituloSelectOption } from "@/packages/administrativo/schemas/PTitulo/PTituloDetailsFormSchema";
+import { cn } from "@/lib/utils";
 
 export interface POcorrenciasSelectObjectProps {
   /** Valor controlado: `ocorrencias_id` como string. */
@@ -90,8 +91,8 @@ export function POcorrenciasSelectObject({
       placeholder={placeholder}
       searchPlaceholder={searchPlaceholder}
       disabled={disabled}
-      className={className}
-      triggerClassName={triggerClassName}
+      className={cn("min-w-0", className)}
+      triggerClassName={cn("min-w-0", triggerClassName)}
       emptyMessage={emptyMessage}
       loadingMessage="Carregando ocorrências..."
       clearAriaLabel="Limpar ocorrência"

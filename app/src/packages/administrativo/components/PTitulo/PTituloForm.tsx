@@ -1,16 +1,5 @@
 "use client";
 
-import { PTituloAceiteEditalButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloAceiteEditalButton";
-import { PTituloApontarButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloApontarButton";
-import { PTituloCancelamentoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloCancelamentoButton";
-import { PTituloDesistenciaButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloDesistenciaButton";
-import { PTituloIntimacaoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloIntimacaoButton";
-import { PTituloLiquidacaoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloLiquidacaoButton";
-import { PTituloProtestoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloProtestoButton";
-import { PTituloVoltarApontamentoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloVoltarApontamentoButton";
-import { PTituloVoltarIntimacaoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloVoltarIntimacaoButton";
-import { PTituloVoltarProtestoButton } from "@/packages/administrativo/components/PTitulo/actions/PTituloVoltarProtestoButton";
-import { PTituloCancelamentoOptionsDIalog } from "@/packages/administrativo/components/PTitulo/PTituloCancelamentoOptionsDIalog";
 import { formatBancoSelectLabel } from "@/packages/administrativo/components/PBanco/PBancoSelectObject";
 import { formatEspecieSelectLabel } from "@/packages/administrativo/components/PEspecie/PEspecieSelectObject";
 import { usePBancoReadHook } from "@/packages/administrativo/hooks/PBanco/usePBancoReadHook";
@@ -29,10 +18,12 @@ import {
   getPTituloCancelamentoOptions,
   getWorkflowProgress,
 } from "@/packages/utils/PTitulo/ptituloWorkflowUtils";
-import { CheckCircle2, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PTituloDetailsForm } from "./PTituloDetailsForm";
+import { PTituloWorkflowActions } from "./PTituloWorkflowActions";
+import { PTituloWorkflowProgress } from "./PTituloWorkflowProgress";
 
 export function PTituloForm({ id }: { id?: string }) {
   const router = useRouter();
@@ -40,6 +31,7 @@ export function PTituloForm({ id }: { id?: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { titulo, setTitulo, isLoading, fetchTituloById } = usePTituloShowHook();
   const fetchTituloByIdRef = useRef(fetchTituloById);
+  const lastInitialFetchIdRef = useRef<number | null>(null);
   fetchTituloByIdRef.current = fetchTituloById;
 
   const { bancos, fetchBancos } = usePBancoReadHook();
@@ -58,17 +50,26 @@ export function PTituloForm({ id }: { id?: string }) {
 
   useEffect(() => {
     if (isNew) {
+      lastInitialFetchIdRef.current = null;
       setTitulo(null);
       return;
     }
 
     const numericId = Number(id);
     if (Number.isNaN(numericId)) {
+      lastInitialFetchIdRef.current = null;
       setTitulo(null);
       return;
     }
 
-    void fetchTituloByIdRef.current(numericId);
+    if (lastInitialFetchIdRef.current === numericId) {
+      return;
+    }
+
+    lastInitialFetchIdRef.current = numericId;
+    void fetchTituloByIdRef.current(numericId).catch(() => {
+      lastInitialFetchIdRef.current = null;
+    });
   }, [id, isNew, setTitulo]);
 
   const selectOptionsByField = useMemo<PTituloSelectOptionsByField>(() => {
@@ -174,8 +175,8 @@ export function PTituloForm({ id }: { id?: string }) {
   return (
     <div className="flex w-full flex-col gap-6">
       <header className="rounded-xl border bg-card p-4 shadow-xs md:p-5">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 items-start gap-2">
               <button
                 type="button"
@@ -188,7 +189,7 @@ export function PTituloForm({ id }: { id?: string }) {
 
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <h1 className="min-w-0 text-xl font-bold tracking-tight sm:text-2xl xl:text-3xl">
+                  <h1 className="min-w-0 text-xl font-bold tracking-tight sm:text-2xl">
                     {isNew ? "Cadastrar Título" : "Detalhes do Título"}
                   </h1>
                 </div>
@@ -199,75 +200,17 @@ export function PTituloForm({ id }: { id?: string }) {
             </div>
 
             <div className="flex w-full flex-col gap-2 xl:w-auto xl:shrink-0 xl:items-end">
-              {workflowActionButtons.length > 0 ? (
-                <div className="rounded-lg bg-muted/30 p-2 xl:max-w-[52rem]">
-                  <div className="flex flex-wrap items-center gap-1.5 xl:justify-end [&>div>button]:h-8 [&>div>button]:px-2.5 [&>div>button]:text-xs xl:[&>div>button]:h-9 xl:[&>div>button]:px-3 xl:[&>div>button]:text-sm">
-                    {workflowActionButtons.map((buttonConfig) => (
-                      <div key={buttonConfig.key}>
-                        {numericTituloId == null ? null : buttonConfig.key === "voltarProtesto" ? (
-                          <PTituloVoltarProtestoButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : buttonConfig.key === "apontarTitulo" ? (
-                          <PTituloApontarButton
-                            id={numericTituloId}
-                            numeroApontamento={titulo?.numero_apontamento ?? null}
-                            onSuccess={handleActionSuccess}
-                          />
-                        ) : buttonConfig.key === "voltarIntimacao" ? (
-                          <PTituloVoltarIntimacaoButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : buttonConfig.key === "cancelarTitulo" ? (
-                          cancelamentoOptions.length > 0 ? (
-                            <PTituloCancelamentoOptionsDIalog
-                              id={numericTituloId}
-                              titulo={titulo}
-                              options={cancelamentoOptions}
-                              onSuccess={handleActionSuccess}
-                            />
-                          ) : (
-                            <PTituloCancelamentoButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                          )
-                        ) : buttonConfig.key === "voltarApontamento" ? (
-                          <PTituloVoltarApontamentoButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : buttonConfig.key === "aceiteEdital" ? (
-                          <PTituloAceiteEditalButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : buttonConfig.key === "desistirTitulo" ? (
-                          <PTituloDesistenciaButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : buttonConfig.key === "liquidarTitulo" ? (
-                          <PTituloLiquidacaoButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : buttonConfig.key === "protestarTitulo" ? (
-                          <PTituloProtestoButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : buttonConfig.key === "intimarTitulo" ? (
-                          <PTituloIntimacaoButton id={numericTituloId} onSuccess={handleActionSuccess} />
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+              <PTituloWorkflowActions
+                actions={workflowActionButtons}
+                cancelamentoOptions={cancelamentoOptions}
+                numericTituloId={numericTituloId}
+                titulo={titulo}
+                onSuccess={handleActionSuccess}
+              />
             </div>
           </div>
 
-          <div className="rounded-lg bg-muted/20 p-3">
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-[#FF6B00] transition-all duration-700 ease-out hover:brightness-110"
-                style={{ width: `${workflowProgress.percent}%` }}
-              />
-            </div>
-            <div
-              className="mt-2 grid gap-2"
-              style={{ gridTemplateColumns: `repeat(${Math.max(workflowProgress.steps.length, 1)}, minmax(0, 1fr))` }}
-            >
-              {workflowProgress.steps.map((step) => (
-                <div
-                  key={step.label}
-                  className={`flex items-center gap-1 text-[11px] ${step.completed ? "text-emerald-600" : "text-muted-foreground"}`}
-                >
-                  {step.completed ? <CheckCircle2 className="h-3.5 w-3.5" /> : <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />}
-                  <span>{step.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <PTituloWorkflowProgress progress={workflowProgress} />
         </div>
       </header>
 

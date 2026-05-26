@@ -116,7 +116,7 @@ export default function PPessoaIndex() {
   }, [fetchPessoas, indexQuery]);
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full min-w-0 flex-col gap-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Pessoas</h1>
@@ -130,7 +130,7 @@ export default function PPessoaIndex() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
         <PPessoaFilter value={filters} onChange={handleFiltersChange} />
 
         <PPessoaTable

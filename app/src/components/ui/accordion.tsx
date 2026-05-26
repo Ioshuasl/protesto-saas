@@ -61,4 +61,63 @@ function AccordionContent({
   );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+function AccordionCardItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof AccordionPrimitive.Item>) {
+  return (
+    <AccordionPrimitive.Item
+      data-slot="accordion-card-item"
+      className={cn("overflow-hidden rounded-lg border bg-card shadow-xs", className)}
+      {...props}
+    />
+  );
+}
+
+function AccordionCardTrigger({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+  return (
+    <AccordionPrimitive.Header className="flex">
+      <AccordionPrimitive.Trigger
+        data-slot="accordion-card-trigger"
+        className={cn(
+          "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm font-medium transition-colors outline-none hover:bg-muted/40 hover:no-underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-default disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200" />
+      </AccordionPrimitive.Trigger>
+    </AccordionPrimitive.Header>
+  );
+}
+
+function AccordionCardContent({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof AccordionPrimitive.Content>) {
+  return (
+    <AccordionPrimitive.Content
+      data-slot="accordion-card-content"
+      className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm"
+      {...props}
+    >
+      <div className={cn("border-t px-2.5 py-2.5", className)}>{children}</div>
+    </AccordionPrimitive.Content>
+  );
+}
+
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+  AccordionCardItem,
+  AccordionCardTrigger,
+  AccordionCardContent,
+};

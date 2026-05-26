@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { PCertidaoInterface } from "@/packages/certidao/interface/PCertidao/PCertidaoInterface";
 import { EMPTY_FIELD_LABEL } from "@/shared/const";
 import { formatEmptyField, formatEmptyFieldDate, formatEmptyFieldTrimmed } from "@/shared/utils/emptyField";
@@ -23,7 +24,7 @@ interface PCertidaoTableProps {
   usuarioLabelById?: Map<number, string>;
 }
 
-function formatDateOnly(dateValue?: Date): string {
+function formatDateOnly(dateValue?: Date | string): string {
   return formatEmptyFieldDate(dateValue, (date) =>
     new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
@@ -31,18 +32,6 @@ function formatDateOnly(dateValue?: Date): string {
       year: "numeric",
     }).format(date),
   );
-}
-
-function getInitials(name?: string): string {
-  const trimmed = name?.trim();
-  if (!trimmed) return "NI";
-  const parts = trimmed
-    .split(" ")
-    .map((part) => part.trim())
-    .filter(Boolean);
-  if (parts.length === 0) return "NI";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
 }
 
 function normalizeCode(value?: string): string {
@@ -71,11 +60,52 @@ function getStatusLabel(status?: PCertidaoInterface["status"] | string): string 
   return EMPTY_FIELD_LABEL;
 }
 
+function isCertidaoCancelada(status?: PCertidaoInterface["status"] | string): boolean {
+  const normalized = normalizeCode(status);
+  return normalized === "C" || normalized === "CANCELADA" || normalized === "INATIVA";
+}
+
 function getTipoCertidaoLabel(tipo?: PCertidaoInterface["tipo_certidao"] | string): string {
   const normalized = normalizeCode(tipo);
+  if (normalized === "R" || normalized.includes("SERASA")) return "Serasa";
   if (normalized === "P" || normalized.startsWith("POSITIVA")) return "Positiva";
   if (normalized === "N" || normalized.startsWith("NEGATIVA")) return "Negativa";
   return EMPTY_FIELD_LABEL;
+}
+
+function getUsuarioLabel(
+  certidao: PCertidaoInterface,
+  usuarioLabelById?: Map<number, string>,
+): string {
+  if (certidao.usuario_nome?.trim()) {
+    return certidao.usuario_nome;
+  }
+  if (certidao.usuario_id) {
+    return usuarioLabelById?.get(certidao.usuario_id) ?? String(certidao.usuario_id);
+  }
+  return EMPTY_FIELD_LABEL;
+}
+
+function ApresentanteCell({ certidao }: { certidao: PCertidaoInterface }) {
+  const apresentante = formatEmptyField(certidao.apresentante);
+  const documento = formatEmptyField(certidao.cpfcnpj);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex min-w-0 max-w-full cursor-help flex-col">
+          <span className="block max-w-full truncate font-medium">{apresentante}</span>
+          <span className="block max-w-full truncate text-xs text-muted-foreground">{documento}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs bg-popover text-popover-foreground shadow-md" side="top" sideOffset={6}>
+        <div className="space-y-0.5">
+          <p className="font-medium">{apresentante}</p>
+          <p className="text-muted-foreground">{documento}</p>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function PCertidaoTable({
@@ -102,16 +132,16 @@ export function PCertidaoTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
-      <Table>
+    <div className="min-w-0 overflow-x-auto rounded-xl border bg-card shadow-sm">
+      <Table className="min-w-[780px] table-fixed">
         <TableHeader className="bg-muted/40">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="py-3">Status</TableHead>
-            <TableHead className="py-3">Tipo Certidão</TableHead>
-            <TableHead className="py-3">Data/Hora</TableHead>
-            <TableHead className="py-3">Apresentante</TableHead>
-            <TableHead className="py-3">Usuário</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead className="w-[96px] py-2.5 text-xs">Status</TableHead>
+            <TableHead className="w-[82px] py-2.5 text-xs">Tipo</TableHead>
+            <TableHead className="w-[140px] py-2.5 text-xs">Data/Hora</TableHead>
+            <TableHead className="w-[230px] py-2.5 text-xs">Apresentante</TableHead>
+            <TableHead className="w-[160px] py-2.5 text-xs">Usuário</TableHead>
+            <TableHead className="w-[72px] py-2.5 text-right text-xs">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -121,48 +151,36 @@ export function PCertidaoTable({
               className="group cursor-pointer transition-colors hover:bg-muted/30"
               onClick={() => onEditarCertidao(certidao)}
             >
-              <TableCell>
+              <TableCell className="py-2">
                 <Badge variant="outline" className={getStatusClassName(certidao.status)}>
                   {getStatusLabel(certidao.status)}
                 </Badge>
               </TableCell>
-              <TableCell>
+              <TableCell className="py-2">
                 <span className="font-medium">{getTipoCertidaoLabel(certidao.tipo_certidao)}</span>
               </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <div className="inline-flex items-center gap-2 text-sm">
+              <TableCell className="py-2 whitespace-nowrap">
+                <div className="inline-flex items-center gap-1.5 text-xs xl:text-sm">
                   <CalendarDays className="h-4 w-4 text-muted-foreground" />
                   <span>{formatDateOnly(certidao.data_certidao)}</span>
                   <span className="text-muted-foreground">{formatEmptyFieldTrimmed(certidao.hora_certidao)}</span>
                 </div>
               </TableCell>
-              <TableCell>
-                <div className="flex min-w-[240px] items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border bg-muted/40 text-[11px] font-semibold">
-                    {getInitials(certidao.apresentante)}
-                  </div>
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate font-medium">{formatEmptyField(certidao.apresentante)}</span>
-                    <span className="truncate text-xs text-muted-foreground">{formatEmptyField(certidao.cpfcnpj)}</span>
-                  </div>
-                </div>
+              <TableCell className="w-[230px] max-w-[230px] min-w-0 py-2">
+                <ApresentanteCell certidao={certidao} />
               </TableCell>
-              <TableCell>
-                <div className="inline-flex items-center gap-2">
+              <TableCell className="min-w-0 py-2">
+                <div className="inline-flex max-w-full min-w-0 items-center gap-2">
                   <UserRound className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    {certidao.usuario_id
-                      ? formatEmptyField(usuarioLabelById?.get(certidao.usuario_id) ?? String(certidao.usuario_id))
-                      : EMPTY_FIELD_LABEL}
-                  </span>
+                  <span className="truncate">{formatEmptyField(getUsuarioLabel(certidao, usuarioLabelById))}</span>
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="py-2">
                 <div className="flex justify-end gap-2">
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
+                    size="icon-sm"
                     className="transition-colors hover:bg-orange-50 hover:text-orange-600"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -173,20 +191,22 @@ export function PCertidaoTable({
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="transition-transform hover:-translate-y-0.5 hover:bg-rose-50"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onCancelarCertidao(certidao);
-                    }}
-                    aria-label="Cancelar certidão"
-                    title="Cancelar certidão"
-                  >
-                    <X className="h-4 w-4 text-rose-600" />
-                  </Button>
+                  {!isCertidaoCancelada(certidao.status) ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="transition-transform hover:-translate-y-0.5 hover:bg-rose-50"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onCancelarCertidao(certidao);
+                      }}
+                      aria-label="Cancelar certidão"
+                      title="Cancelar certidão"
+                    >
+                      <X className="h-4 w-4 text-rose-600" />
+                    </Button>
+                  ) : null}
                 </div>
               </TableCell>
             </TableRow>

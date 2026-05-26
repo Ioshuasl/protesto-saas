@@ -1,10 +1,12 @@
-export type PCertidaoTipoCertidao = "P" | "N";
+export type PCertidaoTipoCertidao = "R" | "P" | "N";
 export type PCertidaoStatus = "A" | "C";
+export type PCertidaoTipoRemessa = "P" | "C";
 
 export interface PCertidaoInterface {
   certidao_id: number;
   usuario_id?: number;
-  data_certidao?: Date;
+  usuario_nome?: string;
+  data_certidao?: Date | string;
   valor_emolumento?: number;
   valor_taxa_judiciaria?: number;
   valor_fundesp?: number;
@@ -23,6 +25,6 @@ export interface PCertidaoInterface {
   qtd_cancelados?: number;
   qtd_sustado?: number;
   n_remessa?: number;
-  tipo_remessa?: string;
+  tipo_remessa?: PCertidaoTipoRemessa;
   protecao_credito_id?: number;
 }

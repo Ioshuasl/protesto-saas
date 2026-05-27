@@ -17,6 +17,7 @@ class GEmolumentoPeriodoIndexRepository(BaseRepository):
         sql = """ SELECT
                     GEP.*
                   FROM G_EMOLUMENTO_PERIODO GEP
+              ORDER BY GEP.EMOLUMENTO_PERIODO_ID DESC
             """
 
         # Execução do sql

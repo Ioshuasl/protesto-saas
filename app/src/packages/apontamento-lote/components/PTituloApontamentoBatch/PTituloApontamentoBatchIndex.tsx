@@ -1,120 +1,174 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { DateRange } from "react-day-picker";
-import { CheckCheck, Filter, PlusCircle, Search } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRangePicker } from "@/shared/components/dateRangePicker/DateRangePicker";
-import { usePTituloApontamentoBatchReadHook } from "@/packages/apontamento-lote/hooks/PTituloApontamentoBatch/usePTituloApontamentoBatchReadHook";
-import type { PTituloApontamentoBatchInterface } from "@/packages/apontamento-lote/interface/PTituloApontamentoBatch/PTituloApontamentoBatchInterface";
-import { PTituloApontamentoBatchTable } from "./PTituloApontamentoBatchTable";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { DateRange } from 'react-day-picker';
+import { CheckCheck } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import type { PTituloBatchRowBase } from '@/packages/administrativo/data/PTitulo/ptituloIndexItemToBatchMapper';
+import { buildPTituloWorkflowBatchQuery } from '@/packages/administrativo/data/PTitulo/ptituloWorkflowBatchQuery';
+import { usePTituloWorkflowBatchReadHook } from '@/packages/administrativo/hooks/PTitulo/usePTituloWorkflowBatchReadHook';
+import { Pagination } from '@/shared/components/pagination/Pagination';
+import { PTituloApontamentoBatchFilter } from './PTituloApontamentoBatchFilter';
+import { PTituloApontamentoBatchTable } from './PTituloApontamentoBatchTable';
 
-function getStatusApontamentoCode(item: PTituloApontamentoBatchInterface): "P" | "A" {
-  return item.data_apontamento ? "A" : "P";
-}
-
-function calculateSelectedTotal(data: PTituloApontamentoBatchInterface[], selectedIds: Set<number>): number {
-  return data.reduce((acc, item) => (selectedIds.has(item.titulo_id) ? acc + (item.valor_titulo ?? 0) : acc), 0);
-}
+const PER_PAGE = 20;
 
 function getDateOnly(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function calculateSelectedTotal(data: PTituloBatchRowBase[], selectedIds: Set<number>): number {
+  return data.reduce((acc, item) => (selectedIds.has(item.titulo_id) ? acc + (item.valor_titulo ?? 0) : acc), 0);
+}
+
 export default function PTituloApontamentoBatchIndex() {
-  const { titulosApontamentoBatch, isLoading, fetchTitulosApontamentoBatch } = usePTituloApontamentoBatchReadHook();
-  const initialFetchDoneRef = useRef(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | "P" | "A">("P");
+  const { titulos, isLoading, fetchTitulos } = usePTituloWorkflowBatchReadHook({
+    successMessage: 'Títulos para apontamento em lote listados com sucesso',
+  });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'' | 'P' | 'A'>('P');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const buildWorkflowQuery = useCallback(
+    (busca?: string) =>
+      buildPTituloWorkflowBatchQuery({
+        workflow_etapa: 'apontamento',
+        statusFilter,
+        busca,
+      }),
+    [statusFilter],
+  );
 
   useEffect(() => {
-    if (initialFetchDoneRef.current) return;
-    initialFetchDoneRef.current = true;
-    void fetchTitulosApontamentoBatch();
-  }, [fetchTitulosApontamentoBatch]);
+    const timer = window.setTimeout(() => setDebouncedSearchQuery(searchQuery.trim()), 400);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    void fetchTitulos(buildWorkflowQuery(debouncedSearchQuery));
+  }, [fetchTitulos, buildWorkflowQuery, debouncedSearchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, debouncedSearchQuery, dateRange?.from, dateRange?.to]);
 
   const filteredData = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
     const from = dateRange?.from ? getDateOnly(dateRange.from) : undefined;
     const to = dateRange?.to ? getDateOnly(dateRange.to) : undefined;
 
-    return titulosApontamentoBatch.filter((item) => {
-      if (query) {
-        const searchContent = [item.numero_titulo, item.nosso_numero, item.apresentante, item.cpfcnpj]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!searchContent.includes(query)) return false;
-      }
-
-      if (statusFilter) {
-        if (getStatusApontamentoCode(item) !== statusFilter) return false;
-      }
-
+    return titulos.filter((item) => {
       if (from || to) {
         const ref = item.data_apontamento ?? item.data_cadastro;
         if (!ref) return false;
-        const current = getDateOnly(new Date(ref));
+        const current = getDateOnly(ref);
         if (from && current < from) return false;
         if (to && current > to) return false;
       }
-
       return true;
     });
-  }, [searchQuery, statusFilter, dateRange?.from, dateRange?.to, titulosApontamentoBatch]);
+  }, [dateRange?.from, dateRange?.to, titulos]);
+
+  const totalPages = useMemo(() => (filteredData.length > 0 ? Math.ceil(filteredData.length / PER_PAGE) : 0), [filteredData.length]);
+
+  useEffect(() => {
+    if (totalPages === 0 && currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * PER_PAGE;
+    return filteredData.slice(start, start + PER_PAGE);
+  }, [currentPage, filteredData]);
+
+  const pagination = useMemo(
+    () => ({
+      page: currentPage,
+      per_page: PER_PAGE,
+      total: filteredData.length,
+      total_pages: totalPages,
+    }),
+    [currentPage, filteredData.length, totalPages],
+  );
 
   const resumo = useMemo(() => {
     const total = filteredData.length;
-    const pendentes = filteredData.filter((item) => getStatusApontamentoCode(item) === "P").length;
-    const apontados = filteredData.filter((item) => getStatusApontamentoCode(item) === "A").length;
+    const pendentes = filteredData.filter((item) => (item.data_apontamento ? 'A' : 'P') === 'P').length;
+    const concluidos = filteredData.filter((item) => (item.data_apontamento ? 'A' : 'P') !== 'P').length;
     const selecionados = filteredData.filter((item) => selectedIds.has(item.titulo_id)).length;
     const valorSelecionado = calculateSelectedTotal(filteredData, selectedIds);
-
-    return { total, pendentes, apontados, selecionados, valorSelecionado };
+    return { total, pendentes, concluidos, selecionados, valorSelecionado };
   }, [filteredData, selectedIds]);
 
-  const handleToggleOne = (tituloId: number, checked: boolean) => {
+  const handleToggleOne = useCallback((tituloId: number, checked: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) next.add(tituloId);
       else next.delete(tituloId);
       return next;
     });
-  };
+  }, []);
 
-  const handleToggleAll = (checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        filteredData.forEach((item) => next.add(item.titulo_id));
-      } else {
-        filteredData.forEach((item) => next.delete(item.titulo_id));
-      }
-      return next;
-    });
-  };
+  const handleToggleAll = useCallback(
+    (checked: boolean) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (checked) filteredData.forEach((item) => next.add(item.titulo_id));
+        else filteredData.forEach((item) => next.delete(item.titulo_id));
+        return next;
+      });
+    },
+    [filteredData],
+  );
 
-  const handleClearFilters = () => {
-    setSearchQuery("");
-    setStatusFilter("P");
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const getSelectedRows = useCallback((): PTituloBatchRowBase[] => {
+    return filteredData.filter((item) => selectedIds.has(item.titulo_id));
+  }, [filteredData, selectedIds]);
+
+  const handleSearch = useCallback(() => {
+    const normalizedSearch = searchQuery.trim();
+    setDebouncedSearchQuery(normalizedSearch);
+    setCurrentPage(1);
+    void fetchTitulos(buildWorkflowQuery(normalizedSearch));
+  }, [searchQuery, fetchTitulos, buildWorkflowQuery]);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setDebouncedSearchQuery('');
+    setStatusFilter('P');
     setDateRange(undefined);
-  };
+    setCurrentPage(1);
+    void fetchTitulos(
+      buildPTituloWorkflowBatchQuery({
+        workflow_etapa: 'apontamento',
+        statusFilter: 'P',
+      }),
+    );
+  }, [fetchTitulos]);
 
   const handleApontarSelecionados = () => {
-    const selectedRows = filteredData.filter((item) => selectedIds.has(item.titulo_id));
+    const selectedRows = getSelectedRows();
     if (selectedRows.length === 0) {
-      toast.warning("Nenhum título selecionado", {
-        description: "Selecione ao menos um título para iniciar o apontamento em lote.",
+      toast.warning('Nenhum título selecionado', {
+        description: 'Selecione ao menos um título para iniciar o apontamento em lote.',
       });
       return;
     }
 
-    toast.info("Fluxo em construção", {
+    toast.info('Fluxo em construção', {
       description: `${selectedRows.length} título(s) pronto(s) para apontamento em lote.`,
     });
   };
@@ -140,75 +194,27 @@ export default function PTituloApontamentoBatchIndex() {
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">Total: <span className="font-semibold">{resumo.total}</span></div>
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">Pendentes: <span className="font-semibold text-amber-700">{resumo.pendentes}</span></div>
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">Já apontados: <span className="font-semibold text-emerald-700">{resumo.concluidos}</span></div>
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">Selecionados: <span className="font-semibold">{resumo.selecionados}</span></div>
           <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
-            Total: <span className="font-semibold">{resumo.total}</span>
-          </div>
-          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
-            Pendentes: <span className="font-semibold text-amber-700">{resumo.pendentes}</span>
-          </div>
-          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
-            Já apontados: <span className="font-semibold text-emerald-700">{resumo.apontados}</span>
-          </div>
-          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
-            Selecionados: <span className="font-semibold">{resumo.selecionados}</span>
-          </div>
-          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
-            Valor selecionado:{" "}
-            <span className="font-semibold">
-              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(resumo.valorSelecionado)}
-            </span>
+            Valor selecionado:{' '}
+            <span className="font-semibold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(resumo.valorSelecionado)}</span>
           </div>
         </div>
       </section>
 
-      <section className="rounded-xl border bg-card p-4 shadow-xs md:p-5">
-        <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Busca por título / nosso número / apresentante
-              </label>
-              <Input
-                placeholder="Ex.: 1001, 900000001, João da Silva"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status apontamento</label>
-              <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "P" || value === "A" ? value : "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="P">Pendente</SelectItem>
-                  <SelectItem value="A">Já apontado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Intervalo (apontamento / cadastro)
-              </label>
-              <DateRangePicker value={dateRange} onChange={setDateRange} placeholder="Todas as datas" />
-            </div>
-          </div>
-
-          <div className="flex items-end gap-2 xl:justify-end">
-            <Button type="button" className="bg-[#FF6B00] text-white hover:bg-[#E56000]">
-              <Search className="mr-1 h-4 w-4" />
-              Pesquisar
-            </Button>
-            <Button type="button" variant="outline" onClick={handleClearFilters}>
-              <Filter className="mr-1 h-4 w-4" />
-              Limpar
-            </Button>
-          </div>
-        </div>
-      </section>
+      <PTituloApontamentoBatchFilter
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        onSearch={handleSearch}
+        onClear={handleClearFilters}
+      />
 
       {selectedIds.size > 0 ? (
         <div className="flex justify-start px-1 py-1">
@@ -216,27 +222,28 @@ export default function PTituloApontamentoBatchIndex() {
             role="button"
             tabIndex={0}
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-[#FF6B00] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FF6B00]/12 hover:text-[#E56000] hover:shadow-sm active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]/35"
-            onClick={() => setSelectedIds(new Set())}
+            onClick={clearSelection}
             onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
+              if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                setSelectedIds(new Set());
+                clearSelection();
               }
             }}
           >
-            <PlusCircle className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden />
             Limpar seleção
           </span>
         </div>
       ) : null}
 
       <PTituloApontamentoBatchTable
-        data={filteredData}
+        data={paginatedData}
         isLoading={isLoading}
         selectedIds={selectedIds}
         onToggleOne={handleToggleOne}
         onToggleAll={handleToggleAll}
       />
+
+      <Pagination pagination={pagination} onPageChange={setCurrentPage} disabled={isLoading} />
     </div>
   );
 }

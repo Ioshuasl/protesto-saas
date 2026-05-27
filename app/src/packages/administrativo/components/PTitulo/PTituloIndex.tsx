@@ -46,6 +46,13 @@ export default function PTituloIndex() {
   const [debouncedFilters, setDebouncedFilters] = useState<PTituloFilterState>(filters);
   const [page, setPage] = useState(1);
 
+  const updateFilter = useCallback(<K extends keyof PTituloFilterState>(key: K, value: PTituloFilterState[K]) => {
+    setFilters((prev) => {
+      if (prev[key] === value) return prev;
+      return { ...prev, [key]: value };
+    });
+  }, []);
+
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedFilters(filters), 400);
     return () => window.clearTimeout(timer);
@@ -117,12 +124,12 @@ export default function PTituloIndex() {
           bancoId={filters.bancoId}
           especieId={filters.especieId}
           ocorrenciaId={filters.ocorrenciaId}
-          onSearchChange={(search) => setFilters((prev) => ({ ...prev, search }))}
-          onStartDateChange={(startDate) => setFilters((prev) => ({ ...prev, startDate }))}
-          onEndDateChange={(endDate) => setFilters((prev) => ({ ...prev, endDate }))}
-          onBancoChange={(bancoId) => setFilters((prev) => ({ ...prev, bancoId }))}
-          onEspecieChange={(especieId) => setFilters((prev) => ({ ...prev, especieId }))}
-          onOcorrenciaChange={(ocorrenciaId) => setFilters((prev) => ({ ...prev, ocorrenciaId }))}
+          onSearchChange={(search) => updateFilter("search", search)}
+          onStartDateChange={(startDate) => updateFilter("startDate", startDate)}
+          onEndDateChange={(endDate) => updateFilter("endDate", endDate)}
+          onBancoChange={(bancoId) => updateFilter("bancoId", bancoId)}
+          onEspecieChange={(especieId) => updateFilter("especieId", especieId)}
+          onOcorrenciaChange={(ocorrenciaId) => updateFilter("ocorrenciaId", ocorrenciaId)}
         />
 
         <PTituloTable

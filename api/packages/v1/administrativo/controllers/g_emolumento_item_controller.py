@@ -1,6 +1,8 @@
 from actions.dynamic_import.dynamic_import import DynamicImport
+from actions.data.query_params_parser import QueryParams
 from packages.v1.administrativo.schemas.g_emolumento_item_schema import (
     GEmolumentoItemByTipoAtoSchema,
+    GEmolumentoItemListDetailsSchema,
     GEmolumentoItemIndexSchema,
     GEmolumentoItemSaveSchema,
     GEmolumentoItemUpdateSchema,
@@ -62,6 +64,26 @@ class GEmolumentoItemController:
         return {
             "message": "Registros de G_EMOLUMENTO_ITEM localizados com sucesso.",
             "data": self.service.execute(data),
+        }
+
+    # ----------------------------------------------------
+    # Lista detalhada de G_EMOLUMENTO_ITEM com includes
+    # ----------------------------------------------------
+    def list_details(
+        self, data: GEmolumentoItemListDetailsSchema, query_params: QueryParams
+    ):
+        service = self.dynamic_import.service(
+            "g_emolumento_item_list_details_service",
+            "GEmolumentoItemListDetailsService",
+        )
+
+        self.service = service()
+        result = self.service.execute(data, query_params)
+
+        return {
+            "message": "Registros detalhados de G_EMOLUMENTO_ITEM localizados com sucesso.",
+            "data": result["rows"],
+            "pagination": result["pagination"],
         }
 
     # ----------------------------------------------------

@@ -28,6 +28,9 @@ _PTITULO_INDEX_FILTER_KEYS = frozenset(
         "ocorrencia_andamento_id",
         "banco_id",
         "especie_id",
+        "situacao_data",
+        "workflow_etapa",
+        "workflow_status",
     }
 )
 
@@ -71,6 +74,21 @@ async def index(
         None, description="FK P_BANCO — filtra por BANCO_ID (opcional)"
     ),
     especie_id: Optional[int] = Query(None, description="FK P_ESPECIE"),
+    situacao_data: Optional[str] = Query(
+        None,
+        description=(
+            "Filtro por status baseado em datas: somente_cadastro, "
+            "somente_apontado, somente_intimado ou somente_protestado"
+        ),
+    ),
+    workflow_etapa: Optional[str] = Query(
+        None,
+        description="Etapa do fluxo: apontamento, intimacao ou protesto",
+    ),
+    workflow_status: Optional[str] = Query(
+        None,
+        description="Status na etapa: pendente ou concluido (requer workflow_etapa)",
+    ),
 ):
     filter_data = {
         key: url_params[key]
@@ -78,6 +96,227 @@ async def index(
         if key in url_params
     }
     return p_titulo_controller.index(PTituloIndexSchema(**filter_data), query_params)
+
+
+@router.get(
+    "/somente-cadastrados/",
+    status_code=status.HTTP_200_OK,
+    summary="Lista títulos somente cadastrados",
+    response_description=(
+        "Lista títulos com DATA_CADASTRO preenchida, sem DATA_APONTAMENTO, "
+        "DATA_INTIMACAO, DATA_PROTESTO, DATA_CANCELAMENTO ou DATA_DESISTENCIA"
+    ),
+)
+async def index_somente_cadastrados(
+    current_user: dict = Depends(get_current_user),
+    url_params=Depends(get_url_params),
+    query_params=Depends(QueryParamsParser.parse),
+    busca: Optional[str] = Query(
+        None,
+        description=(
+            "Busca unificada por pessoa vinculada, CPF/CNPJ, número de apontamento, "
+            "nosso número, número do título e número do título no banco"
+        ),
+    ),
+    busca_pessoa: Optional[str] = Query(
+        None,
+        description="Compatibilidade: busca em P_PESSOA_VINCULO e P_PESSOA vinculada",
+    ),
+    numero_apontamento: Optional[float] = Query(
+        None, description="Número de apontamento (igualdade)"
+    ),
+    nosso_numero: Optional[str] = Query(None, description="Nosso número (LIKE)"),
+    numero_titulo: Optional[str] = Query(None, description="Número do título (LIKE)"),
+    numero_titulo_banco: Optional[str] = Query(
+        None, description="Número do título no banco (LIKE)"
+    ),
+    ocorrencia_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIAS (opcional — omitir para listar todas)"
+    ),
+    ocorrencia_andamento_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIA_ANDAMENTO"
+    ),
+    banco_id: Optional[int] = Query(
+        None, description="FK P_BANCO — filtra por BANCO_ID (opcional)"
+    ),
+    especie_id: Optional[int] = Query(None, description="FK P_ESPECIE"),
+):
+    filter_data = {
+        key: url_params[key]
+        for key in _PTITULO_INDEX_FILTER_KEYS
+        if key in url_params
+    }
+    filter_data["situacao_data"] = "somente_cadastro"
+    return p_titulo_controller.index(PTituloIndexSchema(**filter_data), query_params)
+
+
+@router.get(
+    "/somente-apontados/",
+    status_code=status.HTTP_200_OK,
+    summary="Lista títulos somente apontados",
+    response_description=(
+        "Lista títulos com DATA_CADASTRO e DATA_APONTAMENTO preenchidas, "
+        "sem DATA_INTIMACAO, DATA_PROTESTO, DATA_CANCELAMENTO ou DATA_DESISTENCIA"
+    ),
+)
+async def index_somente_apontados(
+    current_user: dict = Depends(get_current_user),
+    url_params=Depends(get_url_params),
+    query_params=Depends(QueryParamsParser.parse),
+    busca: Optional[str] = Query(
+        None,
+        description=(
+            "Busca unificada por pessoa vinculada, CPF/CNPJ, número de apontamento, "
+            "nosso número, número do título e número do título no banco"
+        ),
+    ),
+    busca_pessoa: Optional[str] = Query(
+        None,
+        description="Compatibilidade: busca em P_PESSOA_VINCULO e P_PESSOA vinculada",
+    ),
+    numero_apontamento: Optional[float] = Query(
+        None, description="Número de apontamento (igualdade)"
+    ),
+    nosso_numero: Optional[str] = Query(None, description="Nosso número (LIKE)"),
+    numero_titulo: Optional[str] = Query(None, description="Número do título (LIKE)"),
+    numero_titulo_banco: Optional[str] = Query(
+        None, description="Número do título no banco (LIKE)"
+    ),
+    ocorrencia_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIAS (opcional — omitir para listar todas)"
+    ),
+    ocorrencia_andamento_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIA_ANDAMENTO"
+    ),
+    banco_id: Optional[int] = Query(
+        None, description="FK P_BANCO — filtra por BANCO_ID (opcional)"
+    ),
+    especie_id: Optional[int] = Query(None, description="FK P_ESPECIE"),
+):
+    filter_data = {
+        key: url_params[key]
+        for key in _PTITULO_INDEX_FILTER_KEYS
+        if key in url_params
+    }
+    filter_data["situacao_data"] = "somente_apontado"
+    return p_titulo_controller.index(PTituloIndexSchema(**filter_data), query_params)
+
+
+@router.get(
+    "/somente-intimados/",
+    status_code=status.HTTP_200_OK,
+    summary="Lista títulos somente intimados",
+    response_description=(
+        "Lista títulos com DATA_CADASTRO, DATA_APONTAMENTO e DATA_INTIMACAO preenchidas, "
+        "sem DATA_PROTESTO, DATA_CANCELAMENTO ou DATA_DESISTENCIA"
+    ),
+)
+async def index_somente_intimados(
+    current_user: dict = Depends(get_current_user),
+    url_params=Depends(get_url_params),
+    query_params=Depends(QueryParamsParser.parse),
+    busca: Optional[str] = Query(
+        None,
+        description=(
+            "Busca unificada por pessoa vinculada, CPF/CNPJ, número de apontamento, "
+            "nosso número, número do título e número do título no banco"
+        ),
+    ),
+    busca_pessoa: Optional[str] = Query(
+        None,
+        description="Compatibilidade: busca em P_PESSOA_VINCULO e P_PESSOA vinculada",
+    ),
+    numero_apontamento: Optional[float] = Query(
+        None, description="Número de apontamento (igualdade)"
+    ),
+    nosso_numero: Optional[str] = Query(None, description="Nosso número (LIKE)"),
+    numero_titulo: Optional[str] = Query(None, description="Número do título (LIKE)"),
+    numero_titulo_banco: Optional[str] = Query(
+        None, description="Número do título no banco (LIKE)"
+    ),
+    ocorrencia_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIAS (opcional — omitir para listar todas)"
+    ),
+    ocorrencia_andamento_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIA_ANDAMENTO"
+    ),
+    banco_id: Optional[int] = Query(
+        None, description="FK P_BANCO — filtra por BANCO_ID (opcional)"
+    ),
+    especie_id: Optional[int] = Query(None, description="FK P_ESPECIE"),
+):
+    filter_data = {
+        key: url_params[key]
+        for key in _PTITULO_INDEX_FILTER_KEYS
+        if key in url_params
+    }
+    filter_data["situacao_data"] = "somente_intimado"
+    return p_titulo_controller.index(PTituloIndexSchema(**filter_data), query_params)
+
+
+@router.get(
+    "/somente-protestados/",
+    status_code=status.HTTP_200_OK,
+    summary="Lista títulos somente protestados",
+    response_description=(
+        "Lista títulos com DATA_CADASTRO, DATA_APONTAMENTO, DATA_INTIMACAO e "
+        "DATA_PROTESTO preenchidas, sem DATA_CANCELAMENTO ou DATA_DESISTENCIA"
+    ),
+)
+async def index_somente_protestados(
+    current_user: dict = Depends(get_current_user),
+    url_params=Depends(get_url_params),
+    query_params=Depends(QueryParamsParser.parse),
+    busca: Optional[str] = Query(
+        None,
+        description=(
+            "Busca unificada por pessoa vinculada, CPF/CNPJ, número de apontamento, "
+            "nosso número, número do título e número do título no banco"
+        ),
+    ),
+    busca_pessoa: Optional[str] = Query(
+        None,
+        description="Compatibilidade: busca em P_PESSOA_VINCULO e P_PESSOA vinculada",
+    ),
+    numero_apontamento: Optional[float] = Query(
+        None, description="Número de apontamento (igualdade)"
+    ),
+    nosso_numero: Optional[str] = Query(None, description="Nosso número (LIKE)"),
+    numero_titulo: Optional[str] = Query(None, description="Número do título (LIKE)"),
+    numero_titulo_banco: Optional[str] = Query(
+        None, description="Número do título no banco (LIKE)"
+    ),
+    ocorrencia_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIAS (opcional — omitir para listar todas)"
+    ),
+    ocorrencia_andamento_id: Optional[int] = Query(
+        None, description="FK P_OCORRENCIA_ANDAMENTO"
+    ),
+    banco_id: Optional[int] = Query(
+        None, description="FK P_BANCO — filtra por BANCO_ID (opcional)"
+    ),
+    especie_id: Optional[int] = Query(None, description="FK P_ESPECIE"),
+):
+    filter_data = {
+        key: url_params[key]
+        for key in _PTITULO_INDEX_FILTER_KEYS
+        if key in url_params
+    }
+    filter_data["situacao_data"] = "somente_protestado"
+    return p_titulo_controller.index(PTituloIndexSchema(**filter_data), query_params)
+
+
+@router.get(
+    "/{titulo_id}/devedores",
+    status_code=status.HTTP_200_OK,
+    summary="Lista devedores vinculados ao título",
+    response_description="Devedores (P_PESSOA_VINCULO.TIPO_VINCULO=DEVEDOR) vinculados ao P_TITULO",
+)
+async def devedores(
+    titulo_id: int,
+    current_user: dict = Depends(get_current_user),
+):
+    return p_titulo_controller.devedores(PTituloIdSchema(titulo_id=titulo_id))
 
 
 @router.get(

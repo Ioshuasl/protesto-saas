@@ -3,5 +3,5 @@ export const PTITULOAPONTAMENTOBATCH_FAKE_ENDPOINTS = {
 };
 
 export function usePTituloApontamentoBatchMockData() {
-  return process.env.NEXT_PUBLIC_USE_MOCK_P_TITULO_APONTAMENTO_BATCH !== "false";
+  return false;
 }

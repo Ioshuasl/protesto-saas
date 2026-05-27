@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Mapping, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from actions.validations.text import Text
 
@@ -18,6 +18,16 @@ SELECAO_STATUS_CODIGO = "I"
 TIPO_ACEITE_CODIGOS = frozenset({"A", "E"})
 TIPO_ENDOSSO_CODIGOS = frozenset({"M", "T"})
 STATUS_IMPORTACAO_CODIGOS = frozenset({"D", "E"})
+SITUACAO_DATA_CODIGOS = frozenset(
+    {
+        "somente_cadastro",
+        "somente_apontado",
+        "somente_intimado",
+        "somente_protestado",
+    }
+)
+WORKFLOW_ETAPA_CODIGOS = frozenset({"apontamento", "intimacao", "protesto"})
+WORKFLOW_STATUS_CODIGOS = frozenset({"pendente", "concluido"})
 
 _NUMERIC_INT_KEYS = frozenset(
     {
@@ -466,6 +476,9 @@ class PTituloIndexSchema(BaseModel):
     ocorrencia_andamento_id: Optional[int] = None
     banco_id: Optional[int] = None
     especie_id: Optional[int] = None
+    situacao_data: Optional[str] = None
+    workflow_etapa: Optional[str] = None
+    workflow_status: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -475,6 +488,9 @@ class PTituloIndexSchema(BaseModel):
         "nosso_numero",
         "numero_titulo",
         "numero_titulo_banco",
+        "situacao_data",
+        "workflow_etapa",
+        "workflow_status",
         mode="before",
     )
     @classmethod
@@ -482,6 +498,57 @@ class PTituloIndexSchema(BaseModel):
         if value is None or value == "":
             return None
         return Text.sanitize_input(str(value))
+
+    @field_validator("situacao_data", mode="after")
+    @classmethod
+    def validate_situacao_data(cls, value: Optional[str]):
+        if value is None:
+            return None
+        normalized = str(value).strip().lower()
+        aliases = {
+            "somente_cadastrado": "somente_cadastro",
+            "somente_cadastrados": "somente_cadastro",
+            "somente_apontados": "somente_apontado",
+            "somente_intimados": "somente_intimado",
+            "somente_protestados": "somente_protestado",
+        }
+        resolved = aliases.get(normalized, normalized)
+        if resolved not in SITUACAO_DATA_CODIGOS:
+            raise ValueError(
+                "situacao_data inválida. Use somente_cadastro, somente_apontado, "
+                "somente_intimado ou somente_protestado."
+            )
+        return resolved
+
+    @field_validator("workflow_etapa", mode="after")
+    @classmethod
+    def validate_workflow_etapa(cls, value: Optional[str]):
+        if value is None:
+            return None
+        normalized = str(value).strip().lower()
+        if normalized not in WORKFLOW_ETAPA_CODIGOS:
+            raise ValueError(
+                "workflow_etapa inválida. Use apontamento, intimacao ou protesto."
+            )
+        return normalized
+
+    @field_validator("workflow_status", mode="after")
+    @classmethod
+    def validate_workflow_status(cls, value: Optional[str]):
+        if value is None:
+            return None
+        normalized = str(value).strip().lower()
+        if normalized not in WORKFLOW_STATUS_CODIGOS:
+            raise ValueError("workflow_status inválido. Use pendente ou concluido.")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_workflow_pair(self):
+        if self.workflow_status and not self.workflow_etapa:
+            raise ValueError(
+                "workflow_etapa é obrigatório quando workflow_status é informado."
+            )
+        return self
 
     @field_validator(
         "numero_apontamento",

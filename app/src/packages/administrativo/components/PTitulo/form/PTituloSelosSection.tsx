@@ -189,7 +189,7 @@ export function PTituloSelosSection({ tituloId, initialSelos }: PTituloSelosSect
 
   return (
     <PTituloSectionCard className="overflow-hidden p-0">
-      <div className="border-b border-border/70 px-3 py-2 md:px-4">
+      <div className="border-b border-border/70 px-3 py-1.5 md:px-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold tracking-tight text-foreground">Selos</h3>
@@ -206,7 +206,7 @@ export function PTituloSelosSection({ tituloId, initialSelos }: PTituloSelosSect
         </div>
       </div>
 
-      <div className="space-y-2 px-3 py-2 md:px-4">
+      <div className="space-y-2 px-3 py-1.5 md:px-4">
         {agrupadorDivergencia.haInconsistencia ? (
           <div
             className="flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
@@ -263,7 +263,6 @@ export function PTituloSelosSection({ tituloId, initialSelos }: PTituloSelosSect
                         <span className="shrink-0 font-mono text-base font-semibold text-foreground">
                           {n.sigla || "-"}
                         </span>
-                        <span className="shrink-0 text-xs font-normal text-muted-foreground">Nº {n.numero}</span>
                         {n.tipoAto ? (
                           <Badge
                             variant="secondary"
@@ -299,9 +298,9 @@ export function PTituloSelosSection({ tituloId, initialSelos }: PTituloSelosSect
                     </div>
                   </AccordionCardTrigger>
 
-                  <AccordionCardContent className="px-2.5 py-2.5">
-                    <div className="space-y-2.5">
-                      <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+                  <AccordionCardContent className="px-2.5 py-2">
+                    <div className="space-y-2">
+                      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                         <SeloInfo label="Agrupador" value={n.seloAgrupador || "-"} className="font-mono" />
                         <SeloInfo label="Data" value={formatDateTime(n.dataRaw as string | Date | undefined)} />
                         <SeloInfo label="Serventuário" value={n.nomeServentuario || "-"} />
@@ -309,7 +308,7 @@ export function PTituloSelosSection({ tituloId, initialSelos }: PTituloSelosSect
                       </div>
 
                       {n.descricaoCompleta && n.descricaoCompleta !== descricaoResumo ? (
-                        <div className="rounded-md border border-border/60 bg-muted/20 px-2.5 py-2">
+                        <div className="rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5">
                           <div className="text-xs font-medium text-muted-foreground">Descrição completa</div>
                           <p className="mt-1 text-sm text-foreground">{n.descricaoCompleta}</p>
                         </div>

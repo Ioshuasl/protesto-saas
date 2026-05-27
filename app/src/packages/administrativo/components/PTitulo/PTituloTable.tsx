@@ -167,12 +167,34 @@ export function PTituloTable({ data, isLoading, searchQuery, onViewDetails, onUp
               ? `Pessoa encontrada nesse título como ${matchedPessoaVinculo.descricao}`
               : "";
             const matchedPessoaVinculoLabel = matchedPessoaVinculo?.descricao ?? "";
+            const detailsHref = `/titulos/${titulo.titulo_id}`;
 
             return (
               <TableRow
                 key={titulo.titulo_id}
                 className="cursor-pointer"
-                onClick={() => onViewDetails(titulo)}
+                onClick={(event) => {
+                  if (event.metaKey || event.ctrlKey) {
+                    event.preventDefault();
+                    window.open(detailsHref, "_blank", "noopener,noreferrer");
+                    return;
+                  }
+
+                  onViewDetails(titulo);
+                }}
+                onAuxClick={(event) => {
+                  if (event.button !== 1) return;
+
+                  event.preventDefault();
+                  window.open(detailsHref, "_blank", "noopener,noreferrer");
+                }}
+                onMouseDown={(event) => {
+                  if (event.button !== 1) return;
+
+                  // Evita o modo de autoscroll do navegador no clique do meio.
+                  event.preventDefault();
+                  window.open(detailsHref, "_blank", "noopener,noreferrer");
+                }}
               >
                 <TableCell className={`${COLUMN_CLASSES.numero} min-w-0 overflow-hidden`}>
                   <div className="flex min-w-0 flex-col">
@@ -224,6 +246,7 @@ export function PTituloTable({ data, isLoading, searchQuery, onViewDetails, onUp
                         size="icon"
                         className="text-foreground hover:text-[#FF6B00]"
                         onClick={(event) => event.stopPropagation()}
+                        onAuxClick={(event) => event.stopPropagation()}
                       >
                         <EllipsisVertical className="h-4 w-4" strokeWidth={1.5} />
                         <span className="sr-only">Ações</span>

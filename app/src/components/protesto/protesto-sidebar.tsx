@@ -21,6 +21,7 @@ import {
   FileText,
   ArrowLeftRight,
   Database,
+  HandCoins,
   Cpu,
   ChevronRight,
   GalleryVerticalEnd,
@@ -77,6 +78,14 @@ export const protestoNavItems: ReadonlyArray<ProtestoNavItem> = [
       { title: "Banco", url: "/cadastro/banco" },
       { title: "Livro Andamento", url: "/cadastro/livro-andamento" },
       { title: "Livro Natureza", url: "/cadastro/livro-natureza" },
+    ],
+  },
+  {
+    title: "Financeiro",
+    icon: HandCoins,
+    items: [
+      { title: "Período de Emolumento", url: "/financeiro/g-emolumento-periodo" },
+      { title: "Emolumentos", url: "/financeiro/emolumentos" },
     ],
   },
   {

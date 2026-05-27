@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from packages.v1.administrativo.endpoints import (
     g_cartorio_endpoint,
     g_feriado_endpoint,
+    g_sistema_endpoint,
     p_banco_endpoint,
     p_especie_endpoint,
     p_motivos_endpoint,
@@ -68,6 +69,7 @@ from packages.v1.administrativo.endpoints import t_imovel_unidade_endpoint
 from packages.v1.administrativo.endpoints import t_pessoa_endpoint
 from packages.v1.administrativo.endpoints import t_pessoa_representante_endpoint
 from packages.v1.administrativo.endpoints import t_pessoa_sinal_publico_endpoint
+from packages.v1.administrativo.endpoints import tabelionato_protesto_endpoint
 from packages.v1.administrativo.endpoints import g_calculo_endpoint
 from packages.v1.docx.endpoints import docx_endpoint
 from packages.v1.ged.endpoints import ged_endpoint
@@ -370,6 +372,13 @@ api_router.include_router(
     tags=["Feriados"],
 )
 
+# Inclui as rotas de g_sistema
+api_router.include_router(
+    g_sistema_endpoint.router,
+    prefix="/administrativo/g_sistema",
+    tags=["Sistemas"],
+)
+
 # Inclui as rotas de p_banco
 api_router.include_router(
     p_banco_endpoint.router,
@@ -424,6 +433,13 @@ api_router.include_router(
     p_titulo_endpoint.router,
     prefix="/administrativo/p_titulo",
     tags=["Titulos"],
+)
+
+# Inclui as rotas de tabelionato_protesto
+api_router.include_router(
+    tabelionato_protesto_endpoint.router,
+    prefix="/administrativo/tabelionato_protesto",
+    tags=["Dashboard Tabelionato Protesto"],
 )
 
 # Inclui as rotas de p_ocorrencias

@@ -73,6 +73,18 @@ class GEmolumentoItemByTipoAtoSchema(BaseModel):
 
 
 # ----------------------------------------------------
+# Schema para listagem detalhada (filtros de busca)
+# ----------------------------------------------------
+class GEmolumentoItemListDetailsSchema(BaseModel):
+    emolumento_periodo_id: Optional[float] = None
+    sistema_id: Optional[float] = None
+    busca: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ----------------------------------------------------
 # Schema para criação (POST)
 # ----------------------------------------------------
 class GEmolumentoItemSaveSchema(GEmolumentoItemSchema):

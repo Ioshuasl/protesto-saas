@@ -1,7 +1,12 @@
 /** Rotas CRUD em api/packages/v1/administrativo/endpoints/p_titulo_endpoint.py */
 export const PTITULO_ENDPOINTS = {
   index: 'administrativo/p_titulo/',
+  somenteCadastrados: 'administrativo/p_titulo/somente-cadastrados/',
+  somenteApontados: 'administrativo/p_titulo/somente-apontados/',
+  somenteIntimados: 'administrativo/p_titulo/somente-intimados/',
+  somenteProtestados: 'administrativo/p_titulo/somente-protestados/',
   show: (id: number) => `administrativo/p_titulo/${id}/`,
+  devedores: (id: number) => `administrativo/p_titulo/${id}/devedores`,
   selos: (id: number) => `administrativo/p_titulo/${id}/selos`,
   create: 'administrativo/p_titulo/',
   update: (id: number) => `administrativo/p_titulo/${id}/`,
@@ -12,7 +17,8 @@ export const PTITULO_ENDPOINTS = {
  * Rotas de fluxo ainda não expostas na API — permanecem em mock até implementação no backend.
  */
 export const PTITULO_WORKFLOW_ENDPOINTS = {
-  showDevedores: (id: number) => `administrativo/p_titulo/devedores/${id}`,
+  /** @deprecated use PTITULO_ENDPOINTS.devedores — rota implementada na API */
+  showDevedores: (id: number) => PTITULO_ENDPOINTS.devedores(id),
   /** @deprecated use PTITULO_ENDPOINTS.selos — rota implementada na API */
   selos: (id: number) => PTITULO_ENDPOINTS.selos(id),
   updateStatus: (id: number) => `administrativo/p_titulo/${id}/status/`,
@@ -35,7 +41,7 @@ export const PTITULO_WORKFLOW_ENDPOINTS = {
 export const PTITULO_FAKE_ENDPOINTS = PTITULO_WORKFLOW_ENDPOINTS;
 
 export function isPTituloWorkflowMockEnabled() {
-  return process.env.NEXT_PUBLIC_USE_MOCK_PTITULO_WORKFLOW !== 'false';
+  return false;
 }
 
 /** @deprecated use isPTituloWorkflowMockEnabled — CRUD usa API real; só fluxo permanece mockável */

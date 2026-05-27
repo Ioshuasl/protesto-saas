@@ -3,5 +3,5 @@ export const PTITULOINTIMACAOBATCH_FAKE_ENDPOINTS = {
 };
 
 export function usePTituloIntimacaoBatchMockData() {
-  return process.env.NEXT_PUBLIC_USE_MOCK_P_TITULO_INTIMACAO_BATCH !== "false";
+  return false;
 }

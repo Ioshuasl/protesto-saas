@@ -26,6 +26,62 @@ class PTituloController:
             "pagination": result["pagination"],
         }
 
+    def index_somente_cadastrados(
+        self, titulo_index_schema: PTituloIndexSchema, query_params: QueryParams
+    ):
+        index_service = self.dynamic_import.service(
+            "p_titulo_index_somente_cadastrados_service",
+            "IndexSomenteCadastradosService",
+        )
+        result = index_service().execute(titulo_index_schema, query_params)
+        return {
+            "message": "Títulos somente cadastrados localizados com sucesso",
+            "data": result["rows"],
+            "pagination": result["pagination"],
+        }
+
+    def index_somente_apontados(
+        self, titulo_index_schema: PTituloIndexSchema, query_params: QueryParams
+    ):
+        index_service = self.dynamic_import.service(
+            "p_titulo_index_somente_apontados_service",
+            "IndexSomenteApontadosService",
+        )
+        result = index_service().execute(titulo_index_schema, query_params)
+        return {
+            "message": "Títulos somente apontados localizados com sucesso",
+            "data": result["rows"],
+            "pagination": result["pagination"],
+        }
+
+    def index_somente_intimados(
+        self, titulo_index_schema: PTituloIndexSchema, query_params: QueryParams
+    ):
+        index_service = self.dynamic_import.service(
+            "p_titulo_index_somente_intimados_service",
+            "IndexSomenteIntimadosService",
+        )
+        result = index_service().execute(titulo_index_schema, query_params)
+        return {
+            "message": "Títulos somente intimados localizados com sucesso",
+            "data": result["rows"],
+            "pagination": result["pagination"],
+        }
+
+    def index_somente_protestados(
+        self, titulo_index_schema: PTituloIndexSchema, query_params: QueryParams
+    ):
+        index_service = self.dynamic_import.service(
+            "p_titulo_index_somente_protestados_service",
+            "IndexSomenteProtestadosService",
+        )
+        result = index_service().execute(titulo_index_schema, query_params)
+        return {
+            "message": "Títulos somente protestados localizados com sucesso",
+            "data": result["rows"],
+            "pagination": result["pagination"],
+        }
+
     def show(self, titulo_schema: PTituloIdSchema):
         show_service = self.dynamic_import.service(
             "p_titulo_show_service",
@@ -44,6 +100,16 @@ class PTituloController:
         return {
             "message": "Selos do título localizados com sucesso",
             "data": selos_service().execute(titulo_schema),
+        }
+
+    def devedores(self, titulo_schema: PTituloIdSchema):
+        devedores_service = self.dynamic_import.service(
+            "p_titulo_devedores_service",
+            "DevedoresService",
+        )
+        return {
+            "message": "Devedores do título localizados com sucesso",
+            "data": devedores_service().execute(titulo_schema),
         }
 
     def save(self, titulo_schema: PTituloSaveSchema):

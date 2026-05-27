@@ -19,6 +19,14 @@ def register_administrativo_associations() -> None:
     from packages.v1.administrativo.model.g_selo_grupo import get_g_selo_grupo_model
     from packages.v1.administrativo.model.g_selo_livro import get_g_selo_livro_model
     from packages.v1.administrativo.model.g_selo_lote import get_g_selo_lote_model
+    from packages.v1.administrativo.model.g_emolumento import get_g_emolumento_model
+    from packages.v1.administrativo.model.g_emolumento_item import (
+        get_g_emolumento_item_model,
+    )
+    from packages.v1.administrativo.model.g_emolumento_periodo import (
+        get_g_emolumento_periodo_model,
+    )
+    from packages.v1.administrativo.model.g_sistema import get_g_sistema_model
     from packages.v1.administrativo.model.g_tb_estadocivil import (
         get_g_tb_estadocivil_model,
     )
@@ -70,6 +78,10 @@ def register_administrativo_associations() -> None:
     G_SELO_GRUPO = get_g_selo_grupo_model()
     G_SELO_LOTE = get_g_selo_lote_model()
     G_SELO_LIVRO = get_g_selo_livro_model()
+    G_EMOLUMENTO = get_g_emolumento_model()
+    G_EMOLUMENTO_ITEM = get_g_emolumento_item_model()
+    G_EMOLUMENTO_PERIODO = get_g_emolumento_periodo_model()
+    G_SISTEMA = get_g_sistema_model()
 
     # --- P_BANCO ---
     P_BANCO.belongsTo(
@@ -355,6 +367,84 @@ def register_administrativo_associations() -> None:
             "foreignKey": "SELO_LOTE_ID",
             "targetKey": "SELO_LOTE_ID",
         },
+    )
+
+    # --- G_EMOLUMENTO / G_EMOLUMENTO_ITEM ---
+    G_EMOLUMENTO.hasMany(
+        G_EMOLUMENTO_ITEM,
+        {
+            "as": "itens",
+            "foreignKey": "EMOLUMENTO_ID",
+            "sourceKey": "EMOLUMENTO_ID",
+        },
+    )
+    G_EMOLUMENTO_ITEM.belongsTo(
+        G_EMOLUMENTO,
+        {
+            "as": "emolumento",
+            "foreignKey": "EMOLUMENTO_ID",
+            "targetKey": "EMOLUMENTO_ID",
+        },
+    )
+    G_EMOLUMENTO_PERIODO.hasMany(
+        G_EMOLUMENTO_ITEM,
+        {
+            "as": "itens",
+            "foreignKey": "EMOLUMENTO_PERIODO_ID",
+            "sourceKey": "EMOLUMENTO_PERIODO_ID",
+        },
+    )
+    G_EMOLUMENTO_ITEM.belongsTo(
+        G_EMOLUMENTO_PERIODO,
+        {
+            "as": "emolumento_periodo",
+            "foreignKey": "EMOLUMENTO_PERIODO_ID",
+            "targetKey": "EMOLUMENTO_PERIODO_ID",
+        },
+    )
+
+    # --- G_SELO_GRUPO / G_EMOLUMENTO_ITEM ---
+    G_SELO_GRUPO.hasMany(
+        G_EMOLUMENTO_ITEM,
+        {
+            "as": "emolumento_itens",
+            "foreignKey": "SELO_GRUPO_ID",
+            "sourceKey": "SELO_GRUPO_ID",
+        },
+    )
+    G_EMOLUMENTO_ITEM.belongsTo(
+        G_SELO_GRUPO,
+        {
+            "as": "selo_grupo",
+            "foreignKey": "SELO_GRUPO_ID",
+            "targetKey": "SELO_GRUPO_ID",
+        },
+    )
+    G_EMOLUMENTO_ITEM.hasMany(
+        G_SELO_LIVRO,
+        {
+            "as": "selos_livro",
+            "foreignKey": "EMOLUMENTO_ITEM_ID",
+            "sourceKey": "EMOLUMENTO_ITEM_ID",
+        },
+    )
+    G_SELO_LIVRO.belongsTo(
+        G_EMOLUMENTO_ITEM,
+        {
+            "as": "emolumento_item",
+            "foreignKey": "EMOLUMENTO_ITEM_ID",
+            "targetKey": "EMOLUMENTO_ITEM_ID",
+        },
+    )
+
+    # --- G_SISTEMA / G_EMOLUMENTO (associação lógica por coluna SISTEMA_ID) ---
+    G_SISTEMA.hasMany(
+        G_EMOLUMENTO,
+        {"as": "emolumentos", "foreignKey": "SISTEMA_ID", "sourceKey": "SISTEMA_ID"},
+    )
+    G_EMOLUMENTO.belongsTo(
+        G_SISTEMA,
+        {"as": "sistema", "foreignKey": "SISTEMA_ID", "targetKey": "SISTEMA_ID"},
     )
 
     # --- G_USUARIO / G_SELO_LIVRO ---

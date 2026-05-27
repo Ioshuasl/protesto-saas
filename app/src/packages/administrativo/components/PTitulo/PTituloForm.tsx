@@ -173,10 +173,10 @@ export function PTituloForm({ id }: { id?: string }) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      <header className="rounded-xl border bg-card p-4 shadow-xs md:p-5">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+    <div className="flex w-full flex-col gap-4">
+      <header className="rounded-xl border bg-card px-4 py-3 shadow-xs md:px-5 md:py-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 items-start gap-2">
               <button
                 type="button"

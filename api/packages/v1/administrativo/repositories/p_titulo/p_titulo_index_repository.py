@@ -287,7 +287,164 @@ class IndexRepository(BaseRepository):
             conditions.append({"BANCO_ID": titulo_index_schema.banco_id})
         if titulo_index_schema.especie_id is not None:
             conditions.append({"ESPECIE_ID": titulo_index_schema.especie_id})
+        workflow_conditions = IndexRepository._build_workflow_conditions(
+            titulo_index_schema.workflow_etapa,
+            titulo_index_schema.workflow_status,
+        )
+        if workflow_conditions:
+            conditions.extend(workflow_conditions)
+        else:
+            conditions.extend(
+                IndexRepository._build_situacao_data_conditions(
+                    titulo_index_schema.situacao_data
+                )
+            )
         return conditions
+
+    @staticmethod
+    def _sem_encerramento_conditions() -> list[dict[Any, Any]]:
+        return [
+            {"DATA_CANCELAMENTO": {Op.is_: None}},
+            {"DATA_DESISTENCIA": {Op.is_: None}},
+        ]
+
+    @staticmethod
+    def _build_workflow_conditions(
+        workflow_etapa: str | None,
+        workflow_status: str | None,
+    ) -> list[dict[Any, Any]]:
+        if not workflow_etapa:
+            return []
+
+        conditions = list(IndexRepository._sem_encerramento_conditions())
+
+        if workflow_etapa == "apontamento":
+            if not workflow_status:
+                conditions.extend(
+                    [
+                        {"DATA_CADASTRO": {Op.not_: None}},
+                        {"DATA_INTIMACAO": {Op.is_: None}},
+                        {"DATA_PROTESTO": {Op.is_: None}},
+                    ]
+                )
+                return conditions
+            if workflow_status == "pendente":
+                conditions.extend(
+                    [
+                        {"DATA_CADASTRO": {Op.not_: None}},
+                        {"DATA_APONTAMENTO": {Op.is_: None}},
+                        {"DATA_INTIMACAO": {Op.is_: None}},
+                        {"DATA_PROTESTO": {Op.is_: None}},
+                    ]
+                )
+                return conditions
+            if workflow_status == "concluido":
+                conditions.extend(
+                    [
+                        {"DATA_CADASTRO": {Op.not_: None}},
+                        {"DATA_APONTAMENTO": {Op.not_: None}},
+                        {"DATA_INTIMACAO": {Op.is_: None}},
+                        {"DATA_PROTESTO": {Op.is_: None}},
+                    ]
+                )
+                return conditions
+
+        if workflow_etapa == "intimacao":
+            if not workflow_status:
+                conditions.extend(
+                    [
+                        {"DATA_APONTAMENTO": {Op.not_: None}},
+                        {"DATA_PROTESTO": {Op.is_: None}},
+                    ]
+                )
+                return conditions
+            if workflow_status == "pendente":
+                conditions.extend(
+                    [
+                        {"DATA_APONTAMENTO": {Op.not_: None}},
+                        {"DATA_INTIMACAO": {Op.is_: None}},
+                        {"DATA_PROTESTO": {Op.is_: None}},
+                    ]
+                )
+                return conditions
+            if workflow_status == "concluido":
+                conditions.extend(
+                    [
+                        {"DATA_APONTAMENTO": {Op.not_: None}},
+                        {"DATA_INTIMACAO": {Op.not_: None}},
+                        {"DATA_PROTESTO": {Op.is_: None}},
+                    ]
+                )
+                return conditions
+
+        if workflow_etapa == "protesto":
+            if not workflow_status:
+                conditions.extend(
+                    [
+                        {"DATA_INTIMACAO": {Op.not_: None}},
+                    ]
+                )
+                return conditions
+            if workflow_status == "pendente":
+                conditions.extend(
+                    [
+                        {"DATA_INTIMACAO": {Op.not_: None}},
+                        {"DATA_PROTESTO": {Op.is_: None}},
+                    ]
+                )
+                return conditions
+            if workflow_status == "concluido":
+                conditions.extend(
+                    [
+                        {"DATA_INTIMACAO": {Op.not_: None}},
+                        {"DATA_PROTESTO": {Op.not_: None}},
+                    ]
+                )
+                return conditions
+
+        return []
+
+    @staticmethod
+    def _build_situacao_data_conditions(situacao_data: str | None) -> list[dict[Any, Any]]:
+        if not situacao_data:
+            return []
+        if situacao_data == "somente_cadastro":
+            return [
+                {"DATA_CADASTRO": {Op.not_: None}},
+                {"DATA_APONTAMENTO": {Op.is_: None}},
+                {"DATA_INTIMACAO": {Op.is_: None}},
+                {"DATA_PROTESTO": {Op.is_: None}},
+                {"DATA_CANCELAMENTO": {Op.is_: None}},
+                {"DATA_DESISTENCIA": {Op.is_: None}},
+            ]
+        if situacao_data == "somente_apontado":
+            return [
+                {"DATA_CADASTRO": {Op.not_: None}},
+                {"DATA_APONTAMENTO": {Op.not_: None}},
+                {"DATA_INTIMACAO": {Op.is_: None}},
+                {"DATA_PROTESTO": {Op.is_: None}},
+                {"DATA_CANCELAMENTO": {Op.is_: None}},
+                {"DATA_DESISTENCIA": {Op.is_: None}},
+            ]
+        if situacao_data == "somente_intimado":
+            return [
+                {"DATA_CADASTRO": {Op.not_: None}},
+                {"DATA_APONTAMENTO": {Op.not_: None}},
+                {"DATA_INTIMACAO": {Op.not_: None}},
+                {"DATA_PROTESTO": {Op.is_: None}},
+                {"DATA_CANCELAMENTO": {Op.is_: None}},
+                {"DATA_DESISTENCIA": {Op.is_: None}},
+            ]
+        if situacao_data == "somente_protestado":
+            return [
+                {"DATA_CADASTRO": {Op.not_: None}},
+                {"DATA_APONTAMENTO": {Op.not_: None}},
+                {"DATA_INTIMACAO": {Op.not_: None}},
+                {"DATA_PROTESTO": {Op.not_: None}},
+                {"DATA_CANCELAMENTO": {Op.is_: None}},
+                {"DATA_DESISTENCIA": {Op.is_: None}},
+            ]
+        return []
 
     @staticmethod
     def _combine_orm_conditions(conditions: list[dict[Any, Any]]) -> dict[Any, Any]:

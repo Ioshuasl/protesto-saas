@@ -1,11 +1,13 @@
 # Importação de bibliotecas
 from fastapi import APIRouter, Depends, status
+from actions.data.query_params_parser import QueryParamsParser
 from actions.jwt.get_current_user import get_current_user
 from packages.v1.administrativo.controllers.g_emolumento_item_controller import (
     GEmolumentoItemController,
 )
 from packages.v1.administrativo.schemas.g_emolumento_item_schema import (
     GEmolumentoItemByTipoAtoSchema,
+    GEmolumentoItemListDetailsSchema,
     GEmolumentoItemIndexSchema,
     GEmolumentoItemSaveSchema,
     GEmolumentoItemUpdateSchema,
@@ -19,6 +21,31 @@ router = APIRouter()
 
 # Instanciamento do controller
 g_emolumento_item_controller = GEmolumentoItemController()
+
+
+# ----------------------------------------------------
+# Lista detalhada de G_EMOLUMENTO_ITEM com includes
+# ----------------------------------------------------
+@router.get(
+    "/list-details",
+    status_code=status.HTTP_200_OK,
+    summary="Lista detalhada de G_EMOLUMENTO_ITEM",
+    response_description="Retorna itens com include de selo grupo e emolumento; filtros: emolumento_periodo_id, sistema_id, busca",
+)
+async def list_details(
+    emolumento_periodo_id: int | None = None,
+    sistema_id: int | None = None,
+    busca: str | None = None,
+    query_params=Depends(QueryParamsParser.parse),
+    current_user: dict = Depends(get_current_user),
+):
+    data = GEmolumentoItemListDetailsSchema(
+        emolumento_periodo_id=emolumento_periodo_id,
+        sistema_id=sistema_id,
+        busca=busca.strip() if busca else None,
+    )
+    response = g_emolumento_item_controller.list_details(data, query_params)
+    return response
 
 
 # ----------------------------------------------------

@@ -1,38 +1,15 @@
-import { useCallback, useState } from "react";
-import type { PTituloProtestarBatchInterface } from "@/packages/protesto-lote/interface/PTituloProtestarBatch/PTituloProtestarBatchInterface";
-import { PTituloProtestarBatchIndexService } from "@/packages/protesto-lote/service/PTituloProtestarBatch/PTituloProtestarBatchIndexService";
-import { useResponse } from "@/shared/components/response/ResponseContext";
+import { usePTituloWorkflowBatchReadHook } from '@/packages/administrativo/hooks/PTitulo/usePTituloWorkflowBatchReadHook';
+import type { PTituloProtestarBatchInterface } from '@/packages/protesto-lote/interface/PTituloProtestarBatch/PTituloProtestarBatchInterface';
 
 export const usePTituloProtestarBatchReadHook = () => {
-  const { setResponse } = useResponse();
-  const [titulosProtestarBatch, setTitulosProtestarBatch] = useState<PTituloProtestarBatchInterface[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { titulos, setTitulos, isLoading, fetchTitulos } = usePTituloWorkflowBatchReadHook({
+    successMessage: 'Títulos para protesto em lote listados com sucesso',
+  });
 
-  const fetchTitulosProtestarBatch = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await PTituloProtestarBatchIndexService();
-
-      if (Array.isArray(response)) {
-        setTitulosProtestarBatch(response);
-        setResponse({
-          status: 200,
-          message: "Títulos para protesto em lote listados com sucesso",
-        });
-      } else {
-        setTitulosProtestarBatch([]);
-        setResponse({
-          status: (response as { status?: number }).status,
-          message: (response as { message?: string }).message,
-          error: (response as { message?: string }).message,
-        });
-      }
-
-      return response;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setResponse]);
-
-  return { titulosProtestarBatch, setTitulosProtestarBatch, isLoading, fetchTitulosProtestarBatch };
+  return {
+    titulosProtestarBatch: titulos as PTituloProtestarBatchInterface[],
+    setTitulosProtestarBatch: setTitulos,
+    isLoading,
+    fetchTitulosProtestarBatch: fetchTitulos,
+  };
 };

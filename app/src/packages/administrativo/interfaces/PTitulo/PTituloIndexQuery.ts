@@ -11,6 +11,13 @@ export type PTituloIndexQuery = {
   ocorrencia_andamento_id?: number;
   banco_id?: number;
   especie_id?: number;
+  situacao_data?:
+    | "somente_cadastro"
+    | "somente_apontado"
+    | "somente_intimado"
+    | "somente_protestado";
+  workflow_etapa?: "apontamento" | "intimacao" | "protesto";
+  workflow_status?: "pendente" | "concluido";
   /** Página da API (query `p`). */
   page?: number;
   per_page?: number;

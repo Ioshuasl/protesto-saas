@@ -1,6 +1,9 @@
 from actions.data.query_params_parser import QueryParams
 from actions.dynamic_import.dynamic_import import DynamicImport
+from fastapi import Request
 from packages.v1.administrativo.schemas.p_template_schema import (
+    PTemplateEditorCallbackSchema,
+    PTemplateEditorOpenSchema,
     PTemplateIdSchema,
     PTemplateIndexSchema,
     PTemplateSaveSchema,
@@ -68,4 +71,29 @@ class PTemplateController:
         return {
             "message": "Template removido com sucesso",
             "data": delete_service().execute(template_schema),
+        }
+
+    def open_editor(
+        self,
+        template_id: int,
+        request: Request,
+        editor_schema: PTemplateEditorOpenSchema,
+    ):
+        open_editor_service = self.dynamic_import.service(
+            "p_template_open_editor_service",
+            "OpenEditorService",
+        )
+        return {
+            "message": "Configuração do editor carregada com sucesso",
+            "data": open_editor_service().execute(template_id, request, editor_schema),
+        }
+
+    def save_editor_callback(self, callback_schema: PTemplateEditorCallbackSchema):
+        callback_service = self.dynamic_import.service(
+            "p_template_save_editor_callback_service",
+            "SaveEditorCallbackService",
+        )
+        return {
+            "message": "Callback processado com sucesso",
+            "data": callback_service().execute(callback_schema),
         }

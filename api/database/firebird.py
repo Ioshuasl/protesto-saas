@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
 from actions.env.env_config_loader import EnvConfigLoader
+from database.firebird_host import resolve_firebird_host
 
 
 @dataclass(frozen=True)
@@ -75,8 +76,8 @@ class Firebird:
                 env_database.ORIUS_API_FDB_PASSWORD,
                 "ORIUS_API_FDB_PASSWORD",
             ),
-            host=cls._require_str(
-                env_database.ORIUS_API_FDB_HOST, "ORIUS_API_FDB_HOST"
+            host=resolve_firebird_host(
+                cls._require_str(env_database.ORIUS_API_FDB_HOST, "ORIUS_API_FDB_HOST")
             ),
             port=cls._require_str(
                 env_database.ORIUS_API_FDB_PORT, "ORIUS_API_FDB_PORT"

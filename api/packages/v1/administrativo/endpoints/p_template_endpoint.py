@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
 from actions.data.get_url_params import get_url_params
 from actions.data.query_params_parser import QueryParamsParser
@@ -6,7 +6,12 @@ from actions.jwt.get_current_user import get_current_user
 from packages.v1.administrativo.controllers.p_template_controller import (
     PTemplateController,
 )
+from packages.v1.administrativo.services.p_template.go.p_template_save_editor_callback_service import (
+    SaveEditorCallbackService,
+)
 from packages.v1.administrativo.schemas.p_template_schema import (
+    PTemplateEditorCallbackSchema,
+    PTemplateEditorOpenSchema,
     PTemplateIdSchema,
     PTemplateIndexSchema,
     PTemplateSaveSchema,
@@ -88,3 +93,46 @@ async def delete(
     current_user: dict = Depends(get_current_user),
 ):
     return p_template_controller.delete(PTemplateIdSchema(template_id=template_id))
+
+
+@router.get(
+    "/{template_id}/texto/editor",
+    status_code=status.HTTP_200_OK,
+    summary="Carrega configuração do editor de texto do template",
+    response_description="Configuração do editor de texto do template",
+)
+async def open_text_editor(
+    template_id: int,
+    request: Request,
+    mode: str = "edit",
+    current_user: dict = Depends(get_current_user),
+):
+    return p_template_controller.open_editor(
+        template_id,
+        request,
+        PTemplateEditorOpenSchema(mode=mode),
+    )
+
+
+@router.post(
+    "/{template_id}/texto/callback",
+    name="p_template_texto_callback",
+    status_code=status.HTTP_200_OK,
+    summary="Recebe callback de edição de texto do template",
+    response_description="Callback de edição de texto processado",
+)
+async def texto_callback(
+    template_id: int,
+    request: Request,
+    token: str | None = None,
+):
+    data = await request.json()
+    SaveEditorCallbackService().execute(
+        PTemplateEditorCallbackSchema(
+            template_id=template_id,
+            data=data,
+            callback_token=token,
+        )
+    )
+    # OnlyOffice exige payload exato para confirmar persistência.
+    return {"error": 0}

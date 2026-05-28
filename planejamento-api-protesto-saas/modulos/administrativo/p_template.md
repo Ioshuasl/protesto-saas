@@ -74,3 +74,31 @@ Sem arquivos auxiliares em `repositories/p_template/`.
 ## Postman
 
 Pasta `Administrativo` -> `Template`: All, Create, Get, Update, Delete.
+
+## Debug OnlyOffice (PTemplate)
+
+- Sintoma observado: editor abre, mas exibe `Erro ao baixar arquivo`.
+- Causa raiz: o frontend reconstruia `document.url` com base em `title` (`/temp/template_<id>.docx`), porem o backend salva arquivo fisico com nome unico (`p_template_<id>_<hash>.docx`).
+- Efeito: o Document Server tentava baixar um arquivo inexistente e retornava erro de download.
+- Correcao aplicada:
+  - `app/src/packages/administrativo/data/PTemplate/PTemplateOpenEditorData.ts`: passa a preservar `document.url` retornada pela API.
+  - `app/src/shared/components/editor/onlyoffice/OnlyOfficeEditor.tsx`: usa `config.document.url` quando disponivel, sem sobrescrever por `title`.
+- Verificacao recomendada:
+  - no log `Configuração Final do Editor`, confirmar `document.url` com nome fisico completo;
+  - abrir esta URL diretamente no navegador e validar download;
+  - confirmar callback em `POST /api/v1/administrativo/p_template/{id}/texto/callback` apos salvar no editor.
+
+## Debug OnlyOffice (Docker/EasyPanel)
+
+- Se `document.url` estiver correta e ainda ocorrer `Erro ao baixar arquivo`, validar o Document Server.
+- Cenario comum: filtro de seguranca do OnlyOffice bloqueando download por IP privado (ex.: `192.168.x.x`).
+- Sinais nos logs do container:
+  - `downloadFile` com falha;
+  - mensagens contendo `private ip address` ou bloqueio por `request-filtering-agent`.
+- Correcao operacional no container:
+  - habilitar `ALLOW_PRIVATE_IP_ADDRESS=true`;
+  - habilitar `ALLOW_META_IP_ADDRESS=true` (quando necessario);
+  - reiniciar o container.
+- Alternativa equivalente: ajustar `/etc/onlyoffice/documentserver/local.json` com:
+  - `services.CoAuthoring.request-filtering-agent.allowPrivateIPAddress = true`
+  - `services.CoAuthoring.request-filtering-agent.allowMetaIPAddress = true`

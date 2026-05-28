@@ -12,11 +12,15 @@ export const useTokenOnlyOfficeEditorHook = () => {
   const [onlyOfficeToken, setOnlyOfficeToken] = useState<string>();
 
   const tokenOnlyOfficeEditorHook = async (data: object) => {
+    console.info('[OnlyOfficeTokenHook] geração de token iniciada');
     // Busca as confgiurações do editor
     const response = await OnlyOfficeEditorTokenService(data);
 
     // Armazena os dados consultados
     setOnlyOfficeToken(response.data);
+    console.info('[OnlyOfficeTokenHook] geração de token concluída', {
+      hasToken: Boolean(response.data),
+    });
 
     // Define a resposta (toast, modal, feedback, etc.)
     setResponse(response);

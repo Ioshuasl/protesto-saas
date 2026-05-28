@@ -9,7 +9,7 @@ import { usePrepareOnlyOfficeEditorHook } from './hooks/usePrepareOnlyOfficeEdit
 import { useTokenOnlyOfficeEditorHook } from './hooks/useTokenOnlyOfficeEditorHook';
 import OnlyOfficeInteface from './interface/OnlyOfficeInterface';
 
-export default function OnlyOfficeEditor({ id, config }: OnlyOfficeInteface) {
+export default function OnlyOfficeEditor({ id, config, onDocumentError }: OnlyOfficeInteface) {
   const { tokenOnlyOfficeEditorHook } = useTokenOnlyOfficeEditorHook();
   const { prepareOnlyOfficeEditorHook } = usePrepareOnlyOfficeEditorHook();
   const [serverUrl, setServerUrl] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export default function OnlyOfficeEditor({ id, config }: OnlyOfficeInteface) {
       setServerUrl(GetServerUrl(response.data));
 
       // 🔥 DEBUG 1: Validação da URL do Documento
-      const docUrl = GetDocumentUrl(response.data) + '/temp/' + data.document.title;
+      const docUrl = data.document.url || GetDocumentUrl(response.data) + '/temp/' + data.document.title;
       data.document.url = docUrl;
       console.log('URL do Documento (verifique se acessível):', docUrl);
       // DICA: Tente abrir esta URL no seu navegador para ver se o arquivo baixa.
@@ -40,7 +40,12 @@ export default function OnlyOfficeEditor({ id, config }: OnlyOfficeInteface) {
       // 🔥 DEBUG 2: Logar o CallbackUrl
       console.log('Callback URL (verifique seu backend):', data.editorConfig.callbackUrl);
 
-      data.token = await tokenOnlyOfficeEditorHook(data);
+      const token = await tokenOnlyOfficeEditorHook(data);
+      if (token && typeof token === 'string') {
+        data.token = token;
+      } else if ('token' in data) {
+        delete data.token;
+      }
 
       // 🔥 DEBUG 3: Logar a configuração final antes de carregar
       console.log('Configuração Final do Editor:', data);
@@ -68,6 +73,7 @@ export default function OnlyOfficeEditor({ id, config }: OnlyOfficeInteface) {
             // 🔥 DEBUG 4: Evento de erro do OnlyOffice
             onDocumentError={(event) => {
               console.error('Erro detalhado do OnlyOffice:', event);
+              onDocumentError?.(event);
               // Referência: https://api.onlyoffice.com/docs/docs-api/get-started/how-it-works/lifecycle-of-opening-editor/#message
             }}
           />

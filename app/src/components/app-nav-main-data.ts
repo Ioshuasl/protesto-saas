@@ -53,6 +53,7 @@ export const APP_NAV_MAIN_ITEMS: AppNavMainItem[] = [
       { title: 'Banco', url: '/cadastro/banco' },
       { title: 'Livro Andamento', url: '/cadastro/livro-andamento' },
       { title: 'Livro Natureza', url: '/cadastro/livro-natureza' },
+      { title: 'Minuta', url: '/cadastro/minuta' },
     ],
   },
   {

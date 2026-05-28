@@ -18,7 +18,13 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel, Field
 from striprtf.striprtf import rtf_to_text
 
+from actions.data.rtf_normalizer import (
+    deduplicate_rtf_unicode,
+    promote_rtf_ansi_to_unicode,
+    should_promote_ansi_to_unicode,
+)
 from actions.data.text import Text
+from packages.v1.docx.services.docx_rtf_convert_service import DocxRtfConvertService
 
 
 # ======================================================
@@ -501,82 +507,32 @@ class DOCXProcess:
     def _convert_rtf_str_to_docx_bytes(
         self, data: DOCXProcessSchema, rtf: str
     ) -> bytes:
-        diretorio = self._prepare_directory(data.storage_dir)
-
         base = self._build_base_name(data)
-        rtf_path = diretorio / f"{base}.rtf"
-        docx_path = diretorio / f"{base}.docx"
-
-        rtf_norm = self._convert_rtf_ansi_to_unicode(rtf)
-        rtf_path.write_text(rtf_norm, encoding="utf-8", newline="")
-
-        self._convert_rtf_to_docx(
-            soffice_path=data.soffice_path,
-            diretorio=diretorio,
-            rtf_path=rtf_path,
-            timeout_sec=data.convert_timeout_sec,
-        )
-
-        if not docx_path.exists():
-            self._cleanup_files(rtf_path, docx_path)
+        try:
+            docx_bytes = DocxRtfConvertService.rtf_text_to_docx_bytes(
+                rtf,
+                storage_dir=data.storage_dir,
+                base_name=base,
+                timeout_sec=data.convert_timeout_sec,
+            )
+        except HTTPException:
+            raise
+        except Exception:
             return self._create_docx_with_text(data.invalid_text)
-
-        docx_bytes = docx_path.read_bytes()
-        self._cleanup_files(rtf_path, docx_path)
 
         if not docx_bytes.startswith(self.DOCX_MAGIC_BYTES):
             return self._create_docx_with_text(data.invalid_text)
 
         return docx_bytes
 
-    def _convert_rtf_to_docx(
-        self,
-        soffice_path: str,
-        diretorio: Path,
-        rtf_path: Path,
-        timeout_sec: int,
-    ) -> None:
-        cmd = [
-            soffice_path,
-            "--headless",
-            "--nologo",
-            "--nolockcheck",
-            "--nodefault",
-            "--nofirststartwizard",
-            "--convert-to",
-            "docx",
-            "--outdir",
-            str(diretorio),
-            str(rtf_path),
-        ]
-
-        env = os.environ.copy()
-        env.setdefault("LANG", "C.UTF-8")
-        env.setdefault("LC_ALL", "C.UTF-8")
-
-        result = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=int(timeout_sec),
-            env=env,
-        )
-
-        if result.returncode != 0:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.stderr
-                or result.stdout
-                or "Falha ao converter RTF para DOCX",
-            )
-
     # ======================================================
     # TXT EXTRACTION (RTF/DOCX)
     # ======================================================
     def _rtf_to_plain_text(self, rtf: str, invalid_text: str) -> str:
         try:
-            normalized = self._convert_rtf_ansi_to_unicode(rtf)
+            normalized = deduplicate_rtf_unicode(rtf)
+            if should_promote_ansi_to_unicode(normalized):
+                normalized = promote_rtf_ansi_to_unicode(normalized)
             return (rtf_to_text(normalized) or "").strip()
         except Exception:
             return invalid_text
@@ -632,74 +588,6 @@ class DOCXProcess:
     # ======================================================
     # RTF NORMALIZATION (UNICODE REAL)
     # ======================================================
-    def _convert_rtf_ansi_to_unicode(self, texto_rtf: str) -> str:
-        if texto_rtf.startswith("{\\rtf1\\ansi"):
-            texto_rtf = texto_rtf.replace("{\\rtf1\\ansi", "{\\rtf1\\ansi\\uc1", 1)
-
-        resultado: list[str] = []
-        source_encoding = self._detect_rtf_encoding(
-            texto_rtf.encode("ascii", errors="ignore")
-        ) or "cp1252"
-        i = 0
-        while i < len(texto_rtf):
-            ch = texto_rtf[i]
-
-            if ch == "\\":
-                if i + 3 < len(texto_rtf) and texto_rtf[i + 1] == "'":
-                    hex_pair = texto_rtf[i + 2 : i + 4]
-                    try:
-                        decoded = bytes.fromhex(hex_pair).decode(source_encoding)
-                        resultado.append(self._rtf_unicode_escape(decoded))
-                        i += 4
-                        continue
-                    except Exception:
-                        pass
-
-                start = i
-                i += 1
-
-                if i < len(texto_rtf) and texto_rtf[i] in "\\{}":
-                    resultado.append(texto_rtf[start : i + 1])
-                    i += 1
-                    continue
-
-                while i < len(texto_rtf) and texto_rtf[i].isalpha():
-                    i += 1
-
-                if i < len(texto_rtf) and texto_rtf[i] in "+-":
-                    i += 1
-
-                while i < len(texto_rtf) and texto_rtf[i].isdigit():
-                    i += 1
-
-                if i < len(texto_rtf) and texto_rtf[i] == " ":
-                    i += 1
-
-                resultado.append(texto_rtf[start:i])
-                continue
-
-            if ch in "{}":
-                resultado.append(ch)
-                i += 1
-                continue
-
-            if ord(ch) < 128:
-                resultado.append(ch)
-            else:
-                resultado.append(self._rtf_unicode_escape(ch))
-            i += 1
-
-        return "".join(resultado)
-
-    def _rtf_unicode_escape(self, text: str) -> str:
-        escaped: list[str] = []
-        for ch in text:
-            codepoint = ord(ch)
-            if codepoint > 32767:
-                codepoint -= 65536
-            escaped.append(f"\\u{codepoint}?")
-        return "".join(escaped)
-
     # ======================================================
     # DISK IO
     # ======================================================

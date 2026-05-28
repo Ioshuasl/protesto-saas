@@ -67,3 +67,30 @@ class PTemplateUpdateSchema(BaseModel):
     @classmethod
     def sanitize_descricao(cls, value: Optional[str]) -> Optional[str]:
         return _sanitize_optional_text(value)
+
+
+class PTemplateUpdateTextoSchema(BaseModel):
+    template_id: int
+    texto: bytes
+
+
+class PTemplateEditorOpenSchema(BaseModel):
+    mode: str = "edit"
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("mode", mode="before")
+    @classmethod
+    def sanitize_mode(cls, value: Optional[str]) -> str:
+        normalized = (value or "edit").strip().lower()
+        if normalized not in {"edit", "view"}:
+            raise ValueError("mode deve ser 'edit' ou 'view'.")
+        return normalized
+
+
+class PTemplateEditorCallbackSchema(BaseModel):
+    template_id: int
+    data: dict
+    callback_token: Optional[str] = None
+
+    model_config = ConfigDict(extra="forbid")

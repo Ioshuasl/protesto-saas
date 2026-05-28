@@ -1,5 +1,8 @@
 import re
+
 from fastapi import HTTPException, status
+
+from actions.data.rtf_tag_utils import limpar_tag_rtf
 
 
 class DOCXRTFExtractorAction:
@@ -79,12 +82,10 @@ class DOCXRTFExtractorAction:
         return self._clean_rtf(match.group(1))
 
     def _clean_rtf(self, text: str) -> str:
-        # Quebras de linha e tabulacao semanticas.
         cleaned = re.sub(r"\\par[d]? ?", "\n", text, flags=re.IGNORECASE)
         cleaned = re.sub(r"\\line ?", "\n", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\\tab ?", "\t", cleaned, flags=re.IGNORECASE)
 
-        # Unicode RTF: \u8226? / \u-1234?
         def unicode_repl(match: re.Match[str]) -> str:
             value = int(match.group(1))
             if value < 0:
@@ -95,21 +96,12 @@ class DOCXRTFExtractorAction:
                 return ""
 
         cleaned = re.sub(r"\\u(-?\d+)\??", unicode_repl, cleaned)
+        cleaned = limpar_tag_rtf(cleaned)
 
-        # Hex escapes RTF: \'e9
-        cleaned = re.sub(
-            r"\\'([0-9a-fA-F]{2})",
-            lambda m: bytes.fromhex(m.group(1)).decode("cp1252", errors="ignore"),
-            cleaned,
-        )
-
-        # Remove comandos/destinos RTF remanescentes.
         cleaned = re.sub(r"\{\\\*[^{}]*\}", " ", cleaned)
         cleaned = re.sub(r"\\[a-zA-Z]+-?\d* ?", " ", cleaned)
         cleaned = re.sub(r"\\[{}\\]", "", cleaned)
         cleaned = re.sub(r"[{}]", "", cleaned)
-
-        # Normaliza espacos e linhas.
         cleaned = re.sub(r"[ \t]+", " ", cleaned)
         cleaned = re.sub(r"\n\s*\n+", "\n", cleaned)
         return cleaned.strip()

@@ -5,7 +5,19 @@ import jwt from 'jsonwebtoken';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 
 export default async function executeOnlyOfficeEditorTokenService(data: object) {
-  const token = jwt.sign(data, 'WYe1zwtlDkh39_X3X3qTSICFDxts4VQrMyGLxnEpGUg', {
+  const jwtEnabled = (process.env.ORIUS_ONLYOFFICE_JWT_ENABLED ?? 'false').toLowerCase() === 'true';
+  if (!jwtEnabled) {
+    return {
+      data: undefined,
+    };
+  }
+
+  const secret = process.env.ORIUS_ONLYOFFICE_JWT_SECRET;
+  if (!secret) {
+    throw new Error('ORIUS_ONLYOFFICE_JWT_SECRET não configurado com JWT habilitado.');
+  }
+
+  const token = jwt.sign(data, secret, {
     algorithm: 'HS256',
     expiresIn: '5m',
   });

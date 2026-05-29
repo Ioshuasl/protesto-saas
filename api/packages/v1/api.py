@@ -14,6 +14,7 @@ from packages.v1.administrativo.endpoints import (
     p_certidao_endpoint,
     p_template_endpoint,
     p_titulo_endpoint,
+    p_arquivo_titulo_endpoint,
     p_ocorrencias_endpoint,
     p_motivos_cancelamento_endpoint,
     p_pessoa_endpoint,
@@ -433,6 +434,13 @@ api_router.include_router(
     p_titulo_endpoint.router,
     prefix="/administrativo/p_titulo",
     tags=["Titulos"],
+)
+
+# Inclui as rotas de p_arquivo_titulo
+api_router.include_router(
+    p_arquivo_titulo_endpoint.router,
+    prefix="/administrativo/p_arquivo_titulo",
+    tags=["Arquivos de titulo"],
 )
 
 # Inclui as rotas de tabelionato_protesto

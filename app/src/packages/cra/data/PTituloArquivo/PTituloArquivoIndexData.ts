@@ -1,29 +1,48 @@
-import { mockDbDelay } from "@/packages/administrativo/shared/mockDbDelay";
-import { pArquivoTituloListRef } from "@/packages/cra/data/PTituloArquivo/pArquivoTituloInMemory";
-import {
-  PTITULOARQUIVO_FAKE_ENDPOINTS,
-  usePTituloArquivoMockData,
-} from "@/packages/cra/data/PTituloArquivo/pTituloArquivoDataConfig";
+import { buildPArquivoTituloIndexEndpoint } from "@/packages/cra/data/PTituloArquivo/pArquivoTituloIndexQueryBuilder";
 import type { PArquivoTituloInterface } from "@/packages/cra/interface/PArquivoTitulo/PArquivoTituloInterface";
+import type { PArquivoTituloIndexQuery } from "@/packages/cra/interface/PArquivoTitulo/PArquivoTituloIndexQuery";
+import type { PArquivoTituloIndexResult } from "@/packages/cra/interface/PArquivoTitulo/PArquivoTituloIndexQuery";
 import { withClientErrorHandler } from "@/shared/actions/withClientErrorHandler/withClientErrorHandler";
+import {
+  DEFAULT_PAGINATION_META,
+  normalizePaginationMeta,
+  type PaginationMeta,
+} from "@/shared/components/pagination";
 import API from "@/shared/services/api/Api";
 import { Methods } from "@/shared/services/api/enums/ApiMethodEnum";
 
-export async function PTituloArquivoIndexData(): Promise<PArquivoTituloInterface[]> {
-  if (!usePTituloArquivoMockData()) {
-    const api = new API();
-    const apiCall = withClientErrorHandler(async () =>
-      api.send({
-        method: Methods.GET,
-        endpoint: PTITULOARQUIVO_FAKE_ENDPOINTS.index,
-      }),
-    );
-    const response = await apiCall();
-    if (Number(response?.status) >= 200 && Number(response?.status) < 300 && Array.isArray(response?.data)) {
-      return response.data as PArquivoTituloInterface[];
-    }
+function emptyPArquivoTituloIndexResult(
+  perPage = DEFAULT_PAGINATION_META.per_page,
+): PArquivoTituloIndexResult {
+  return {
+    rows: [],
+    pagination: { ...DEFAULT_PAGINATION_META, per_page: perPage },
+  };
+}
+
+async function executePTituloArquivoIndexData(
+  query?: PArquivoTituloIndexQuery,
+): Promise<PArquivoTituloIndexResult> {
+  const perPage = query?.per_page ?? DEFAULT_PAGINATION_META.per_page;
+  const api = new API();
+  const response = await api.send({
+    method: Methods.GET,
+    endpoint: buildPArquivoTituloIndexEndpoint(query),
+  });
+
+  if (Number(response?.status) < 200 || Number(response?.status) >= 300) {
+    return emptyPArquivoTituloIndexResult(perPage);
   }
 
-  await mockDbDelay(300);
-  return [...pArquivoTituloListRef.current];
+  const rows = Array.isArray(response?.data)
+    ? (response.data as PArquivoTituloInterface[])
+    : [];
+  const pagination = normalizePaginationMeta(
+    (response?.pagination as Partial<PaginationMeta> | undefined) ?? undefined,
+    perPage,
+  );
+
+  return { rows, pagination };
 }
+
+export const PTituloArquivoIndexData = withClientErrorHandler(executePTituloArquivoIndexData);

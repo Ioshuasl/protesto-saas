@@ -76,6 +76,7 @@ class PTemplateUpdateTextoSchema(BaseModel):
 
 class PTemplateEditorOpenSchema(BaseModel):
     mode: str = "edit"
+    highlight_markers: bool = True
 
     model_config = ConfigDict(extra="forbid")
 

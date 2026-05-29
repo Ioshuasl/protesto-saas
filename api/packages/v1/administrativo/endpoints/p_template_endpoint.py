@@ -105,12 +105,13 @@ async def open_text_editor(
     template_id: int,
     request: Request,
     mode: str = "edit",
+    highlight_markers: bool = True,
     current_user: dict = Depends(get_current_user),
 ):
     return p_template_controller.open_editor(
         template_id,
         request,
-        PTemplateEditorOpenSchema(mode=mode),
+        PTemplateEditorOpenSchema(mode=mode, highlight_markers=highlight_markers),
     )
 
 

@@ -1,40 +1,73 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Filter, Search } from "lucide-react";
-import type { DateRange } from "react-day-picker";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { usePBancoReadHook } from "@/packages/administrativo/hooks/PBanco/usePBancoReadHook";
+import { PArquivoTituloFilter } from "@/packages/cra/components/PArquivoTitulo/PArquivoTituloFilter";
+import {
+  buildPArquivoTituloIndexQuery,
+  defaultPArquivoTituloFilterState,
+  type PArquivoTituloFilterState,
+} from "@/packages/cra/components/PArquivoTitulo/pArquivoTituloFilterUtils";
 import { usePTituloArquivoReadHook } from "@/packages/cra/hooks/PTituloArquivo/usePTituloArquivoReadHook";
 import type { PArquivoTituloInterface } from "@/packages/cra/interface/PArquivoTitulo/PArquivoTituloInterface";
-import { DateRangePicker } from "@/shared/components/dateRangePicker/DateRangePicker";
+import { DEFAULT_PAGINATION_META, Pagination } from "@/shared/components/pagination";
 import { PArquivoTituloTable } from "./PArquivoTituloTable";
+import { PArquivoTituloTitulosTableDialog } from "./PArquivoTituloTitulosTableDialog";
 
-function getDateOnly(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
+const PARQUIVO_TITULO_PER_PAGE = DEFAULT_PAGINATION_META.per_page;
 
 export default function PArquivoTituloIndex() {
-  const { arquivosTitulo, isLoading, fetchArquivosTitulo } = usePTituloArquivoReadHook();
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const { bancos, fetchBancos } = usePBancoReadHook();
+  const { arquivosTitulo, pagination, isLoading, fetchArquivosTitulo } = usePTituloArquivoReadHook();
+  const [filters, setFilters] = useState<PArquivoTituloFilterState>(defaultPArquivoTituloFilterState);
+  const [page, setPage] = useState(1);
+  const [titulosModalOpen, setTitulosModalOpen] = useState(false);
+  const [arquivoSelecionado, setArquivoSelecionado] = useState<PArquivoTituloInterface | null>(null);
 
   useEffect(() => {
-    void fetchArquivosTitulo();
-  }, [fetchArquivosTitulo]);
+    void fetchBancos({ page: 1, per_page: 500, sort: "banco_id.desc" });
+  }, [fetchBancos]);
 
-  const filteredArquivos = useMemo(() => {
-    const from = dateRange?.from ? getDateOnly(dateRange.from) : undefined;
-    const to = dateRange?.to ? getDateOnly(dateRange.to) : undefined;
+  const bancoCodigoById = useMemo(
+    () =>
+      new Map(
+        bancos.map((banco) => [
+          String(banco.banco_id),
+          (banco.codigo_banco ?? "").trim(),
+        ]),
+      ),
+    [bancos],
+  );
 
-    return arquivosTitulo.filter((arquivo) => {
-      if (!from && !to) return true;
-      if (!arquivo.data_importacao) return false;
-      const current = getDateOnly(new Date(arquivo.data_importacao));
-      if (from && current < from) return false;
-      if (to && current > to) return false;
-      return true;
-    });
-  }, [arquivosTitulo, dateRange?.from, dateRange?.to]);
+  const apiFilters = useMemo(
+    () => buildPArquivoTituloIndexQuery(filters, bancoCodigoById),
+    [filters, bancoCodigoById],
+  );
+
+  const indexQuery = useMemo(
+    () => ({
+      ...(apiFilters ?? {}),
+      page,
+      per_page: PARQUIVO_TITULO_PER_PAGE,
+      sort: "arquivo_titulo_id.desc",
+      include: "titulos",
+    }),
+    [apiFilters, page],
+  );
+
+  useEffect(() => {
+    void fetchArquivosTitulo(indexQuery);
+  }, [fetchArquivosTitulo, indexQuery]);
+
+  const handleFiltersChange = useCallback((next: PArquivoTituloFilterState) => {
+    setFilters(next);
+    setPage(1);
+  }, []);
+
+  const handleSearch = () => {
+    void fetchArquivosTitulo(indexQuery);
+  };
 
   const handleGerarArquivoConfirmacao = (arquivo: PArquivoTituloInterface) => {
     toast.info("Funcionalidade em construção", {
@@ -42,13 +75,16 @@ export default function PArquivoTituloIndex() {
     });
   };
 
+  const handleVerTitulos = (arquivo: PArquivoTituloInterface) => {
+    setArquivoSelecionado(arquivo);
+    setTitulosModalOpen(true);
+  };
+
   const handleEstornarRemessa = (arquivo: PArquivoTituloInterface) => {
     toast.info("Funcionalidade em construção", {
       description: `Estorno da remessa "${arquivo.nome_arquivo ?? "arquivo"}" ainda não implementado.`,
     });
   };
-
-  const handleClearFilters = () => setDateRange(undefined);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -59,33 +95,32 @@ export default function PArquivoTituloIndex() {
         </p>
       </div>
 
-      <section className="rounded-xl border bg-card p-4 shadow-xs md:p-5">
-        <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
-          <div className="max-w-md space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Intervalo de importação (data)
-            </label>
-            <DateRangePicker value={dateRange} onChange={setDateRange} placeholder="Todas as datas" />
-          </div>
-          <div className="flex items-end gap-2 xl:justify-end">
-            <Button type="button" className="bg-[#FF6B00] text-white hover:bg-[#E56000]">
-              <Search className="mr-1 h-4 w-4" />
-              Pesquisar
-            </Button>
-            <Button type="button" variant="outline" onClick={handleClearFilters}>
-              <Filter className="mr-1 h-4 w-4" />
-              Limpar
-            </Button>
-          </div>
-        </div>
-      </section>
+      <PArquivoTituloFilter
+        value={filters}
+        onChange={handleFiltersChange}
+        onSearch={handleSearch}
+        disabled={isLoading}
+      />
 
       <PArquivoTituloTable
-        data={filteredArquivos}
+        data={arquivosTitulo}
         isLoading={isLoading}
         onGerarArquivoConfirmacao={handleGerarArquivoConfirmacao}
         onEstornarRemessa={handleEstornarRemessa}
+        onVerTitulos={handleVerTitulos}
       />
+
+      <PArquivoTituloTitulosTableDialog
+        key={arquivoSelecionado?.arquivo_titulo_id ?? "closed"}
+        open={titulosModalOpen}
+        onOpenChange={(open) => {
+          setTitulosModalOpen(open);
+          if (!open) setArquivoSelecionado(null);
+        }}
+        arquivo={arquivoSelecionado}
+      />
+
+      <Pagination pagination={pagination} onPageChange={setPage} disabled={isLoading} />
     </div>
   );
 }

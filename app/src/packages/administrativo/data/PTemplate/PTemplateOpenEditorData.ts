@@ -1,6 +1,8 @@
 'use server';
 
+import { P_TEMPLATE_ONLYOFFICE_CUSTOMIZATION } from '@/packages/administrativo/constants/pTemplateOnlyOfficeCustomization';
 import { PTEMPLATE_ENDPOINTS } from '@/packages/administrativo/data/PTemplate/pTemplateDataConfig';
+import type { PTemplateMarkerLegend } from '@/packages/administrativo/interfaces/PTemplate/PTemplateMarkerLegend';
 import type { PTemplateOnlyOfficeConfig } from '@/packages/administrativo/interfaces/PTemplate/PTemplateOnlyOfficeConfig';
 import { withClientErrorHandler } from '@/shared/actions/withClientErrorHandler/withClientErrorHandler';
 import API from '@/shared/services/api/Api';
@@ -18,7 +20,14 @@ type PTemplateOpenEditorResponse = {
     callbackUrl?: string;
     mode?: string;
     lang?: string;
+    customization?: typeof P_TEMPLATE_ONLYOFFICE_CUSTOMIZATION;
   };
+  markerLegend?: PTemplateMarkerLegend;
+};
+
+export type PTemplateOpenEditorResult = {
+  config: PTemplateOnlyOfficeConfig;
+  markerLegend?: PTemplateMarkerLegend;
 };
 
 function basenameFromUrl(urlValue: string | undefined): string | undefined {
@@ -66,6 +75,8 @@ function toOnlyOfficeConfig(payload: PTemplateOpenEditorResponse): PTemplateOnly
       mode: payload.editorConfig?.mode || 'edit',
       lang: payload.editorConfig?.lang || 'pt-BR',
       orius_api_endpoint: callbackEndpoint,
+      customization:
+        payload.editorConfig?.customization ?? P_TEMPLATE_ONLYOFFICE_CUSTOMIZATION,
     },
   };
 }
@@ -73,7 +84,7 @@ function toOnlyOfficeConfig(payload: PTemplateOpenEditorResponse): PTemplateOnly
 async function executePTemplateOpenEditorData(
   templateId: number,
   mode: 'edit' | 'view' = 'edit',
-): Promise<PTemplateOnlyOfficeConfig> {
+): Promise<PTemplateOpenEditorResult> {
   const api = new API();
   const response = await api.send({
     method: Methods.GET,
@@ -81,7 +92,11 @@ async function executePTemplateOpenEditorData(
   });
 
   if (Number(response?.status) >= 200 && Number(response?.status) < 300 && response?.data) {
-    return toOnlyOfficeConfig(response.data as PTemplateOpenEditorResponse);
+    const payload = response.data as PTemplateOpenEditorResponse;
+    return {
+      config: toOnlyOfficeConfig(payload),
+      markerLegend: payload.markerLegend,
+    };
   }
 
   throw new Error(response?.message ?? 'Erro ao abrir editor da minuta');

@@ -133,13 +133,22 @@ function parseTransacao(line: string, lineNumber: number): CraRemessaTransacao {
   };
 }
 
+function computeSomatorioSeguranca(header: CraRemessaHeader): number {
+  return (
+    header.quantidadeRegistros +
+    header.quantidadeTitulos +
+    header.quantidadeIndicacoes +
+    header.quantidadeOriginais
+  );
+}
+
 function parseTrailer(line: string): CraRemessaTrailer {
   return {
     idRegistro: field(line, 1, 1),
     codigoPortador: field(line, 2, 4),
     nomePortador: field(line, 5, 44).trim(),
     dataMovimento: parseDate(field(line, 45, 52)),
-    quantidadeRegistros: parseNumber(field(line, 53, 57)),
+    somatorioSeguranca: parseNumber(field(line, 53, 57)),
     somaValoresCentavos: parseNumber(field(line, 58, 75)),
     sequenciaRegistro: parseNumber(field(line, 597, 600)),
   };
@@ -282,32 +291,20 @@ function validateCrossChecks(
   warnings: CraRemessaValidationIssue[],
 ) {
   const transactionCount = parsed.transacoes.length;
-  const totalLines = transactionCount + 2;
   const indicationCount = parsed.transacoes.filter((transacao) =>
-    ["DMI", "DRI"].includes(transacao.especie.toUpperCase()),
+    ["DMI", "DRI", "CBI"].includes(transacao.especie.toUpperCase()),
   ).length;
   const originalCount = transactionCount - indicationCount;
   const sumSaldo = parsed.transacoes.reduce((acc, item) => acc + item.saldoTituloCentavos, 0);
+  const somatorioSegurancaEsperado = computeSomatorioSeguranca(parsed.header);
 
-  // Na prática, arquivos CRA costumam usar "Qtd Registros" do header como
-  // quantidade de transações/títulos, embora alguns layouts descrevam total de linhas.
-  // Aceitamos ambos para evitar falso negativo.
+  // h09 — quantidade de registros de transação (linhas tipo 1), conforme manual CRA.
   const headerQtdRegistros = parsed.header.quantidadeRegistros;
-  const headerQtdRegistrosMatchesTransactions = headerQtdRegistros === transactionCount;
-  const headerQtdRegistrosMatchesTotalLines = headerQtdRegistros === totalLines;
-
-  if (!headerQtdRegistrosMatchesTransactions && !headerQtdRegistrosMatchesTotalLines) {
+  if (headerQtdRegistros !== transactionCount) {
     pushError(
       errors,
       "header_qtd_registros_mismatch",
-      `Header informa ${headerQtdRegistros} registros, mas esperado ${transactionCount} (transações) ou ${totalLines} (linhas totais).`,
-      1,
-    );
-  } else if (headerQtdRegistrosMatchesTotalLines && !headerQtdRegistrosMatchesTransactions) {
-    pushWarning(
-      warnings,
-      "header_qtd_registros_total_lines",
-      `Header usa quantidade total de linhas (${totalLines}) em vez de transações (${transactionCount}).`,
+      `Header informa ${headerQtdRegistros} registros de transação, mas foram lidas ${transactionCount} linha(s) tipo 1.`,
       1,
     );
   }
@@ -335,11 +332,11 @@ function validateCrossChecks(
       1,
     );
   }
-  if (parsed.trailer.quantidadeRegistros !== totalLines) {
+  if (parsed.trailer.somatorioSeguranca !== somatorioSegurancaEsperado) {
     pushError(
       errors,
-      "trailer_qtd_registros_mismatch",
-      `Trailer informa ${parsed.trailer.quantidadeRegistros} registros, mas o arquivo possui ${totalLines}.`,
+      "trailer_somatorio_seguranca_mismatch",
+      `Trailer informa somatório de segurança ${parsed.trailer.somatorioSeguranca}, mas a soma h09+h10+h11+h12 do header é ${somatorioSegurancaEsperado}.`,
       parsed.transacoes.length + 2,
     );
   }
@@ -347,7 +344,7 @@ function validateCrossChecks(
     pushError(
       errors,
       "trailer_soma_valores_mismatch",
-      `Trailer informa soma de ${parsed.trailer.somaValoresCentavos}, mas a soma dos saldos é ${sumSaldo}.`,
+      `Trailer informa soma de saldos ${parsed.trailer.somaValoresCentavos}, mas a soma dos saldos (t18) das transações é ${sumSaldo}.`,
       parsed.transacoes.length + 2,
     );
   }

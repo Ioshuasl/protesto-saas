@@ -1,3 +1,5 @@
+import type { PTituloInterface } from "@/packages/administrativo/interfaces/PTitulo/PTituloInterface";
+
 /**
  * Interface gerada para a tabela P_ARQUIVO_TITULO
  */
@@ -29,4 +31,6 @@ export interface PArquivoTituloInterface {
   versao_layout?: string;
   sequencial_footer?: string;
   texto_importado?: string;
+  /** Presente com `?include=titulos` (index: só numero_apontamento; show: título completo). */
+  titulos?: PTituloInterface[];
 }

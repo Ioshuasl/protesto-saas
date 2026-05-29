@@ -17,6 +17,9 @@ from packages.v1.docx.actions.docx_load_only_office_file_bytes_action import (
     DOCXLoadOnlyOfficeFileBytesAction,
 )
 from packages.v1.docx.services.docx_rtf_convert_service import DocxRtfConvertService
+from packages.v1.docx.services.docx_wptools_marker_highlight_service import (
+    strip_marker_highlights_from_docx_bytes,
+)
 from packages.v1.docx.schemas.docx_schema import DOCXSchemaCallback
 
 logger = logging.getLogger(__name__)
@@ -47,6 +50,7 @@ class SaveEditorCallbackService:
             data=data.data,
         )
         file_bytes = DOCXLoadOnlyOfficeFileBytesAction.execute(onlyoffice_callback)
+        file_bytes = strip_marker_highlights_from_docx_bytes(file_bytes)
         rtf_text = DocxRtfConvertService.docx_bytes_to_rtf_text(file_bytes)
         compressed_blob = RTFBlobCodec.rtf_text_to_blob(rtf_text)
 

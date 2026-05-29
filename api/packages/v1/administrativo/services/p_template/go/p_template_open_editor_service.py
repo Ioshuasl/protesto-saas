@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi import Request
@@ -15,6 +16,12 @@ from packages.v1.administrativo.schemas.p_template_schema import (
     PTemplateIdSchema,
 )
 from packages.v1.docx.services.docx_process_service import DOCXProcess, DOCXProcessSchema
+from packages.v1.administrativo.constants.p_template_onlyoffice_customization import (
+    P_TEMPLATE_ONLYOFFICE_CUSTOMIZATION,
+)
+from packages.v1.docx.services.docx_wptools_marker_highlight_service import (
+    apply_marker_highlights_to_docx_path,
+)
 
 
 class OpenEditorService:
@@ -27,16 +34,20 @@ class OpenEditorService:
         row = ShowTextoAction().execute(PTemplateIdSchema(template_id=template_id))
         rtf_text = RTFBlobCodec.blob_to_rtf_text(row.get("texto"))
 
+        storage_dir = Path("./storage/temp")
         filename = DOCXProcess().execute(
             DOCXProcessSchema(
                 id=f"p_template_{template_id}",
                 content=rtf_text,
                 output="path",
                 save_disk=True,
-                storage_dir="./storage/temp",
+                storage_dir=str(storage_dir),
                 filename_prefix=f"p_template_{template_id}",
             )
         )
+
+        if editor_schema.highlight_markers and filename:
+            apply_marker_highlights_to_docx_path(storage_dir / filename)
 
         file_url = self._build_temp_url(request, filename)
         callback_url = self._build_callback_url(request, template_id)
@@ -62,6 +73,20 @@ class OpenEditorService:
                 "callbackUrl": callback_url,
                 "mode": editor_schema.mode,
                 "lang": "pt-BR",
+                "customization": P_TEMPLATE_ONLYOFFICE_CUSTOMIZATION,
+            },
+            "markerLegend": {
+                "manual": {"tag": "«m»", "color": "amarelo", "label": "Campo manual"},
+                "automatic": {
+                    "tag": "«a»",
+                    "color": "verde",
+                    "label": "Campo automático",
+                },
+                "variable": {
+                    "tag": "«w»",
+                    "color": "turquesa",
+                    "label": "Variável / placeholder",
+                },
             },
         }
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { PTemplateOpenEditorService } from '@/packages/administrativo/services/PTemplate/PTemplateOpenEditorService';
 import type { PTemplateInterface } from '@/packages/administrativo/interfaces/PTemplate/PTemplateInterface';
+import type { PTemplateMarkerLegend } from '@/packages/administrativo/interfaces/PTemplate/PTemplateMarkerLegend';
 import type { PTemplateOnlyOfficeConfig } from '@/packages/administrativo/interfaces/PTemplate/PTemplateOnlyOfficeConfig';
 import { useResponse } from '@/shared/components/response/ResponseContext';
 
@@ -20,6 +21,7 @@ export const usePTemplateOnlyOfficeHook = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<PTemplateInterface | null>(null);
   const [config, setConfig] = useState<PTemplateOnlyOfficeConfig | null>(null);
+  const [markerLegend, setMarkerLegend] = useState<PTemplateMarkerLegend | null>(null);
 
   const openEditor = async (template: PTemplateInterface, mode: 'edit' | 'view' = 'edit') => {
     console.info('[PTemplateOnlyOfficeHook] openEditor acionado', {
@@ -30,25 +32,26 @@ export const usePTemplateOnlyOfficeHook = () => {
     setSelectedTemplate(template);
     try {
       const response = await PTemplateOpenEditorService(template.template_id, mode);
-      if (isOnlyOfficeConfig(response)) {
+      if (response && isOnlyOfficeConfig(response.config)) {
         console.info('[PTemplateOnlyOfficeHook] configuração do editor recebida', {
           templateId: template.template_id,
-          documentKey: response.document?.key,
-          callbackEndpoint: response.editorConfig?.orius_api_endpoint,
+          documentKey: response.config.document?.key,
+          callbackEndpoint: response.config.editorConfig?.orius_api_endpoint,
         });
-        setConfig(response);
+        setConfig(response.config);
+        setMarkerLegend(response.markerLegend ?? null);
         setIsEditorOpen(true);
         setResponse({
           status: 200,
           message: 'Editor carregado com sucesso',
         });
-        return response;
+        return response.config;
       }
 
       setResponse({
-        status: response.status,
-        message: response.message,
-        error: response.message,
+        status: (response as { status?: number })?.status,
+        message: (response as { message?: string })?.message,
+        error: (response as { message?: string })?.message,
       });
       console.error('[PTemplateOnlyOfficeHook] falha ao abrir editor', response);
       return response;
@@ -63,6 +66,7 @@ export const usePTemplateOnlyOfficeHook = () => {
   const closeEditor = () => {
     setIsEditorOpen(false);
     setConfig(null);
+    setMarkerLegend(null);
     setSelectedTemplate(null);
   };
 
@@ -71,6 +75,7 @@ export const usePTemplateOnlyOfficeHook = () => {
     isLoading,
     selectedTemplate,
     config,
+    markerLegend,
     openEditor,
     closeEditor,
     setIsEditorOpen,

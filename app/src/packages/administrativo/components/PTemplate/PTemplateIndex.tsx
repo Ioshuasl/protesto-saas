@@ -19,6 +19,7 @@ export default function PTemplateIndex() {
     isLoading: isEditorLoading,
     selectedTemplate: editorTemplate,
     config: editorConfig,
+    markerLegend,
     openEditor,
     closeEditor,
   } = usePTemplateOnlyOfficeHook();
@@ -84,6 +85,7 @@ export default function PTemplateIndex() {
         }}
         template={editorTemplate}
         config={editorConfig}
+        markerLegend={markerLegend}
         isLoading={isEditorLoading}
       />
     </div>

@@ -1,29 +1,35 @@
-import { mockDbDelay } from "@/packages/administrativo/shared/mockDbDelay";
-import { pArquivoTituloListRef } from "@/packages/cra/data/PTituloArquivo/pArquivoTituloInMemory";
-import {
-  PTITULOARQUIVO_FAKE_ENDPOINTS,
-  usePTituloArquivoMockData,
-} from "@/packages/cra/data/PTituloArquivo/pTituloArquivoDataConfig";
+import { PARQUIVO_TITULO_ENDPOINTS } from "@/packages/cra/data/PTituloArquivo/pTituloArquivoDataConfig";
 import type { PArquivoTituloInterface } from "@/packages/cra/interface/PArquivoTitulo/PArquivoTituloInterface";
-import { withClientErrorHandler } from "@/shared/actions/withClientErrorHandler/withClientErrorHandler";
 import API from "@/shared/services/api/Api";
 import { Methods } from "@/shared/services/api/enums/ApiMethodEnum";
 
-export async function PTituloArquivoShowData(): Promise<PArquivoTituloInterface[]> {
-  if (!usePTituloArquivoMockData()) {
-    const api = new API();
-    const apiCall = withClientErrorHandler(async () =>
-      api.send({
-        method: Methods.GET,
-        endpoint: PTITULOARQUIVO_FAKE_ENDPOINTS.index,
-      }),
-    );
-    const response = await apiCall();
-    if (Number(response?.status) >= 200 && Number(response?.status) < 300 && Array.isArray(response?.data)) {
-      return response.data as PArquivoTituloInterface[];
-    }
+export type PArquivoTituloShowQuery = {
+  include?: string;
+};
+
+export async function PTituloArquivoShowData(
+  arquivoTituloId: number,
+  query?: PArquivoTituloShowQuery,
+): Promise<PArquivoTituloInterface> {
+  const params = new URLSearchParams();
+  if (query?.include) {
+    params.set("include", query.include);
   }
 
-  await mockDbDelay(300);
-  return [...pArquivoTituloListRef.current];
+  const qs = params.toString();
+  const endpoint = qs
+    ? `${PARQUIVO_TITULO_ENDPOINTS.show(arquivoTituloId)}?${qs}`
+    : PARQUIVO_TITULO_ENDPOINTS.show(arquivoTituloId);
+
+  const api = new API();
+  const response = await api.send({
+    method: Methods.GET,
+    endpoint,
+  });
+
+  if (Number(response?.status) >= 200 && Number(response?.status) < 300 && response?.data) {
+    return response.data as PArquivoTituloInterface;
+  }
+
+  throw new Error(response?.message || "Arquivo de título não encontrado");
 }

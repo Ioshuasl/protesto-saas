@@ -34,7 +34,7 @@ export function CraImportacaoSubView({ transacao, index, onClick }: CraImportaca
           onClick?.();
         }
       }}
-      className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/20"
+      className="cursor-pointer rounded-lg border bg-card p-4 transition-colors hover:bg-muted/20"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-2">
@@ -45,7 +45,7 @@ export function CraImportacaoSubView({ transacao, index, onClick }: CraImportaca
             <span className="text-xs text-muted-foreground">Nosso numero: {transacao.nossoNumero || "-"}</span>
           </div>
           <div className="space-y-1">
-            <p className="truncate text-sm font-semibold text-foreground">{transacao.nomeDevedor || "-"}</p>
+            <p className="truncate text-sm font-semibold text-foreground">Devedor: {transacao.nomeDevedor || "-"}</p>
             <p className="truncate text-xs text-muted-foreground">
               Cedente: <span className="font-medium text-foreground">{transacao.nomeCedente || "-"}</span>
             </p>

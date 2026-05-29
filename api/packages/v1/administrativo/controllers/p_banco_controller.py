@@ -1,6 +1,7 @@
 from actions.data.query_params_parser import QueryParams
 from actions.dynamic_import.dynamic_import import DynamicImport
 from packages.v1.administrativo.schemas.p_banco_schema import (
+    PBancoCodigoSchema,
     PBancoIdSchema,
     PBancoIndexSchema,
     PBancoSaveSchema,
@@ -34,6 +35,16 @@ class PBancoController:
         return {
             "message": "Banco localizado com sucesso",
             "data": show_service().execute(banco_schema),
+        }
+
+    def show_by_codigo(self, codigo_schema: PBancoCodigoSchema):
+        show_by_codigo_service = self.dynamic_import.service(
+            "p_banco_show_by_codigo_service",
+            "ShowByCodigoService",
+        )
+        return {
+            "message": "Banco localizado com sucesso",
+            "data": show_by_codigo_service().execute(codigo_schema),
         }
 
     def save(self, banco_schema: PBancoSaveSchema):

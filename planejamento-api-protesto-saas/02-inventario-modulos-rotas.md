@@ -56,7 +56,7 @@ Implementar em fatias por fase ([04-ordem-implementacao.md](./04-ordem-implement
 | PTituloApontamentoBatch | `NEXT_PUBLIC_USE_MOCK_P_TITULO_APONTAMENTO_BATCH` |
 | PTituloIntimacaoBatch | `NEXT_PUBLIC_USE_MOCK_P_TITULO_INTIMACAO_BATCH` |
 | PTituloProtestarBatch | `NEXT_PUBLIC_USE_MOCK_P_TITULO_PROTESTAR_BATCH` |
-| PTituloArquivo | `NEXT_PUBLIC_USE_MOCK_P_TITULO_ARQUIVO` |
+| PTituloArquivo | — (API real) |
 | PRetornoCra | `NEXT_PUBLIC_USE_MOCK_P_RETORNO_CRA` |
 
 Critério de pronto por módulo: com mock flag `false`, hooks/services do app funcionam sem alteração de URL.

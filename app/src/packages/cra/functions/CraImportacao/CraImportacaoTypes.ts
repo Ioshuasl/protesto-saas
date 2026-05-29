@@ -60,7 +60,9 @@ export interface CraRemessaTrailer {
   codigoPortador: string;
   nomePortador: string;
   dataMovimento: string;
-  quantidadeRegistros: number;
+  /** t05 — soma de h09 + h10 + h11 + h12 do header (somatório de segurança). */
+  somatorioSeguranca: number;
+  /** t06 — soma do saldo a protestar (t18) de todas as transações. */
   somaValoresCentavos: number;
   sequenciaRegistro: number;
 }

@@ -39,7 +39,7 @@ export function CraImportacaoDetailsModal({
 }: CraImportacaoDetailsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[85vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Detalhes do título {index !== undefined ? `#${index + 1}` : ""}</DialogTitle>
           <DialogDescription>Visualização completa dos dados da transação importada no arquivo CRA.</DialogDescription>

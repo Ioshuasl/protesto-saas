@@ -22119,6 +22119,365 @@
               "response": []
             }
           ]
+        },
+        {
+          "name": "Arquivo Titulo",
+          "item": [
+            {
+              "name": "All",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_arquivo_titulo?p=1&per_page=20&sort=arquivo_titulo_id.desc",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_arquivo_titulo"
+                  ],
+                  "query": [
+                    {
+                      "key": "p",
+                      "value": "1"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "arquivo_titulo_id.desc"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});",
+                      "",
+                      "const response = pm.response.json();",
+                      "if (response && response.data && response.data.arquivo_titulo_id !== undefined) {",
+                      "    pm.collectionVariables.set(\"arquivoTituloId\", response.data.arquivo_titulo_id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_arquivo_titulo",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_arquivo_titulo"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome_arquivo\": \"TST-API.251\",\n  \"portador_codigo\": \"033\",\n  \"soma_vlr_remessa\": 100.50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Get",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_arquivo_titulo/{{arquivoTituloId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_arquivo_titulo",
+                    "{{arquivoTituloId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Texto",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_arquivo_titulo/{{arquivoTituloId}}/texto/",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_arquivo_titulo",
+                    "{{arquivoTituloId}}",
+                    "texto",
+                    ""
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Texto Importado",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_arquivo_titulo/{{arquivoTituloId}}/texto_importado/",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_arquivo_titulo",
+                    "{{arquivoTituloId}}",
+                    "texto_importado",
+                    ""
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_arquivo_titulo/{{arquivoTituloId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_arquivo_titulo",
+                    "{{arquivoTituloId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome_arquivo\": \"TST-API-UPD.251\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Delete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code é 201 ou 200\", function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "pm.test(\"Mensagem indica sucesso\", function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.message || \"\").to.match(/sucesso|criado|registrado|localizado|removido|atualizado|salvo/i);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{BearerToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BaseUrlV1}}administrativo/p_arquivo_titulo/{{arquivoTituloId}}",
+                  "host": [
+                    "{{BaseUrlV1}}administrativo"
+                  ],
+                  "path": [
+                    "p_arquivo_titulo",
+                    "{{arquivoTituloId}}"
+                  ]
+                }
+              }
+            }
+          ]
         }
       ]
     },
@@ -29529,6 +29888,10 @@
       "key": "templateId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "arquivoTituloId",
+      "value": ""
     }
   ]
 }

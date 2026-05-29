@@ -8,6 +8,7 @@ from database.orm_firebird import normalize_row_keys
 from database.orm_firebird_settings import use_orm_firebird
 from packages.v1.administrativo.model.p_banco import get_p_banco_model
 from packages.v1.administrativo.schemas.p_banco_schema import (
+    PBancoCodigoSchema,
     PBancoIdSchema,
     normalize_sim_nao_from_db,
 )
@@ -30,6 +31,30 @@ class ShowRepository(BaseRepository):
             return self._execute_orm(banco_schema)
         return self._execute_sql(banco_schema)
 
+    def execute_by_codigo(self, codigo_schema: PBancoCodigoSchema) -> Optional[dict[str, Any]]:
+        codigo = (codigo_schema.codigo_banco or "").strip()
+        if not codigo:
+            return None
+
+        candidates: list[str] = [codigo]
+        if codigo.isdigit():
+            stripped = codigo.lstrip("0") or "0"
+            padded = codigo.zfill(3)
+            for variant in (stripped, padded):
+                if variant not in candidates:
+                    candidates.append(variant)
+
+        for candidate in candidates:
+            schema = PBancoCodigoSchema(codigo_banco=candidate)
+            if use_orm_firebird():
+                row = self._execute_by_codigo_orm(schema)
+            else:
+                row = self._execute_by_codigo_sql(schema)
+            if row:
+                return row
+
+        return None
+
     def _execute_orm(self, banco_schema: PBancoIdSchema) -> Optional[dict[str, Any]]:
         row = get_p_banco_model().findByPk(banco_schema.banco_id)
         return self._map_banco_row(row)
@@ -42,6 +67,19 @@ class ShowRepository(BaseRepository):
         WHERE BANCO_ID = :banco_id
         """
         row = self.fetch_one(sql, {"banco_id": banco_schema.banco_id})
+        return self._map_banco_row(row)
+
+    def _execute_by_codigo_orm(self, codigo_schema: PBancoCodigoSchema) -> Optional[dict[str, Any]]:
+        return self._execute_by_codigo_sql(codigo_schema)
+
+    def _execute_by_codigo_sql(self, codigo_schema: PBancoCodigoSchema) -> Optional[dict[str, Any]]:
+        sql = f"""
+        SELECT
+            {_SELECT_COLUMNS.strip()}
+        FROM P_BANCO
+        WHERE UPPER(TRIM(CODIGO_BANCO)) = UPPER(TRIM(:codigo_banco))
+        """
+        row = self.fetch_one(sql, {"codigo_banco": codigo_schema.codigo_banco})
         return self._map_banco_row(row)
 
     @staticmethod

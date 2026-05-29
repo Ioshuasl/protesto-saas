@@ -5,6 +5,7 @@ from actions.data.query_params_parser import QueryParamsParser
 from actions.jwt.get_current_user import get_current_user
 from packages.v1.administrativo.controllers.p_banco_controller import PBancoController
 from packages.v1.administrativo.schemas.p_banco_schema import (
+    PBancoCodigoSchema,
     PBancoIdSchema,
     PBancoIndexSchema,
     PBancoSaveSchema,
@@ -32,6 +33,19 @@ async def index(
     if busca is not None:
         filter_data["busca"] = busca
     return p_banco_controller.index(PBancoIndexSchema(**filter_data), query_params)
+
+
+@router.get(
+    "/codigo/{codigo_banco}",
+    status_code=status.HTTP_200_OK,
+    summary="Busca banco pelo código",
+    response_description="Busca banco pelo código (CODIGO_BANCO)",
+)
+async def show_by_codigo(
+    codigo_banco: str,
+    current_user: dict = Depends(get_current_user),
+):
+    return p_banco_controller.show_by_codigo(PBancoCodigoSchema(codigo_banco=codigo_banco))
 
 
 @router.get(

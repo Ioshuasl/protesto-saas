@@ -55,6 +55,7 @@ def register_administrativo_associations() -> None:
         get_p_pessoa_vinculo_model,
     )
     from packages.v1.administrativo.model.p_certidao import get_p_certidao_model
+    from packages.v1.administrativo.model.p_arquivo_titulo import get_p_arquivo_titulo_model
     from packages.v1.administrativo.model.p_titulo import get_p_titulo_model
 
     P_BANCO = get_p_banco_model()
@@ -70,6 +71,7 @@ def register_administrativo_associations() -> None:
     P_PESSOA = get_p_pessoa_model()
     P_PESSOA_VINCULO = get_p_pessoa_vinculo_model()
     P_CERTIDAO = get_p_certidao_model()
+    P_ARQUIVO_TITULO = get_p_arquivo_titulo_model()
     P_TITULO = get_p_titulo_model()
     G_TB_ESTADOCIVIL = get_g_tb_estadocivil_model()
     G_TB_PROFISSAO = get_g_tb_profissao_model()
@@ -564,6 +566,24 @@ def register_administrativo_associations() -> None:
             "as": "usuario",
             "foreignKey": "USUARIO_ID",
             "targetKey": "USUARIO_ID",
+        },
+    )
+
+    # --- P_ARQUIVO_TITULO / P_TITULO ---
+    P_ARQUIVO_TITULO.hasMany(
+        P_TITULO,
+        {
+            "as": "titulos",
+            "foreignKey": "ARQUIVO_TITULO_ID",
+            "sourceKey": "ARQUIVO_TITULO_ID",
+        },
+    )
+    P_TITULO.belongsTo(
+        P_ARQUIVO_TITULO,
+        {
+            "as": "arquivo_titulo",
+            "foreignKey": "ARQUIVO_TITULO_ID",
+            "targetKey": "ARQUIVO_TITULO_ID",
         },
     )
 
